@@ -177,7 +177,7 @@ public class AnyType extends ModelObject implements Type, PObject {
 				RecursionGuard g = guard == null ? new RecursionGuard() : guard;
 				// A recursion detected both in self and other means that other is assignable
 				// to self. This point would not have been reached otherwise
-				return g.addThat(t) == RecursionGuard.SELF_RECURSION_IN_BOTH || isAssignable(t.resolvedType(), g);
+				return g.withThat(t, state -> state == RecursionGuard.SELF_RECURSION_IN_BOTH || isAssignable(t.resolvedType(), g));
 			}
 			return isAssignable(t.resolvedType(), guard);
 		}

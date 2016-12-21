@@ -32,7 +32,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("the attribute type is not a type")
 			public void notType() {
 				declareObject("attributes => { a => 23 }");
-				Throwable ex = expectThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
+				Throwable ex = assertThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
 				assertEquals("initializer for attribute TestObj[a] expects a value of type Type or Struct, got Integer", ex.getMessage());
 			}
 
@@ -40,7 +40,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("the attribute type is missing")
 			public void typeMissing() {
 				declareObject("attributes => { a=> { kind => derived }}");
-				Throwable ex = expectThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
+				Throwable ex = assertThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
 				assertIncludes("expects a value for key 'type'", ex.getMessage());
 			}
 
@@ -48,7 +48,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("value is of incompatible type")
 			public void valueNotOfAttrType() {
 				declareObject("attributes => { a=> { type => Integer, value => 'three' }}");
-				Throwable ex = expectThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
+				Throwable ex = assertThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
 				assertEquals("attribute TestObj[a] value expects an Integer value, got String", ex.getMessage());
 			}
 
@@ -56,7 +56,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("the kind is invalid'")
 			public void kindInvalid() {
 				declareObject("attributes => { a=> { type => String, kind => derivd }}");
-				Throwable ex = expectThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
+				Throwable ex = assertThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
 				assertIncludes("entry 'kind' expects a match for Enum['constant', 'derived', 'given_or_derived'], got 'derivd'",
 						ex.getMessage());
 			}
@@ -66,7 +66,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			public void noValue() {
 				declareObject("attributes => { a=> Integer }");
 				Attribute attr = resolveObject().getAttribute("a");
-				Throwable ex = expectThrows(TypeResolverException.class, attr::value);
+				Throwable ex = assertThrows(TypeResolverException.class, attr::value);
 				assertEquals("attribute TestObj[a] has no value", ex.getMessage());
 			}
 		}
@@ -111,7 +111,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("raises an error when no value is declared")
 			public void missingValue() {
 				declareObject("attributes => { a=> { type => Integer, kind => constant }}");
-				Throwable ex = expectThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
+				Throwable ex = assertThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
 				assertEquals("attribute TestObj[a] of kind  of kind 'constant' requires a value", ex.getMessage());
 			}
 
@@ -119,7 +119,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("raises an error when final => false")
 			public void finalFalse() {
 				declareObject("attributes => { a=> { type => Integer, kind => constant, final => false }}");
-				Throwable ex = expectThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
+				Throwable ex = assertThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
 				assertEquals("attribute TestObj[a] of kind 'constant' cannot be combined with final => false", ex.getMessage());
 			}
 
@@ -156,7 +156,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("function type is not a Type[Callable]")
 			public void notCallableType() {
 				declareObject("functions => { a => String }");
-				Throwable ex = expectThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
+				Throwable ex = assertThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
 				assertIncludes("initializer for function TestObj[a] expects a value of type Type[Callable] or Struct", ex.getMessage());
 			}
 
@@ -164,7 +164,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("function has same name as attribute")
 			public void sameNameAsAttribute() {
 				declareObject("attributes => { a => Integer }, functions => { a => Callable }");
-				Throwable ex = expectThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
+				Throwable ex = assertThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
 				assertEquals("function TestObj[a] conflicts with attribute with the same name", ex.getMessage());
 			}
 		}
@@ -213,7 +213,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 				declareObject("TestSub",
 						declareObject("attributes => { a => Integer }"),
 						"functions => { a => { type => Callable, override => true }}");
-				Throwable ex = expectThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
 				assertEquals("function TestSub[a] attempts to override attribute TestObj[a]", ex.getMessage());
 			}
 
@@ -223,7 +223,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 				declareObject("TestSub",
 						declareObject("functions => { a => Callable }"),
 						"attributes => { a => { type => Integer, override => true }}");
-				Throwable ex = expectThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
 				assertEquals("attribute TestSub[a] attempts to override function TestObj[a]", ex.getMessage());
 			}
 
@@ -233,7 +233,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 				declareObject("TestSub",
 						declareObject("attributes => { a => Integer }"),
 						"attributes => { a => { type => String, override => true }}");
-				Throwable ex = expectThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
 				assertEquals("attribute TestSub[a] attempts to override attribute TestObj[a] with a type that does not match", ex.getMessage());
 			}
 
@@ -243,7 +243,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 				declareObject("TestSub",
 						declareObject("attributes => { a => { type => Integer, final => true }}"),
 						"attributes => { a => { type => Integer, override => true }}");
-				Throwable ex = expectThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
 				assertEquals("attribute TestSub[a] attempts to override final attribute TestObj[a]", ex.getMessage());
 			}
 
@@ -253,7 +253,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 				declareObject("TestSub",
 						declareObject("attributes => { a => Integer }"),
 						"attributes => { a =>  Integer }");
-				Throwable ex = expectThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
 				assertEquals("attribute TestSub[a] attempts to override attribute TestObj[a] without having override => true", ex.getMessage());
 			}
 
@@ -263,7 +263,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 				declareObject("TestSub",
 						declareObject("attributes => { a => Integer }"),
 						"attributes => { b => { type => Integer, override => true }}");
-				Throwable ex = expectThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> resolveObject("TestSub"));
 				assertEquals("expected attribute TestSub[b] to override inherited attribute, but no such attribute was found", ex.getMessage());
 			}
 		}
@@ -405,7 +405,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 							"  d => Integer\n" +
 							"}\n," +
 							"equality => a");
-			Throwable ex = expectThrows(TypeResolverException.class, () -> resolveObject("Sub"));
+			Throwable ex = assertThrows(TypeResolverException.class, () -> resolveObject("Sub"));
 			assertEquals("Sub equality is referencing attribute TestObj[a] which is included in equality of TestObj", ex.getMessage());
 		}
 
@@ -418,7 +418,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 					"  b => { type => Integer, kind => constant, value => 3 }\n" +
 					"},\n" +
 					"equality => [a,b]");
-			Throwable ex = expectThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
+			Throwable ex = assertThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
 			assertEquals("TestObj equality is referencing constant attribute TestObj[b]. Reference to constant is not allowed in equality", ex.getMessage());
 		}
 
@@ -433,7 +433,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 					"  b => Callable\n" +
 					"},\n" +
 					"equality => [a,b]");
-			Throwable ex = expectThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
+			Throwable ex = assertThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
 			assertEquals("TestObj equality is referencing function TestObj[b]. Only attribute references are allowed", ex.getMessage());
 		}
 
@@ -445,7 +445,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 					"  a => Integer\n" +
 					"},\n" +
 					"equality => [a,b]");
-			Throwable ex = expectThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
+			Throwable ex = assertThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
 			assertEquals("TestObj equality is referencing non existent attribute 'b'", ex.getMessage());
 		}
 
@@ -458,7 +458,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 					"},\n" +
 					"equality => a,\n" +
 			    "equality_include_type => false");
-			Throwable ex = expectThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
+			Throwable ex = assertThrows(TypeResolverException.class, ObjectTypeTest.this::resolveObject);
 			assertEquals("TestObj equality_include_type = false cannot be combined with non empty equality specification", ex.getMessage());
 		}
 	}
@@ -515,7 +515,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 								"},\n" +
 								"equality => [a]");
 				ObjectType t = resolveObject();
-				Throwable ex = expectThrows(TypeResolverException.class, () -> t.newInstance(pcore, 3));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> t.newInstance(pcore, 3));
 				assertEquals("Invalid number of type parameters specified: 'TestObj' requires 2 parameters, 1 provided", ex.getMessage());
 			}
 
@@ -529,7 +529,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 								"},\n" +
 								"equality => [a]");
 				ObjectType t = resolveObject();
-				Throwable ex = expectThrows(TypeResolverException.class, () -> t.newInstance(pcore, 3, 4, 5));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> t.newInstance(pcore, 3, 4, 5));
 				assertEquals("Invalid number of type parameters specified: 'TestObj' requires 2 parameters, 3 provided", ex.getMessage());
 			}
 		}

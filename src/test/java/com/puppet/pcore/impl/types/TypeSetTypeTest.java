@@ -65,7 +65,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 			@DisplayName("pcore_version is missing")
 			public void pcoreVersionMissing() {
 				declareTypeSet("version => '1.0.0'");
-				Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+				Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 				assertEquals("TypeSet initializer expects a value for key 'pcore_version'", ex.getMessage());
 			}
 
@@ -73,7 +73,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 			@DisplayName("version is missing")
 			public void versionMissing() {
 				declareTypeSet("pcore_version => '1.0.0'");
-				Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+				Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 				assertEquals("TypeSet initializer expects a value for key 'version'", ex.getMessage());
 			}
 
@@ -81,7 +81,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 			@DisplayName("version is an invalid semantic version")
 			public void versionInvalid() {
 				declareTypeSet("version => '1.x', pcore_version => '1.0.0'");
-				Throwable ex = expectThrows(IllegalArgumentException.class, () -> resolveTypeSet());
+				Throwable ex = assertThrows(IllegalArgumentException.class, () -> resolveTypeSet());
 				assertEquals("The string '1.x' does not represent a valid semantic version", ex.getMessage());
 			}
 
@@ -89,7 +89,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 			@DisplayName("pcore_version is an invalid semantic version")
 			public void pcoreVersionInvalid() {
 				declareTypeSet("version => '1.0.0', pcore_version => '1.x'");
-				Throwable ex = expectThrows(IllegalArgumentException.class, () -> resolveTypeSet());
+				Throwable ex = assertThrows(IllegalArgumentException.class, () -> resolveTypeSet());
 				assertEquals("The string '1.x' does not represent a valid semantic version", ex.getMessage());
 			}
 
@@ -97,14 +97,14 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 			@DisplayName("the pcore_version is outside of the range of that is parsable by this runtime")
 			public void pcoreVersionOutOfRange() {
 				declareTypeSet("version => '1.0.0', pcore_version => '2.0.0'");
-				Throwable ex = expectThrows(TypeResolverException.class, () -> resolveTypeSet());
+				Throwable ex = assertThrows(TypeResolverException.class, () -> resolveTypeSet());
 				assertMatches("The pcore version .* Expected range 1\\.0\\.0, got 2\\.0\\.0", ex.getMessage());
 			}
 
 			@Test
 			@DisplayName("the name authority is an invalid URI")
 			public void nameAuthInvalid() {
-				Throwable ex = expectThrows(IllegalArgumentException.class, () ->
+				Throwable ex = assertThrows(IllegalArgumentException.class, () ->
 						declareTypeSet("FirstSet", "version => '1.0.0', pcore_version => '1.0.0', name_authority => 'not a valid URI'", null));
 				assertMatches("not a valid URI", ex.getMessage());
 			}
@@ -116,7 +116,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("is empty")
 				public void isEmpty() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', types => {}");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertEquals("TypeSet initializer entry 'types' expects attribute count to be at least 1, got 0", ex.getMessage());
 				}
 
@@ -124,7 +124,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("is not a map")
 				public void isNotAMap() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', types => []");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertEquals("TypeSet initializer entry 'types' expects a Hash value, got Array", ex.getMessage());
 				}
 
@@ -132,7 +132,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("contains values that are not types")
 				public void containsNonTypeValues() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', types => { Car => 'brum' }");
-					Throwable ex = expectThrows(TypeResolverException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeResolverException.class, () -> resolveTypeSet());
 					assertEquals("''brum'' did not resolve to a Pcore type", ex.getMessage());
 				}
 
@@ -140,7 +140,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("contains names that are not SimpleNames")
 				public void complexNames() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', types => { car => Integer }");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("expects a match for Pattern[/\\\\A[A-Z]\\\\w*\\\\z/], got 'car'", ex.getMessage());
 				}
 			}
@@ -152,7 +152,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("is empty")
 				public void isEmpty() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => {}");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("expects attribute count to be at least 1, got 0", ex.getMessage());
 				}
 
@@ -160,7 +160,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("is not a map")
 				public void isNotAMap() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => []");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("expects a Hash value, got Array", ex.getMessage());
 				}
 
@@ -168,7 +168,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("contains something other than reference initialization maps")
 				public void isNotRefI12n() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => {Ref => 2}");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("entry 'Ref' expects a Struct value, got Integer", ex.getMessage());
 				}
 
@@ -180,7 +180,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 							" A => { name => 'Vehicle::Cars', version_range => '1.x' }," +
 							" V => { name => 'Vehicle::Cars', version_range => '1.x' }," +
 							"}");
-					Throwable ex = expectThrows(TypeResolverException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeResolverException.class, () -> resolveTypeSet());
 					assertIncludes("TypeSet 'http://puppet.com/2016.1/runtime/Vehicle::Cars' more than once using overlapping version ranges", ex.getMessage());
 				}
 
@@ -194,7 +194,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 							"references => {" +
 							"  Car => { name => 'Vehicle::Car', version_range => '1.x' }" +
 							"}");
-					Throwable ex = expectThrows(TypeResolverException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeResolverException.class, () -> resolveTypeSet());
 					assertIncludes("TypeSet using alias 'Car'. The alias collides with the name of a declared type", ex.getMessage());
 				}
 
@@ -202,7 +202,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("contains an initialization map that has no version range")
 				public void refNoRange() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => { Ref => { name => 'X' } }");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("entry 'Ref' expects a value for key 'version_range'", ex.getMessage());
 				}
 
@@ -210,7 +210,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("contains an initialization map that has no name")
 				public void refNoName() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => { Ref => { version_range => '1.x' } }");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("entry 'Ref' expects a value for key 'name'", ex.getMessage());
 				}
 
@@ -218,7 +218,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("contains an initialization map that has a name that is not a QRef")
 				public void refNameNotQRef() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => { Ref => { name => 'cars', version_range => '1.x' } }");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("entry 'Ref' entry 'name' expects a match for Pattern[/\\\\A[A-Z][\\\\w]*(?:::[A-Z][\\\\w]*)*\\\\z/], got 'cars'", ex.getMessage());
 				}
 
@@ -226,7 +226,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("contains an initialization map that has a version_range that is not a valid SemVer range")
 				public void refRangeInvalid() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => { Ref => { name => 'Cars', version_range => 'X' } }");
-					Throwable ex = expectThrows(IllegalArgumentException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(IllegalArgumentException.class, () -> resolveTypeSet());
 					assertIncludes("Expected one of '<', '>' or digit at position 0 in range 'X'", ex.getMessage());
 				}
 
@@ -234,7 +234,7 @@ public class TypeSetTypeTest extends DeclaredTypeTest {
 				@DisplayName("contains an initialization map that has an alias that is not a SimpleName")
 				public void refAliasInvalid() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => { 'cars' => { name => 'X', version_range => '1.x' } }");
-					Throwable ex = expectThrows(TypeAssertionException.class, () -> resolveTypeSet());
+					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("key of entry 'cars' expects a match for Pattern[/\\\\A[A-Z]\\\\w*\\\\z/], got 'cars'", ex.getMessage());
 				}
 			}

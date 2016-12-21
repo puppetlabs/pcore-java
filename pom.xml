@@ -7,11 +7,17 @@
     <groupId>com.puppet</groupId>
     <artifactId>pcore</artifactId>
     <version>0.1.0-SNAPSHOT</version>
+
+    <properties>
+        <junit.platform.version>1.0.0-M3</junit.platform.version>
+        <junit.jupiter.version>5.0.0-M3</junit.jupiter.version>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
-            <version>5.0.0-M2</version>
+            <version>${junit.jupiter.version}</version>
             <scope>test</scope>
         </dependency>
         <dependency>
@@ -41,13 +47,13 @@
                     <dependency>
                         <groupId>org.junit.platform</groupId>
                         <artifactId>junit-platform-surefire-provider</artifactId>
-                        <version>1.0.0-M2</version>
+                        <version>${junit.platform.version}</version>
                     </dependency>
                     <dependency>
                         <groupId>org.junit.jupiter</groupId>
                         <artifactId>junit-jupiter-engine</artifactId>
-                        <version>5.0.0-M2</version>
-                     </dependency>
+                        <version>${junit.jupiter.version}</version>
+                    </dependency>
                 </dependencies>
             </plugin>
         </plugins>

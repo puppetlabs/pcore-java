@@ -170,7 +170,7 @@ public class TypeAliasType extends AnyType {
 	boolean isAssignable(AnyType o, RecursionGuard guard) {
 		if(isRecursive()) {
 			RecursionGuard g = guard == null ? new RecursionGuard() : guard;
-			return g.addThis(this) == RecursionGuard.SELF_RECURSION_IN_BOTH || super.isAssignable(o, g);
+			return g.withThis(this, state -> state == RecursionGuard.SELF_RECURSION_IN_BOTH || super.isAssignable(o, g));
 		}
 		return super.isAssignable(o, guard);
 	}
@@ -188,11 +188,8 @@ public class TypeAliasType extends AnyType {
 	@Override
 	int isReallyInstance(Object o, RecursionGuard guard) {
 		if(selfRecursion) {
-			if(guard == null)
-				guard = new RecursionGuard();
-			guard.addThat(o);
-			if(guard.addThis(this) == RecursionGuard.SELF_RECURSION_IN_BOTH)
-				return 0;
+			RecursionGuard g = guard == null ? new RecursionGuard() : guard;
+			return g.withThat(o, thatState -> g.withThis(this, state -> state == RecursionGuard.SELF_RECURSION_IN_BOTH ? 0 : resolvedType().isReallyInstance(o, g)));
 		}
 		return resolvedType().isReallyInstance(o, guard);
 	}
@@ -204,9 +201,8 @@ public class TypeAliasType extends AnyType {
 
 	private <R> R guardedRecursion(RecursionGuard guard, R dflt, Function<RecursionGuard,? extends R> block) {
 		if(selfRecursion) {
-			if(guard == null)
-				guard = new RecursionGuard();
-			return (guard.addThis(this) & RecursionGuard.SELF_RECURSION_IN_THIS) == 0 ? block.apply(guard) : dflt;
+			RecursionGuard g = guard == null ? new RecursionGuard() : guard;
+			return g.withThis(this, state -> (state & RecursionGuard.SELF_RECURSION_IN_THIS) == 0 ? block.apply(g) : dflt);
 		}
 		return block.apply(guard);
 	}

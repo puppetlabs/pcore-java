@@ -2,6 +2,7 @@ package com.puppet.pcore.impl.types;
 
 import java.util.IdentityHashMap;
 import java.util.Map;
+import java.util.function.Function;
 
 abstract class ModelObject {
 	interface Visitor {
@@ -23,8 +24,10 @@ abstract class ModelObject {
 		static final int SELF_RECURSION_IN_BOTH = 3;
 		static final int SELF_RECURSION_IN_THAT = 2;
 		static final int SELF_RECURSION_IN_THIS = 1;
-		private final Map<Object,Boolean> thatMap = new IdentityHashMap<>();
-		private final Map<Object,Boolean> thisMap = new IdentityHashMap<>();
+		private Map<Object,Boolean> thatMap;
+		private Map<Object,Boolean> thisMap;
+		private Map<Object,Boolean> recursiveThatMap;
+		private Map<Object,Boolean> recursiveThisMap;
 		private int state;
 
 		RecursionGuard() {
@@ -32,29 +35,52 @@ abstract class ModelObject {
 		}
 
 		/**
-		 * Add the given argument as 'that' and return the resulting state
+		 * Add the given argument as 'that' and call block with the resulting state. Pop
+		 * restore state after call.
 		 *
 		 * @param instance the object to add
-		 * @return the resulting state
+		 * @return the result of calling the block
 		 */
-		int addThat(Object instance) {
-			if((state & SELF_RECURSION_IN_THAT) == 0)
-				if(thatMap.put(instance, Boolean.TRUE) != null)
+		<R> R withThat(Object instance, Function<Integer, R> block) {
+			R result;
+			if(getThatMap().put(instance, Boolean.TRUE) == null) {
+				result = block.apply(state);
+				thatMap.remove(instance);
+			} else {
+				getRecursiveThatMap().put(instance, Boolean.TRUE);
+				if((state & SELF_RECURSION_IN_THAT) == 0) {
 					state |= SELF_RECURSION_IN_THAT;
-			return state;
+					result = block.apply(state);
+					state &= ~SELF_RECURSION_IN_THAT;
+				}
+				else
+					result = block.apply(state);
+			}
+			return result;
 		}
 
 		/**
-		 * Add the given argument as 'this' and return the resulting state
+		 * Add the given argument as 'this' and call block with the resulting state. Pop
+		 * restore state after call.
 		 *
 		 * @param instance the object to add
-		 * @return the resulting state
+		 * @return the result of calling the block
 		 */
-		int addThis(Object instance) {
-			if((state & SELF_RECURSION_IN_THIS) == 0)
-				if(thisMap.put(instance, Boolean.TRUE) != null)
+		<R> R withThis(Object instance, Function<Integer, R> block) {
+			R result;
+			if(getThisMap().put(instance, Boolean.TRUE) == null) {
+				result = block.apply(state);
+				thisMap.remove(instance);
+			} else {
+				getRecursiveThisMap().put(instance, Boolean.TRUE);
+				if((state & SELF_RECURSION_IN_THIS) == 0) {
 					state |= SELF_RECURSION_IN_THIS;
-			return state;
+					result = block.apply(state);
+					state &= ~SELF_RECURSION_IN_THIS;
+				} else
+					result = block.apply(state);
+			}
+			return result;
 		}
 
 		/**
@@ -64,7 +90,7 @@ abstract class ModelObject {
 		 * @return true if recursion was detected, false otherwise.
 		 */
 		boolean recursiveThat(Object instance) {
-			return thatMap.containsKey(instance);
+			return recursiveThatMap != null && recursiveThatMap.containsKey(instance);
 		}
 
 		/**
@@ -74,7 +100,31 @@ abstract class ModelObject {
 		 * @return true if recursion was detected, false otherwise.
 		 */
 		boolean recursiveThis(Object instance) {
-			return thisMap.containsKey(instance);
+			return recursiveThisMap != null && recursiveThisMap.containsKey(instance);
+		}
+
+		private Map<Object,Boolean> getRecursiveThatMap() {
+			if(recursiveThatMap == null)
+				recursiveThatMap = new IdentityHashMap<>();
+			return recursiveThatMap;
+		}
+
+		private Map<Object,Boolean> getRecursiveThisMap() {
+			if(recursiveThisMap == null)
+				recursiveThisMap = new IdentityHashMap<>();
+			return recursiveThisMap;
+		}
+
+		private Map<Object,Boolean> getThatMap() {
+			if(thatMap == null)
+				thatMap = new IdentityHashMap<>();
+			return thatMap;
+		}
+
+		private Map<Object,Boolean> getThisMap() {
+			if(thisMap == null)
+				thisMap = new IdentityHashMap<>();
+			return thisMap;
 		}
 	}
 
