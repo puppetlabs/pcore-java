@@ -271,7 +271,9 @@ public class ObjectType extends MetaType {
 	ObjectType(ArgumentsAccessor args) throws IOException {
 		super((Expression)null);
 		args.remember(this);
-		setI12nHashExpression((Map<String,Object>)args.get(0));
+		Map<String,Object> i12nHash = (Map<String,Object>)args.get(0);
+		this.name = (String)TYPE_QUALIFIED_REFERENCE.assertInstanceOf(i12nHash.get(KEY_NAME), true, () -> "Object name");
+		setI12nHashExpression(i12nHash);
 	}
 
 	ObjectType(String name, Expression i12nHashExpression) {

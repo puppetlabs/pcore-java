@@ -77,10 +77,11 @@ public abstract class AbstractWriter implements Writer {
 		registerType(TABULATION, Tabulation.class, o -> buildPayload(ep -> ep.write(o.index)));
 		registerType(ARRAY_START, ArrayStart.class, o -> buildPayload(ep -> ep.write(o.size)));
 		registerType(MAP_START, MapStart.class, o -> buildPayload(ep -> ep.write(o.size)));
-		registerType(OBJECT_START, ObjectStart.class, o -> buildPayload(ep -> {
+		registerType(PCORE_OBJECT_START, PcoreObjectStart.class, o -> buildPayload(ep -> {
 			writePayloadQName(ep, o.typeName);
 			ep.write(o.attributeCount);
 		}));
+		registerType(OBJECT_START, ObjectStart.class, o -> buildPayload(ep -> ep.write(o.attributeCount)));
 		registerType(SENSITIVE_START, SensitiveStart.class, o -> buildPayload(ep -> {}));
 		registerType(DEFAULT, Default.class, o -> buildPayload(ep -> {}));
 		registerType(COMMENT, Comment.class, o -> buildPayload(ep -> ep.write(o.comment)));

@@ -68,7 +68,8 @@ public abstract class AbstractReader implements Reader {
 		registerType(TABULATION, data -> readPayload(data, ep -> new Tabulation(ep.readInt())));
 		registerType(ARRAY_START, data -> readPayload(data, ep -> new ArrayStart(ep.readInt())));
 		registerType(MAP_START, data -> readPayload(data, ep -> new MapStart(ep.readInt())));
-		registerType(OBJECT_START, data -> readPayload(data, ep -> new ObjectStart(readPayloadQName(ep), ep.readInt())));
+		registerType(PCORE_OBJECT_START, data -> readPayload(data, ep -> new PcoreObjectStart(readPayloadQName(ep), ep.readInt())));
+		registerType(OBJECT_START, data -> readPayload(data, ep -> new ObjectStart(ep.readInt())));
 		registerType(SENSITIVE_START, data -> readPayload(data, ep -> SensitiveStart.SINGLETON));
 		registerType(DEFAULT, data -> readPayload(data, ep -> Default.SINGLETON));
 		registerType(COMMENT, data -> readPayload(data, ep -> new Comment(ep.readString())));

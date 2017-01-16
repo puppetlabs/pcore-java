@@ -525,6 +525,8 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	List<? extends Mismatch> _describe(ArrayType expected, AnyType actual, List<PathElement> path) {
+		if(expected.isAssignable(actual))
+			return emptyList();
 		if(actual instanceof TupleType)
 			return describeArrayTuple(expected, (TupleType)actual, path);
 		if(actual instanceof ArrayType)
@@ -533,11 +535,11 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	List<? extends Mismatch> _describe(CallableType expected, AnyType actual, List<PathElement> path) {
+		if(expected.isAssignable(actual))
+			return emptyList();
+
 		if(!(actual instanceof CallableType))
 			return singletonList(new TypeMismatch(path, expected, actual));
-
-		if(expected.equals(allCallableType()))
-			return emptyList();
 
 		CallableType ca = (CallableType)actual;
 
@@ -561,10 +563,12 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	List<? extends Mismatch> _describe(EnumType expected, AnyType actual, List<PathElement> path) {
-		return singletonList(new PatternMismatch(path, expected, actual));
+		return expected.isAssignable(actual) ? emptyList() : singletonList(new PatternMismatch(path, expected, actual));
 	}
 
 	List<? extends Mismatch> _describe(HashType expected, AnyType actual, List<PathElement> path) {
+		if(expected.isAssignable(actual))
+			return emptyList();
 		if(actual instanceof StructType)
 			return describeHashStruct(expected, (StructType)actual, path);
 		if(actual instanceof HashType)
@@ -577,10 +581,12 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	List<? extends Mismatch> _describe(PatternType expected, AnyType actual, List<PathElement> path) {
-		return singletonList(new PatternMismatch(path, expected, actual));
+		return expected.isAssignable(actual) ? emptyList() : singletonList(new PatternMismatch(path, expected, actual));
 	}
 
 	List<? extends Mismatch> _describe(StructType expected, AnyType actual, List<PathElement> path) {
+		if(expected.isAssignable(actual))
+			return emptyList();
 		if(actual instanceof StructType)
 			return describeStructStruct(expected, (StructType)actual, path);
 		if(actual instanceof HashType)
@@ -633,9 +639,6 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	private List<? extends Mismatch> describeArrayArray(ArrayType expected, ArrayType actual, List<PathElement> path) {
-		if(expected.equals(actual))
-			return emptyList();
-
 		return expected.size.isAssignable(actual.size)
 				? singletonList(new TypeMismatch(path, expected, actual))
 				: singletonList(new SizeMismatch(path, expected.size, actual.size));
@@ -656,9 +659,6 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	private List<? extends Mismatch> describeHashHash(HashType expected, HashType actual, List<PathElement> path) {
-		if(expected.equals(actual))
-			return emptyList();
-
 		return expected.size.isAssignable(actual.size)
 				? singletonList(new TypeMismatch(path, expected, actual))
 				: singletonList(new SizeMismatch(path, expected.size, actual.size));
@@ -685,9 +685,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 				: singletonList(new SizeMismatch(path, expected.size, actual.size));
 	}
 
-	private List<? extends Mismatch> describeStructSignature(
-			StructType paramsStruct, Map<String,Object> paramHash,
-			boolean missingOk) {
+	private List<? extends Mismatch> describeStructSignature(StructType paramsStruct, Map<String,Object> paramHash, boolean missingOk) {
 		Map<String,StructElement> paramTypeHash = paramsStruct.hashedMembers();
 		List<Mismatch> result = paramHash.keySet().stream()
 				.filter(p -> !paramTypeHash.containsKey(p))
@@ -705,12 +703,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		return result;
 	}
 
-	private List<? extends Mismatch> describeStructStruct(
-			StructType expected, StructType actual, List<PathElement>
-			path) {
-		if(expected.equals(actual))
-			return emptyList();
-
+	private List<? extends Mismatch> describeStructStruct(StructType expected, StructType actual, List<PathElement> path) {
 		List<Mismatch> descriptions = new ArrayList<>();
 		Map<String,StructElement> h2 = new LinkedHashMap<>(actual.hashedMembers());
 		expected.elements.forEach(e1 -> {
@@ -730,9 +723,9 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		return descriptions;
 	}
 
-	private List<? extends Mismatch> describeTuple(
-			TupleType expected, AnyType actual, List<PathElement> path, boolean
-			isCount) {
+	private List<? extends Mismatch> describeTuple(TupleType expected, AnyType actual, List<PathElement> path, boolean isCount) {
+		if(expected.isAssignable(actual))
+			return emptyList();
 		if(actual instanceof TupleType)
 			return describeTupleTuple(expected, (TupleType)actual, path, isCount);
 		if(actual instanceof ArrayType)
@@ -740,12 +733,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		return singletonList(new TypeMismatch(path, expected, actual));
 	}
 
-	private List<? extends Mismatch> describeTupleArray(
-			TupleType expected, ArrayType actual, List<PathElement> path,
-			boolean isCount) {
-		if(expected.types.isEmpty())
-			return emptyList();
-
+	private List<? extends Mismatch> describeTupleArray(TupleType expected, ArrayType actual, List<PathElement> path, boolean isCount) {
 		if(actual.type.isAssignable(anyType()))
 			return singletonList(new TypeMismatch(path, expected, actual));
 
@@ -767,9 +755,6 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	private List<? extends Mismatch> describeTupleTuple(
 			TupleType expected, TupleType actual, List<PathElement> path,
 			boolean isCount) {
-		if(expected.equals(actual))
-			return emptyList();
-
 		if(!expected.givenOrActualSize.isAssignable(actual.givenOrActualSize))
 			return singletonList(isCount
 					? new CountMismatch(path, expected.givenOrActualSize, actual.givenOrActualSize)

@@ -2,18 +2,16 @@ package com.puppet.pcore.impl.serialization;
 
 import com.puppet.pcore.Binary;
 import com.puppet.pcore.Comment;
-import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Symbol;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.serialization.extension.ArrayStart;
 import com.puppet.pcore.impl.serialization.extension.MapStart;
-import com.puppet.pcore.impl.serialization.extension.ObjectStart;
+import com.puppet.pcore.impl.serialization.extension.PcoreObjectStart;
 import com.puppet.pcore.impl.serialization.extension.SensitiveStart;
 import com.puppet.pcore.impl.serialization.msgpack.MsgPackSerializationFactory;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.serialization.Reader;
-import com.puppet.pcore.serialization.SerializationFactory;
 import com.puppet.pcore.serialization.Writer;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -95,9 +93,9 @@ public class ReaderWriterTest {
 	}
 
 	@Test
-	@DisplayName("ObjectStart")
+	@DisplayName("PcoreObjectStart")
 	public void rwObjectStart() throws IOException {
-		ObjectStart os = new ObjectStart("My::Test::Object::Test", 10);
+		PcoreObjectStart os = new PcoreObjectStart("My::Test::Object::Test", 10);
 		assertEquals(os, writeAndRead(os));
 	}
 

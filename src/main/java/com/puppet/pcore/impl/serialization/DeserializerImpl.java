@@ -4,8 +4,11 @@ import com.puppet.pcore.Default;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Sensitive;
 import com.puppet.pcore.Type;
+import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.serialization.extension.*;
 import com.puppet.pcore.impl.types.ObjectType;
+import com.puppet.pcore.loader.Loader;
+import com.puppet.pcore.loader.TypedName;
 import com.puppet.pcore.serialization.Deserializer;
 import com.puppet.pcore.serialization.Reader;
 
@@ -56,14 +59,30 @@ public class DeserializerImpl implements Deserializer {
 		if(val instanceof SensitiveStart)
 			return new Sensitive(read());
 
-		if(val instanceof ObjectStart) {
-			ObjectStart os = (ObjectStart)val;
+		if(val instanceof PcoreObjectStart) {
+			PcoreObjectStart os = (PcoreObjectStart)val;
 			Type type = pcore.typeEvaluator().resolveType(os.typeName);
 			if(!(type instanceof ObjectType))
 				throw new SerializationException("No implementation mapping found for Puppet Type " + os.typeName);
 
 			ObjectType ot = (ObjectType)type;
-			return ot.newInstance(pcore, new DeserializerArgumentsAccessor(this, ot, os.attributeCount));
+			val = ot.newInstance(pcore, new DeserializerArgumentsAccessor(this, ot, os.attributeCount));
+			if(val instanceof ObjectType) {
+				Loader loader = pcore.typeEvaluator().getLoader();
+				TypedName tn = new TypedName(Constants.KEY_TYPE, ((ObjectType)val).name().toLowerCase());
+
+				// Add result to the loader unless it is the exact same instance as the type returned from loadOrNull. The add
+				// will succeed when loadOrNull returns null.
+				if(val != loader.loadOrNull(tn))
+					loader.bind(tn, val);
+			}
+			return val;
+		}
+
+		if(val instanceof ObjectStart) {
+			ObjectStart os = (ObjectStart)val;
+			ObjectType ot = (ObjectType)read();
+			return ot.newInstance(pcore, new DeserializerArgumentsAccessor(this, ot, os.attributeCount - 1));
 		}
 		return remember(val);
 	}

@@ -12,8 +12,9 @@ public class Numbers {
 	// 0x10 - 0x1F are reserved for structural extensions
 	public static final byte ARRAY_START = 0x10;
 	public static final byte MAP_START = 0x11;
-	public static final byte OBJECT_START = 0x12;
-	public static final byte SENSITIVE_START = 0x13;
+	public static final byte PCORE_OBJECT_START = 0x12;
+	public static final byte OBJECT_START = 0x13;
+	public static final byte SENSITIVE_START = 0x14;
 
 	// 0x20 - 0x2f reserved for special extension objects
 	public static final byte DEFAULT = 0x20;

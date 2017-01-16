@@ -2,23 +2,17 @@ package com.puppet.pcore.impl.serialization.extension;
 
 public class ObjectStart implements SequenceStart {
 	public final int attributeCount;
-	public final String typeName;
 
-	public ObjectStart(String typeName, int attributeCount) {
-		this.typeName = typeName;
+	public ObjectStart(int attributeCount) {
 		this.attributeCount = attributeCount;
 	}
 
 	public boolean equals(Object o) {
-		if(o instanceof ObjectStart) {
-			ObjectStart oo = (ObjectStart)o;
-			return attributeCount == oo.attributeCount && typeName.equals(oo.typeName);
-		}
-		return false;
+		return o instanceof ObjectStart && attributeCount == ((ObjectStart)o).attributeCount;
 	}
 
 	public int hashCode() {
-		return typeName.hashCode() * 29 + attributeCount;
+		return attributeCount * 3;
 	}
 
 	/**

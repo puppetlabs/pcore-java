@@ -37,8 +37,12 @@ public class SerializerImpl implements Serializer {
 		writer.finish();
 	}
 
-	public void startObject(String typeName, int attributeCount) throws IOException {
-		writer.write(new ObjectStart(typeName, attributeCount));
+	public void startPcoreObject(String typeName, int attributeCount) throws IOException {
+		writer.write(new PcoreObjectStart(typeName, attributeCount));
+	}
+
+	public void startObject(int attributeCount) throws IOException {
+		writer.write(new ObjectStart(attributeCount));
 	}
 
 	@Override
@@ -82,13 +86,19 @@ public class SerializerImpl implements Serializer {
 		}
 		++top;
 
-		writer.write(new ObjectStart(type.name(), top));
+		if(type.name().startsWith("Pcore::")) {
+			objectsWritten.put(value, objectsWritten.size());
+			startPcoreObject(type.name(), top);
+		} else {
+			startObject(top + 1);
+			write(type);
+			objectsWritten.put(value, objectsWritten.size());
+		}
 		for(int idx = 0; idx < top; ++idx)
 			write(args[idx]);
 	}
 
 	private void writeTabulatedFirstTime(Object value) throws IOException {
-		objectsWritten.put(value, objectsWritten.size());
 		if(value instanceof Symbol
 				|| value instanceof Pattern
 				|| value instanceof Version
@@ -97,20 +107,24 @@ public class SerializerImpl implements Serializer {
 				|| value instanceof Instant
 				|| value instanceof Binary
 				|| value instanceof TypeReferenceType) {
+			objectsWritten.put(value, objectsWritten.size());
 			writer.write(value);
 		} else if(value instanceof List<?>) {
 			List<?> lv = (List<?>)value;
+			objectsWritten.put(value, objectsWritten.size());
 			writer.write(new ArrayStart(lv.size()));
 			for(Object v : lv)
 				write(v);
 		} else if(value instanceof Map<?,?>) {
 			Map<?,?> mv = (Map<?,?>)value;
+			objectsWritten.put(value, objectsWritten.size());
 			writer.write(new MapStart(mv.size()));
 			for(Map.Entry<?,?> me : mv.entrySet()) {
 				write(me.getKey());
 				write(me.getValue());
 			}
 		} else if(value instanceof Sensitive) {
+			objectsWritten.put(value, objectsWritten.size());
 			writer.write(SensitiveStart.SINGLETON);
 			write(((Sensitive)value).unwrap());
 		} else {
