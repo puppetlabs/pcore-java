@@ -20,6 +20,7 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 
+import static com.puppet.pcore.Pcore.typeEvaluator;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
@@ -29,17 +30,9 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 @DisplayName("The Serializer/Deserializer")
 public class SerializationTest {
 
-	private Pcore pcore;
-
 	@BeforeEach
 	public void init() {
-		pcore = null;
-	}
-
-	public Pcore getPcore() {
-		if(pcore == null)
-			pcore = new PcoreImpl();
-		return pcore;
+		Pcore.reset();
 	}
 
 	interface RuntimeTypes {
@@ -410,7 +403,7 @@ public class SerializationTest {
 		@Test
 		@DisplayName("TypeSet[...]")
 		default void rwTypeSetType() throws IOException {
-			TypeEvaluator te = getPcore().typeEvaluator();
+			TypeEvaluator te = typeEvaluator();
 			te.declareType("Transports", "TypeSet[{pcore_version => '1.0.0', version => '1.0.0'}]");
 
 			assertWriteAndRead("TypeSet[{pcore_version => '1.0.0', version => '1.0.0', " +
@@ -443,8 +436,6 @@ public class SerializationTest {
 		}
 
 		void assertWriteAndRead(String typeString) throws IOException;
-
-		Pcore getPcore();
 	}
 
 	@Nested
@@ -465,10 +456,6 @@ public class SerializationTest {
 			@Override
 			public void assertWriteAndRead(String typeString) throws IOException {
 				SerializationTest.this.assertWriteAndRead(typeString, SerializationFactory.JSON);
-			}
-
-			public Pcore getPcore() {
-				return SerializationTest.this.getPcore();
 			}
 		}
 	}
@@ -492,22 +479,18 @@ public class SerializationTest {
 			public void assertWriteAndRead(String typeString) throws IOException {
 				SerializationTest.this.assertWriteAndRead(typeString, SerializationFactory.MSGPACK);
 			}
-
-			public Pcore getPcore() {
-				return SerializationTest.this.getPcore();
-			}
 		}
 	}
 
 	void assertWriteAndRead(String typeString, String factoryName) throws IOException {
-		TypeEvaluator te = getPcore().typeEvaluator();
+		TypeEvaluator te = typeEvaluator();
 		Type type = ((AnyType)te.resolveType(typeString)).resolve(te);
 		assertEquals(type, ((AnyType)writeAndRead(type, factoryName)).resolve(te));
 	}
 
 	Object writeAndRead(Object value, String factoryName) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		SerializationFactory factory = getPcore().serializationFactory(factoryName);
+		SerializationFactory factory = Pcore.serializationFactory(factoryName);
 		Serializer writer = factory.forOutput(emptyMap(), out);
 		writer.write(value);
 		writer.finish();

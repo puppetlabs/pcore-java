@@ -155,7 +155,7 @@ public class ReaderWriterTest {
 
 	public Object writeAndRead(Object value) throws IOException {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
-		SerializationFactoryImpl factory = new MsgPackSerializationFactory(new PcoreImpl());
+		SerializationFactoryImpl factory = new MsgPackSerializationFactory();
 		Writer writer = factory.writerOn(emptyMap(), out);
 		writer.write(value);
 		writer.finish();

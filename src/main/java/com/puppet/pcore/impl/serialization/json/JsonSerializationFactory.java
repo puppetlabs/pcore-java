@@ -14,10 +14,6 @@ import java.util.Map;
 public class JsonSerializationFactory extends SerializationFactoryImpl {
 	static final ObjectMapper mapper = new ObjectMapper();
 
-	public JsonSerializationFactory(Pcore pcore) {
-		super(pcore);
-	}
-
 	@Override
 	public Reader readerOn(InputStream in) throws IOException {
 		return new JsonReader(new JsonUnpacker(in));

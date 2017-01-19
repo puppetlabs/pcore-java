@@ -413,16 +413,16 @@ public class ObjectType extends MetaType {
 		return name;
 	}
 
-	public Object newInstance(Pcore pcore, ArgumentsAccessor aa) throws IOException {
-		ImplementationRegistry ir = pcore.implementationRegistry();
+	public Object newInstance(ArgumentsAccessor aa) throws IOException {
+		ImplementationRegistry ir = Pcore.implementationRegistry();
 		Class<?> implClass = ir.classFor(this, currentThread().getContextClassLoader());
 		FactoryFunction creator = implClass == null ? null : ir.creatorFor(implClass);
 		return creator == null ? new DynamicObjectImpl(aa) : aa.remember(creator.createInstance(aa));
 	}
 
-	public Object newInstance(Pcore pcore, Object... args) {
+	public Object newInstance(Object... args) {
 		try {
-			return newInstance(pcore, new GivenArgumentsAccessor(args, this));
+			return newInstance(new GivenArgumentsAccessor(args, this));
 		} catch(IOException e) {
 			throw new PCoreException(e);
 		}

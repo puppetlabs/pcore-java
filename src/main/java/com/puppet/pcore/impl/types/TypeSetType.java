@@ -1,5 +1,6 @@
 package com.puppet.pcore.impl.types;
 
+import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.TypeResolverException;
@@ -68,7 +69,7 @@ public class TypeSetType extends MetaType {
 
 		public void resolve(TypeEvaluator evaluator) {
 			TypedName tn = new TypedName("type", name, nameAuthority);
-			Object type = evaluator.getLoader().load(tn);
+			Object type = Pcore.loader().load(tn);
 			if(!(type instanceof TypeSetType))
 				throw new TypeResolverException(format("%s resolves to a %s", this, type));
 
@@ -252,10 +253,11 @@ public class TypeSetType extends MetaType {
 		super.resolve(evaluator);
 		for(Reference ref : references.values())
 			ref.resolve(evaluator);
-		TypeEvaluator nested = ((TypeEvaluatorImpl)evaluator).typeSetEvaluator(this);
-		for(Map.Entry<String,AnyType> entry : types.entrySet())
-			entry.setValue(entry.getValue().resolve(nested));
-		return this;
+		return Pcore.withTypeSetLoader(this, () -> {
+			for(Map.Entry<String,AnyType> entry : types.entrySet())
+				entry.setValue(entry.getValue().resolve(evaluator));
+			return this;
+		});
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
@@ -433,7 +435,7 @@ public class TypeSetType extends MetaType {
 		if(nameAuth != null)
 			return nameAuth;
 
-		Loader loader = evaluator.getLoader();
+		Loader loader = Pcore.loader();
 		if(loader instanceof TypeSetLoader)
 			return loader.getNameAuthority();
 

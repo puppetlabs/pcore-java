@@ -2,6 +2,7 @@ package com.puppet.pcore.impl;
 
 import com.puppet.pcore.Binary;
 import com.puppet.pcore.Pcore;
+import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.impl.loader.BasicLoader;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.ArrayType;
@@ -324,7 +325,7 @@ public class TypeFormatterTest {
 
 	@Test
 	public void objectTypeWithName() {
-		TypeEvaluatorImpl typeEvaluator = new TypeEvaluatorImpl(new BasicLoader());
+		TypeEvaluator typeEvaluator = Pcore.typeEvaluator();
 		Map<String,Object> i12nHash = new HashMap<>();
 		i12nHash.put(Constants.KEY_NAME, "TestObj");
 		assertEquals("TestObj", objectType(i12nHash).resolve(typeEvaluator).toString());
@@ -357,7 +358,7 @@ public class TypeFormatterTest {
 						"attributes => {'a' => Integer, 'b' => {type => Integer, kind => constant, value => 32}, 'n' => Integer}, " +
 						"functions => {'f' => Callable}, " +
 						"equality => ['a', 'n']}]",
-				objectType(i12nHash).resolve(Pcore.INSTANCE.typeEvaluator()).toExpandedString());
+				objectType(i12nHash).resolve(Pcore.typeEvaluator()).toExpandedString());
 	}
 
 	@Test
@@ -583,7 +584,7 @@ public class TypeFormatterTest {
 
 	@Test
 	public void typeAlias() {
-		TypeEvaluatorImpl typeEvaluator = new TypeEvaluatorImpl(new BasicLoader());
+		TypeEvaluator typeEvaluator = Pcore.typeEvaluator();
 		AnyType alias = typeAliasType("MyAlias", typeReferenceType("String[1,20]")).resolve(typeEvaluator);
 		assertEquals("MyAlias", alias.toString());
 		assertEquals("MyAlias = String[1, 20]", alias.toExpandedString());

@@ -2,12 +2,14 @@ package com.puppet.pcore.impl;
 
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.loader.BasicLoader;
+import com.puppet.pcore.impl.loader.TypeSetLoader;
 import com.puppet.pcore.impl.serialization.SerializationException;
 import com.puppet.pcore.impl.serialization.json.JsonSerializationFactory;
 import com.puppet.pcore.impl.serialization.msgpack.MsgPackSerializationFactory;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.ObjectType;
 import com.puppet.pcore.impl.types.TypeFactory;
+import com.puppet.pcore.impl.types.TypeSetType;
 import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.loader.TypedName;
 import com.puppet.pcore.serialization.FactoryFunction;
@@ -17,6 +19,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 import static com.puppet.pcore.impl.Constants.*;
 import static com.puppet.pcore.impl.types.TypeFactory.objectType;
@@ -25,12 +28,13 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
-public class PcoreImpl implements Pcore {
+public class PcoreImpl {
 	private final ImplementationRegistry implementationRegistry = new ImplementationRegistryImpl();
-	private final Loader loader = new BasicLoader();
-	private final TypeEvaluator defaultEvaluator = new TypeEvaluatorImpl(loader);
+	private final TypeEvaluator typeEvaluator = new TypeEvaluatorImpl();
+	private final ThreadLocal<Loader> loader = new ThreadLocal<Loader>();
 
-	public PcoreImpl() {
+	public void initBaseTypeSystem() {
+		loader.set(new BasicLoader());
 		try {
 			Collection<AnyType> basicTypes = TypeEvaluatorImpl.BASIC_TYPES.values();
 			List<ObjectType> metaTypes = new ArrayList<>(basicTypes.size());
@@ -40,7 +44,7 @@ public class PcoreImpl implements Pcore {
 				metaTypes.add((ObjectType)registerPtypeMethod.invoke(null, this));
 			}
 			for(ObjectType metaType : metaTypes)
-				metaType.resolve(defaultEvaluator);
+				metaType.resolve(typeEvaluator);
 		} catch(NoSuchMethodException | IllegalAccessException e) {
 			throw new PCoreException(e);
 		} catch(InvocationTargetException e) {
@@ -91,39 +95,57 @@ public class PcoreImpl implements Pcore {
 			i12nHash.put(KEY_SERIALIZATION, serialization);
 		implementationRegistry.registerImplementation(typeName, implClass.getName(), creator, attributeSupplier);
 		ObjectType type = objectType(i12nHash);
-		loader.bind(new TypedName("type", typeName), type);
+		loader().bind(new TypedName("type", typeName), type);
 		return type;
 	}
 
-	@Override
 	public ImplementationRegistry implementationRegistry() {
 		return implementationRegistry;
 	}
 
-	@Override
+	/**
+	 * Execute function using a loader that is parented by the current loader and capable of finding things
+	 * in the given type set.
+	 *
+	 * @param typeSet
+	 * @param function
+	 * @param <T>
+	 * @return the return value of the given function
+	 */
+	public <T> T withTypeSetLoader(TypeSetType typeSet, Supplier<T> function) {
+		Loader current = loader.get();
+		loader.set(new TypeSetLoader(current, typeSet));
+		try {
+			return function.get();
+		} finally {
+			loader.set(current);
+		}
+	}
+
+	public Loader loader() {
+		return loader.get();
+	}
+
 	public Type infer(Object value) {
 		return TypeFactory.infer(value);
 	}
 
-	@Override
 	public Type inferSet(Object value) {
 		return TypeFactory.inferSet(value);
 	}
 
-	@Override
 	public SerializationFactory serializationFactory(String serializationFormat) {
 		switch(serializationFormat) {
 		case SerializationFactory.MSGPACK:
-			return new MsgPackSerializationFactory(this);
+			return new MsgPackSerializationFactory();
 		case SerializationFactory.JSON:
-			return new JsonSerializationFactory(this);
+			return new JsonSerializationFactory();
 		default:
 			throw new SerializationException(format("Unknown serialization format '%s'", serializationFormat));
 		}
 	}
 
-	@Override
 	public TypeEvaluator typeEvaluator() {
-		return defaultEvaluator;
+		return typeEvaluator;
 	}
 }

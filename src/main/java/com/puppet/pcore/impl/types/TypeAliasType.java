@@ -10,6 +10,7 @@ import com.puppet.pcore.serialization.ArgumentsAccessor;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -72,7 +73,11 @@ public class TypeAliasType extends AnyType {
 	}
 
 	public boolean equals(Object o) {
-		return super.equals(o) && name.equals(((TypeAliasType)o).name);
+		if(super.equals(o)) {
+			TypeAliasType to = (TypeAliasType)o;
+			return name.equals(to.name) && Objects.equals(resolvedType, to.resolvedType);
+		}
+		return false;
 	}
 
 	@Override

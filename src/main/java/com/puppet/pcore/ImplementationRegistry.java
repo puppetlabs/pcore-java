@@ -103,17 +103,15 @@ public interface ImplementationRegistry {
 	 * Find the type for a given implementation class
 	 *
 	 * @param implClass the implementation class
-	 * @param evaluator the evaluator to use when evaluating the type expression
 	 * @return the type, or <code>null</code> if no type could be found for the given class.
 	 */
-	Type typeFor(Class<?> implClass, TypeEvaluator evaluator);
+	Type typeFor(Class<?> implClass);
 
 	/**
 	 * Find the type for a given implementation class
 	 *
 	 * @param implClassName the name of the implementation class
-	 * @param evaluator     the evaluator to use when evaluating the type expression
 	 * @return the type, or <code>null</code> if no type could be found for the given class name.
 	 */
-	Type typeFor(String implClassName, TypeEvaluator evaluator);
+	Type typeFor(String implClassName);
 }

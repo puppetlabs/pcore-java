@@ -20,11 +20,9 @@ import java.util.Map;
 
 public class DeserializerImpl implements Deserializer {
 	private final List<Object> objectsRead = new ArrayList<>();
-	private final Pcore pcore;
 	private final Reader reader;
 
-	public DeserializerImpl(Pcore pcore, Reader reader) {
-		this.pcore = pcore;
+	public DeserializerImpl(Reader reader) {
 		this.reader = reader;
 	}
 
@@ -61,18 +59,18 @@ public class DeserializerImpl implements Deserializer {
 
 		if(val instanceof PcoreObjectStart) {
 			PcoreObjectStart os = (PcoreObjectStart)val;
-			Type type = pcore.typeEvaluator().resolveType(os.typeName);
+			Type type = Pcore.typeEvaluator().resolveType(os.typeName);
 			if(!(type instanceof ObjectType))
 				throw new SerializationException("No implementation mapping found for Puppet Type " + os.typeName);
 
 			ObjectType ot = (ObjectType)type;
-			val = ot.newInstance(pcore, new DeserializerArgumentsAccessor(this, ot, os.attributeCount));
+			val = ot.newInstance(new DeserializerArgumentsAccessor(this, ot, os.attributeCount));
 			if(val instanceof ObjectType) {
-				Loader loader = pcore.typeEvaluator().getLoader();
 				TypedName tn = new TypedName(Constants.KEY_TYPE, ((ObjectType)val).name().toLowerCase());
 
 				// Add result to the loader unless it is the exact same instance as the type returned from loadOrNull. The add
 				// will succeed when loadOrNull returns null.
+				Loader loader = Pcore.loader();
 				if(val != loader.loadOrNull(tn))
 					loader.bind(tn, val);
 			}
@@ -82,7 +80,7 @@ public class DeserializerImpl implements Deserializer {
 		if(val instanceof ObjectStart) {
 			ObjectStart os = (ObjectStart)val;
 			ObjectType ot = (ObjectType)read();
-			return ot.newInstance(pcore, new DeserializerArgumentsAccessor(this, ot, os.attributeCount - 1));
+			return ot.newInstance(new DeserializerArgumentsAccessor(this, ot, os.attributeCount - 1));
 		}
 		return remember(val);
 	}

@@ -24,11 +24,9 @@ import static java.lang.String.format;
 
 public class SerializerImpl implements Serializer {
 	private final Map<Object,Integer> objectsWritten = new IdentityHashMap<>();
-	private final Pcore pcore;
 	private final Writer writer;
 
-	public SerializerImpl(Pcore pcore, Writer writer) {
-		this.pcore = pcore;
+	public SerializerImpl(Writer writer) {
 		this.writer = writer;
 	}
 
@@ -61,7 +59,7 @@ public class SerializerImpl implements Serializer {
 	@SuppressWarnings("unchecked")
 	private <T> void writeObject(T value) throws IOException {
 		Function<T,Object[]> attributeProvider;
-		Type type = value instanceof PObject ? ((PObject)value)._pType() : pcore.infer(value);
+		Type type = value instanceof PObject ? ((PObject)value)._pType() : Pcore.infer(value);
 		if(value instanceof DynamicObjectImpl) {
 			attributeProvider = t -> ((DynamicObjectImpl)value).getAttributes();
 		} else {
@@ -69,7 +67,7 @@ public class SerializerImpl implements Serializer {
 			if(!(type instanceof ObjectType))
 				throw new SerializationException(format("No Puppet Type found for %s", implClass.getName()));
 
-			attributeProvider = pcore.implementationRegistry().attributeProviderFor(implClass);
+			attributeProvider = Pcore.implementationRegistry().attributeProviderFor(implClass);
 			if(attributeProvider == null)
 				throw new SerializationException(format("No Object Writer found for %s", implClass.getName()));
 		}

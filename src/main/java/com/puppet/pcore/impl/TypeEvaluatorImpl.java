@@ -1,6 +1,7 @@
 package com.puppet.pcore.impl;
 
 import com.puppet.pcore.Default;
+import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.TypeResolverException;
 import com.puppet.pcore.impl.loader.TypeSetLoader;
@@ -20,6 +21,7 @@ import java.time.Instant;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.puppet.pcore.Pcore.loader;
 import static com.puppet.pcore.impl.Constants.KEY_NAME_AUTHORITY;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
@@ -80,12 +82,6 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 		BASIC_TYPES = Collections.unmodifiableMap(coreTypes);
 	}
 
-	private final Loader loader;
-
-	public TypeEvaluatorImpl(Loader loader) {
-		this.loader = loader;
-	}
-
 	public static int assertParameterCount(int min, int max, int actual, String name) {
 		if(actual < min || actual > max) {
 			String rq;
@@ -102,6 +98,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 	}
 
 	public AnyType bindByName(String name, AnyType typeToBind, URI nameAuthority) {
+		Loader loader = loader();
 		TypedName typedName = new TypedName("type", name, nameAuthority);
 		AnyType type = (AnyType)loader.loadOrNull(typedName);
 		if(type != null && type.equals(typeToBind))
@@ -123,6 +120,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 
 	@Override
 	public AnyType declareType(String name, Expression expr, URI nameAuthority) {
+		Loader loader = loader();
 		AnyType createdType = null;
 		if(expr instanceof AccessExpression) {
 			AccessExpression ae = (AccessExpression)expr;
@@ -152,11 +150,6 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 			createdType = typeAliasType(name, expr);
 
 		return bindByName(name, createdType, nameAuthority == null ? loader.getNameAuthority() : nameAuthority);
-	}
-
-	@Override
-	public Loader getLoader() {
-		return loader;
 	}
 
 	@Override
@@ -191,10 +184,6 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 		throw new TypeResolverException(format("'%s' did not resolve to a Pcore type", expression));
 	}
 
-	public TypeEvaluator typeSetEvaluator(TypeSetType typeSet) {
-		return new TypeEvaluatorImpl(new TypeSetLoader(loader, typeSet));
-	}
-
 	@Override
 	protected DispatchMap getDispatchMap() {
 		return dispatchMap;
@@ -221,7 +210,8 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 	Object eval(AssignmentExpression ce) {
 		if(!(ce.lhs instanceof TypeNameExpression))
 			throw new TypeResolverException("LHS of assignment expression must be a Type name");
-		return declareType(((TypeNameExpression)ce.lhs).name, ce.rhs, loader.getNameAuthority()).resolve(this);
+
+		return declareType(((TypeNameExpression)ce.lhs).name, ce.rhs, loader().getNameAuthority()).resolve(this);
 	}
 
 	Object eval(RegexpExpression ce) {
@@ -237,7 +227,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 		if("object".equals(dcName) || "typeset".equals(dcName)) {
 			assertParameterCount(1, 1, ae.elements.size(), te.name);
 			HashExpression i12nExpr = assertOneParam(HashExpression.class, ae.elements.get(0), 0, te.name);
-			return "object".equals(dcName) ? objectType(null, i12nExpr) : typeSetType(null, loader.getNameAuthority(), i12nExpr);
+			return "object".equals(dcName) ? objectType(null, i12nExpr) : typeSetType(null, loader().getNameAuthority(), i12nExpr);
 		}
 
 		Object[] args = ae.elements.stream().map(this::resolve).toArray();
@@ -473,9 +463,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 		if(type != null)
 			return type;
 
-		if(loader == null)
-			return typeReferenceType(te.name);
-
+		Loader loader = loader();
 		TypedName typedName = new TypedName("type", te.name, loader.getNameAuthority());
 		AnyType found = (AnyType)loader.loadOrNull(typedName);
 		return found == null ? typeReferenceType(te.name) : found.resolve(this);

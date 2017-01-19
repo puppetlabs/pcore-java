@@ -22,6 +22,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @SuppressWarnings("unused")
 @DisplayName("A Pcore Object Type")
 public class ObjectTypeTest extends  DeclaredTypeTest {
+	@BeforeEach
+	public void init() {
+		Pcore.reset();
+	}
+
 	@Nested
 	@DisplayName("when dealing with attributes")
 	class Attributes {
@@ -479,14 +484,14 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 						"},\n" +
 						"equality => [a]");
 				ObjectType t = resolveObject();
-				DynamicObject a = (DynamicObject)t.newInstance(pcore, (float)3.0, 5);
+				DynamicObject a = (DynamicObject)t.newInstance((float)3.0, 5);
 				assertEquals(3.0, a.get("a"));
 				assertEquals(5L, a.get("b"));
 
-				Object b = t.newInstance(pcore, 3.0, 8);
+				Object b = t.newInstance(3.0, 8);
 				assertEquals(a, b);
 
-				Object c = t.newInstance(pcore, 5.0, 5);
+				Object c = t.newInstance(5.0, 5);
 				assertNotEquals(a, c);
 			}
 
@@ -500,7 +505,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 						"},\n" +
 						"equality => [a]");
 				ObjectType t = resolveObject();
-				DynamicObject a = (DynamicObject)t.newInstance(pcore, 3);
+				DynamicObject a = (DynamicObject)t.newInstance(3);
 				assertEquals(3L, a.get("a"));
 				assertEquals(8L, a.get("b"));
 			}
@@ -515,7 +520,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 								"},\n" +
 								"equality => [a]");
 				ObjectType t = resolveObject();
-				Throwable ex = assertThrows(TypeResolverException.class, () -> t.newInstance(pcore, 3));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> t.newInstance(3));
 				assertEquals("Invalid number of type parameters specified: 'TestObj' requires 2 parameters, 1 provided", ex.getMessage());
 			}
 
@@ -529,7 +534,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 								"},\n" +
 								"equality => [a]");
 				ObjectType t = resolveObject();
-				Throwable ex = assertThrows(TypeResolverException.class, () -> t.newInstance(pcore, 3, 4, 5));
+				Throwable ex = assertThrows(TypeResolverException.class, () -> t.newInstance(3, 4, 5));
 				assertEquals("Invalid number of type parameters specified: 'TestObj' requires 2 parameters, 3 provided", ex.getMessage());
 			}
 		}
@@ -538,7 +543,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 		@DisplayName("that are Pcore Types, creates")
 		class PcoreTypes {
 			ObjectType resolveType(String typeName) {
-				Type t = pcore.typeEvaluator().resolveType(typeName);
+				Type t = Pcore.typeEvaluator().resolveType(typeName);
 				if(t instanceof ObjectType)
 					return (ObjectType)t;
 				fail("resolveType did not result in an ObjectType");
@@ -548,21 +553,21 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@Test
 			@DisplayName("Any")
 			public void pAny() {
-				Object result = resolveType("Pcore::AnyType").newInstance(pcore);
+				Object result = resolveType("Pcore::AnyType").newInstance();
 				assertEquals("Any", result.toString());
 			}
 
 			@Test
 			@DisplayName("Array[String,5,100]")
 			public void pArray() {
-				Object result = resolveType("Pcore::ArrayType").newInstance(pcore, stringType(), integerType(5, 100));
+				Object result = resolveType("Pcore::ArrayType").newInstance(stringType(), integerType(5, 100));
 				assertEquals("Array[String, 5, 100]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Binary")
 			public void pBinary() {
-				Object result = resolveType("Pcore::BinaryType").newInstance(pcore);
+				Object result = resolveType("Pcore::BinaryType").newInstance();
 				assertEquals("Binary", result.toString());
 			}
 
@@ -570,9 +575,9 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("Callable[[String, Integer, Callable[[0, 0], String]], Double]")
 			public void pCallableWithReturn() {
 				ObjectType callableMetaType = resolveType("Pcore::CallableType");
-				Object result = callableMetaType.newInstance(pcore,
+				Object result = callableMetaType.newInstance(
 						tupleType(asList(stringType(), integerType())),
-						callableMetaType.newInstance(pcore, tupleType(asList()), null, stringType()),
+						callableMetaType.newInstance(tupleType(asList()), null, stringType()),
 						floatType());
 				assertEquals("Callable[[String, Integer, Callable[[0, 0], String]], Float]", result.toString());
 			}
@@ -580,133 +585,133 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@Test
 			@DisplayName("Class['name']")
 			public void pClass() {
-				Object result = resolveType("Pcore::ClassType").newInstance(pcore, "name");
+				Object result = resolveType("Pcore::ClassType").newInstance("name");
 				assertEquals("Class['name']", result.toString());
 			}
 
 			@Test
 			@DisplayName("Collection[1, 3]")
 			public void pCollection() {
-				Object result = resolveType("Pcore::CollectionType").newInstance(pcore, integerType(1, 3));
+				Object result = resolveType("Pcore::CollectionType").newInstance(integerType(1, 3));
 				assertEquals("Collection[1, 3]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Enum['a', 'b', 'c']")
 			public void pEnum() {
-				Object result = resolveType("Pcore::EnumType").newInstance(pcore, asList("a", "b", "c"));
+				Object result = resolveType("Pcore::EnumType").newInstance(asList("a", "b", "c"));
 				assertEquals("Enum['a', 'b', 'c']", result.toString());
 			}
 
 			@Test
 			@DisplayName("Float[-3.4, -2.04]")
 			public void pFloat() {
-				Object result = resolveType("Pcore::FloatType").newInstance(pcore, -3.4, -2.04);
+				Object result = resolveType("Pcore::FloatType").newInstance(-3.4, -2.04);
 				assertEquals("Float[-3.4, -2.04]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Hash[String,Integer,5,100]")
 			public void pHash() {
-				Object result = resolveType("Pcore::HashType").newInstance(pcore, stringType(), integerType(), integerType(5, 100));
+				Object result = resolveType("Pcore::HashType").newInstance(stringType(), integerType(), integerType(5, 100));
 				assertEquals("Hash[String, Integer, 5, 100]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Integer[-10, -5]")
 			public void pInteger() {
-				Object result = resolveType("Pcore::IntegerType").newInstance(pcore, -10, -5);
+				Object result = resolveType("Pcore::IntegerType").newInstance(-10, -5);
 				assertEquals("Integer[-10, -5]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Iterable[String]")
 			public void pIterable() {
-				Object result = resolveType("Pcore::IterableType").newInstance(pcore, stringType());
+				Object result = resolveType("Pcore::IterableType").newInstance(stringType());
 				assertEquals("Iterable[String]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Iterator[String]")
 			public void pIterator() {
-				Object result = resolveType("Pcore::IteratorType").newInstance(pcore, stringType());
+				Object result = resolveType("Pcore::IteratorType").newInstance(stringType());
 				assertEquals("Iterator[String]", result.toString());
 			}
 
 			@Test
 			@DisplayName("NotUndef[Unit]")
 			public void pNotUndef() {
-				Object result = resolveType("Pcore::NotUndefType").newInstance(pcore, unitType());
+				Object result = resolveType("Pcore::NotUndefType").newInstance(unitType());
 				assertEquals("NotUndef[Unit]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Object[{name => 'MyObj', attributes => {'a' => Integer}}]")
 			public void pObjectType() {
-				Object result = resolveType("Pcore::ObjectType").newInstance(pcore, asMap("name", "MyObj", "attributes", asMap("a", integerType())));
-				assertEquals("Object[{name => 'MyObj', attributes => {'a' => Integer}}]", ((ObjectType)result).resolve(pcore.typeEvaluator()).toExpandedString());
+				Object result = resolveType("Pcore::ObjectType").newInstance(asMap("name", "MyObj", "attributes", asMap("a", integerType())));
+				assertEquals("Object[{name => 'MyObj', attributes => {'a' => Integer}}]", ((ObjectType)result).resolve(Pcore.typeEvaluator()).toExpandedString());
 			}
 
 			@Test
 			@DisplayName("Optional[Iterator[String]]")
 			public void pOptional() {
-				Object result = resolveType("Pcore::OptionalType").newInstance(pcore, iteratorType(stringType()));
+				Object result = resolveType("Pcore::OptionalType").newInstance(iteratorType(stringType()));
 				assertEquals("Optional[Iterator[String]]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Pattern[/pat1/, /pat2/]")
 			public void pPattern() {
-				Object result = resolveType("Pcore::PatternType").newInstance(pcore, asList(regexpType("pat1"), regexpType("pat2")));
+				Object result = resolveType("Pcore::PatternType").newInstance(asList(regexpType("pat1"), regexpType("pat2")));
 				assertEquals("Pattern[/pat1/, /pat2/]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Regexp[/pat1/]")
 			public void pRegexp() {
-				Object result = resolveType("Pcore::RegexpType").newInstance(pcore, "pat1");
+				Object result = resolveType("Pcore::RegexpType").newInstance("pat1");
 				assertEquals("Regexp[/pat1/]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Resource['name','title']")
 			public void pResource() {
-				Object result = resolveType("Pcore::ResourceType").newInstance(pcore, "name", "title");
+				Object result = resolveType("Pcore::ResourceType").newInstance("name", "title");
 				assertEquals("Name['title']", result.toString());
 			}
 
 			@Test
 			@DisplayName("Runtime['ruby', 'Some::Class::Name']")
 			public void pRuntime() {
-				Object result = resolveType("Pcore::RuntimeType").newInstance(pcore, "ruby", "Some::Class::Name");
+				Object result = resolveType("Pcore::RuntimeType").newInstance("ruby", "Some::Class::Name");
 				assertEquals("Runtime['ruby', 'Some::Class::Name']", result.toString());
 			}
 
 			@Test
 			@DisplayName("SemVer['>=1.2.3', '<4.0.0']")
 			public void pSemVer() {
-				Object result = resolveType("Pcore::SemVerType").newInstance(pcore, asList(VersionRange.fromString(">=1.2.3"), VersionRange.fromString("<4.0.0")));
+				Object result = resolveType("Pcore::SemVerType").newInstance(asList(VersionRange.fromString(">=1.2.3"), VersionRange.fromString("<4.0.0")));
 				assertEquals("SemVer['>=1.2.3', '<4.0.0']", result.toString());
 			}
 
 			@Test
 			@DisplayName("Sensitive[Binary]")
 			public void pSensitive() {
-				Object result = resolveType("Pcore::SensitiveType").newInstance(pcore, binaryType());
+				Object result = resolveType("Pcore::SensitiveType").newInstance(binaryType());
 				assertEquals("Sensitive[Binary]", result.toString());
 			}
 
 			@Test
 			@DisplayName("String[10, default]")
 			public void pString() {
-				Object result = resolveType("Pcore::StringType").newInstance(pcore, integerType(10));
+				Object result = resolveType("Pcore::StringType").newInstance(integerType(10));
 				assertEquals("String[10, default]", result.toString());
 			}
 
 			@Test
 			@DisplayName("String (based from string)")
 			public void pString2() {
-				Object result = resolveType("Pcore::StringType").newInstance(pcore, "abc");
+				Object result = resolveType("Pcore::StringType").newInstance("abc");
 				assertEquals("String", result.toString());
 				assertEquals("String['abc']", ((Type)result).toDebugString());
 			}
@@ -714,35 +719,35 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@Test
 			@DisplayName("Struct[{'a' => Integer, 'b' => String}]")
 			public void pStruct() {
-				Object result = resolveType("Pcore::StructType").newInstance(pcore, asList(structElement("a", integerType()), structElement("b", stringType())));
+				Object result = resolveType("Pcore::StructType").newInstance(asList(structElement("a", integerType()), structElement("b", stringType())));
 				assertEquals("Struct[{'a' => Integer, 'b' => String}]", result.toString());
 			}
 
 			@Test
 			@DisplayName("TimeSpan['0-00:00:00', '1-00:00:00']")
 			public void pTimeSpan() {
-				Object result = resolveType("Pcore::TimeSpanType").newInstance(pcore, Duration.ofDays(0), Duration.ofDays(1));
+				Object result = resolveType("Pcore::TimeSpanType").newInstance(Duration.ofDays(0), Duration.ofDays(1));
 				assertEquals("TimeSpan['0-00:00:00.0', '1-00:00:00.0']", result.toString());
 			}
 
 			@Test
 			@DisplayName("Timestamp['2000-01-01T00:00:00', '2010-12-31T23:59:59']")
 			public void pTimestamp() {
-				Object result = resolveType("Pcore::TimestampType").newInstance(pcore, Instant.parse("2000-01-01T00:00:00.00Z"), Instant.parse("2010-12-31T23:59:59.999Z"));
+				Object result = resolveType("Pcore::TimestampType").newInstance(Instant.parse("2000-01-01T00:00:00.00Z"), Instant.parse("2010-12-31T23:59:59.999Z"));
 				assertEquals("Timestamp['2000-01-01T00:00:00Z', '2010-12-31T23:59:59.999Z']", result.toString());
 			}
 
 			@Test
 			@DisplayName("Tuple[TimeSpan,String]")
 			public void pTuple() {
-				Object result = resolveType("Pcore::TupleType").newInstance(pcore, asList(timeSpanType(), stringType()));
+				Object result = resolveType("Pcore::TupleType").newInstance(asList(timeSpanType(), stringType()));
 				assertEquals("Tuple[TimeSpan, String]", result.toString());
 			}
 
 			@Test
 			@DisplayName("MyAlias = String[1, 20]")
 			public void pTypeAlias() {
-				Object result = resolveType("Pcore::TypeAliasType").newInstance(pcore, "MyAlias", stringType(1,20));
+				Object result = resolveType("Pcore::TypeAliasType").newInstance("MyAlias", stringType(1,20));
 				assertEquals("MyAlias", result.toString());
 				assertEquals("MyAlias = String[1, 20]", ((Type)result).toExpandedString());
 			}
@@ -750,21 +755,21 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@Test
 			@DisplayName("TypeReference['Some::Type']")
 			public void pTypeReference() {
-				Object result = resolveType("Pcore::TypeReferenceType").newInstance(pcore, "Some::Type");
+				Object result = resolveType("Pcore::TypeReferenceType").newInstance("Some::Type");
 				assertEquals("TypeReference['Some::Type']", result.toString());
 			}
 
 			@Test
 			@DisplayName("Type[String]")
 			public void pTypeType() {
-				Object result = resolveType("Pcore::TypeType").newInstance(pcore, stringType());
+				Object result = resolveType("Pcore::TypeType").newInstance(stringType());
 				assertEquals("Type[String]", result.toString());
 			}
 
 			@Test
 			@DisplayName("Variant[Enum['a', 'b', 'c'], Integer]")
 			public void pVariant() {
-				Object result = resolveType("Pcore::VariantType").newInstance(pcore, asList(enumType("a", "b", "c"), integerType()));
+				Object result = resolveType("Pcore::VariantType").newInstance(asList(enumType("a", "b", "c"), integerType()));
 				assertEquals("Variant[Enum['a', 'b', 'c'], Integer]", result.toString());
 			}
 		}

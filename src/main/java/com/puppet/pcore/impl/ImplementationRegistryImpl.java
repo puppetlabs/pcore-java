@@ -1,9 +1,6 @@
 package com.puppet.pcore.impl;
 
-import com.puppet.pcore.ImplementationRegistry;
-import com.puppet.pcore.PatternSubstitution;
-import com.puppet.pcore.Type;
-import com.puppet.pcore.TypeEvaluator;
+import com.puppet.pcore.*;
 import com.puppet.pcore.impl.types.RuntimeType;
 import com.puppet.pcore.serialization.FactoryFunction;
 
@@ -104,14 +101,14 @@ public class ImplementationRegistryImpl implements ImplementationRegistry {
 	}
 
 	@Override
-	public Type typeFor(Class<?> implClass, TypeEvaluator evaluator) {
-		return typeFor(implClass.getName(), evaluator);
+	public Type typeFor(Class<?> implClass) {
+		return typeFor(implClass.getName());
 	}
 
 	@Override
-	public Type typeFor(String name, TypeEvaluator evaluator) {
+	public Type typeFor(String name) {
 		String typeString = findMapping(name, typeNamesPerImpl, implNameSubstitutions);
-		return typeString == null ? null : evaluator.resolveType(typeString);
+		return typeString == null ? null : Pcore.typeEvaluator().resolveType(typeString);
 	}
 
 	@SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")

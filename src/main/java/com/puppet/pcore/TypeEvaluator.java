@@ -51,13 +51,6 @@ public interface TypeEvaluator {
 	Type declareType(String name, Expression typeExpression, URI nameAuthority);
 
 	/**
-	 * Returns the loader associated with this evaluator
-	 *
-	 * @return the loader
-	 */
-	Loader getLoader();
-
-	/**
 	 * Resolves a literal expression. The expression may contain numbers, strings, boolean,
 	 * undef, array, hash, or type expressions.
 	 *

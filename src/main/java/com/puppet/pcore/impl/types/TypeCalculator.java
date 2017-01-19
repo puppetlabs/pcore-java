@@ -95,8 +95,7 @@ class TypeCalculator extends Polymorphic<AnyType> {
 	}
 
 	AnyType _infer(Object o) {
-		Pcore pcore = Pcore.INSTANCE;
-		AnyType type = (AnyType)pcore.implementationRegistry().typeFor(o.getClass(), pcore.typeEvaluator());
+		AnyType type = (AnyType)Pcore.implementationRegistry().typeFor(o.getClass());
 		return type == null ? runtimeType("java", o.getClass().getName()) : type;
 	}
 

@@ -2,6 +2,7 @@ package com.puppet.pcore.impl;
 
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeAssertionException;
+import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.impl.loader.BasicLoader;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.semver.VersionRange;
@@ -459,14 +460,14 @@ public class TypeEvaluatorTest {
 		}
 	}
 
-	private static TypeEvaluatorImpl typeEvaluator;
+	private static TypeEvaluator typeEvaluator;
 
 	@BeforeAll
 	public static void init() {
-		typeEvaluator = new TypeEvaluatorImpl(new BasicLoader());
+		typeEvaluator = Pcore.typeEvaluator();
 	}
 
 	public static AnyType resolveType(String typeString) {
-		return typeEvaluator.resolveType(typeString);
+		return ((TypeEvaluatorImpl)typeEvaluator).resolveType(typeString);
 	}
 }

@@ -1,8 +1,10 @@
 package com.puppet.pcore.impl.types;
 
+import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.TypeAssertionException;
 import com.puppet.pcore.TypeResolverException;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -18,6 +20,11 @@ import static org.junit.jupiter.api.Assertions.*;
 @SuppressWarnings("unused")
 @DisplayName("A TypeSetType")
 public class TypeSetTypeTest extends DeclaredTypeTest {
+
+	@BeforeEach
+	public void init() {
+		Pcore.reset();
+	}
 
 	@Nested
 	@DisplayName("when validating the initialization hash")

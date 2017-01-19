@@ -11,10 +11,6 @@ import java.io.OutputStream;
 import java.util.Map;
 
 public class MsgPackSerializationFactory extends SerializationFactoryImpl {
-	public MsgPackSerializationFactory(Pcore pcore) {
-		super(pcore);
-	}
-
 	@Override
 	public Reader readerOn(InputStream in) {
 		return new MsgPackReader(new MsgUnpacker(MessagePack.newDefaultUnpacker(in)));
