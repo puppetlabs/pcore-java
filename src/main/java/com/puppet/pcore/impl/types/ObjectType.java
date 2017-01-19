@@ -1,6 +1,7 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.*;
+import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.DynamicObjectImpl;
 import com.puppet.pcore.impl.GivenArgumentsAccessor;
 import com.puppet.pcore.impl.PcoreImpl;
@@ -81,9 +82,11 @@ public class ObjectType extends MetaType {
 			return name.hashCode() * 31 + type.hashCode();
 		}
 
-		@Override
 		public Map<String,Object> i12nHash() {
-			Map<String,Object> result = Annotatable.super.i12nHash();
+			Map<String,Object> result = new LinkedHashMap<>();
+			Map<AnyType,Map<String,?>> annotations = getAnnotations();
+			if(!annotations.isEmpty())
+				result.put(Constants.KEY_ANNOTATIONS, annotations);
 			result.put(KEY_TYPE, type);
 			if(isFinal())
 				result.put(KEY_FINAL, true);
@@ -102,7 +105,7 @@ public class ObjectType extends MetaType {
 
 		@Override
 		void accept(Visitor visitor, RecursionGuard guard) {
-			annotatableAccept(visitor, guard);
+			getAnnotations().keySet().forEach(key -> key.accept(visitor, guard));
 			type.accept(visitor, guard);
 		}
 

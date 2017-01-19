@@ -1,7 +1,6 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.Pcore;
-import com.puppet.pcore.Type;
 import com.puppet.pcore.TypeAssertionException;
 import com.puppet.pcore.TypeResolverException;
 import org.junit.jupiter.api.BeforeEach;
@@ -19,7 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("unused")
 @DisplayName("A TypeSetType")
-public class TypeSetTypeTest extends DeclaredTypeTest {
+public class TypeSetTypeTest extends DeclaredTypeTestBase {
 
 	@BeforeEach
 	public void init() {

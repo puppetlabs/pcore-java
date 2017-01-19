@@ -1,6 +1,7 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.Pcore;
+import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.parser.HashExpression;
 import com.puppet.pcore.parser.Expression;
 
@@ -66,7 +67,7 @@ abstract class MetaType extends AnyType implements Annotatable {
 
 	@Override
 	void accept(Visitor visitor, RecursionGuard guard) {
-		annotatableAccept(visitor, guard);
+		getAnnotations().keySet().forEach(key -> key.accept(visitor, guard));
 		super.accept(visitor, guard);
 	}
 
@@ -102,6 +103,14 @@ abstract class MetaType extends AnyType implements Annotatable {
 		}
 
 		return value instanceof AnyType ? ((AnyType)value).resolve() : value;
+	}
+
+	public Map<String,Object> i12nHash() {
+		Map<String,Object> result = new LinkedHashMap<>();
+		Map<AnyType,Map<String,?>> annotations = getAnnotations();
+		if(!annotations.isEmpty())
+			result.put(Constants.KEY_ANNOTATIONS, annotations);
+		return result;
 	}
 
 	void setI12nHashExpression(Map<String,Object> unresolvedI12nHash) {

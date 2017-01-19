@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("unused")
 @DisplayName("A Pcore Type Alias")
-public class TypeAliasTypeTest extends DeclaredTypeTest {
+public class TypeAliasTypeTest extends DeclaredTypeTestBase {
 	@BeforeEach
 	public void init() {
 		Pcore.reset();

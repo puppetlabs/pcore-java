@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("unused")
 @DisplayName("A Pcore Object Type")
-public class ObjectTypeTest extends  DeclaredTypeTest {
+public class ObjectTypeTest extends DeclaredTypeTestBase {
 	@BeforeEach
 	public void init() {
 		Pcore.reset();

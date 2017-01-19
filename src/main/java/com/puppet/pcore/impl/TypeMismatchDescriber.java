@@ -8,6 +8,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static com.puppet.pcore.impl.Helpers.*;
+import static com.puppet.pcore.impl.LabelProvider.aOrAn;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
 import static java.lang.String.join;
@@ -253,7 +254,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		}
 	}
 
-	private static class TypeMismatch extends ExpectedActualMismatch<TypeMismatch> implements LabelProvider {
+	private static class TypeMismatch extends ExpectedActualMismatch<TypeMismatch> {
 		TypeMismatch(List<PathElement> path, AnyType expected, AnyType actual) {
 			super(path, expected, actual);
 		}

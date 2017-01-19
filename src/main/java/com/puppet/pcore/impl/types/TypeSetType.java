@@ -4,6 +4,7 @@ import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.TypeResolverException;
+import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import com.puppet.pcore.impl.loader.TypeSetLoader;
@@ -56,9 +57,11 @@ public class TypeSetType extends MetaType {
 			return annotations;
 		}
 
-		@Override
 		public Map<String,Object> i12nHash() {
-			Map<String,Object> result = Annotatable.super.i12nHash();
+			Map<String,Object> result = new LinkedHashMap<>();
+			Map<AnyType,Map<String,?>> annotations = getAnnotations();
+			if(!annotations.isEmpty())
+				result.put(Constants.KEY_ANNOTATIONS, annotations);
 			if(!nameAuthority.equals(TypeSetType.this.nameAuthority))
 				result.put(KEY_NAME_AUTHORITY, nameAuthority.toString());
 			result.put(KEY_NAME, name);
@@ -79,7 +82,7 @@ public class TypeSetType extends MetaType {
 		}
 
 		void accept(Visitor visitor, RecursionGuard guard) {
-			annotatableAccept(visitor, guard);
+			getAnnotations().keySet().forEach(key -> key.accept(visitor, guard));
 		}
 	}
 	private static final AnyType TYPE_STRING_OR_VERSION = variantType(StringType.NOT_EMPTY, semVerType());
