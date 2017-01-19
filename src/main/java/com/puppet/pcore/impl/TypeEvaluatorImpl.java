@@ -1,10 +1,8 @@
 package com.puppet.pcore.impl;
 
 import com.puppet.pcore.Default;
-import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.TypeResolverException;
-import com.puppet.pcore.impl.loader.TypeSetLoader;
 import com.puppet.pcore.impl.parser.*;
 import com.puppet.pcore.impl.types.*;
 import com.puppet.pcore.loader.Loader;
@@ -19,15 +17,14 @@ import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.stream.Stream;
 
 import static com.puppet.pcore.Pcore.loader;
 import static com.puppet.pcore.impl.Constants.KEY_NAME_AUTHORITY;
+import static com.puppet.pcore.impl.Helpers.map;
+import static com.puppet.pcore.impl.Helpers.mapRange;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
-import static java.util.stream.IntStream.range;
 
 @SuppressWarnings("unused")
 public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
@@ -195,23 +192,24 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 
 	Object eval(HashExpression ce) {
 		Map<Object,Object> result = new LinkedHashMap<>();
-		Object[] args = ce.elements.stream().map(this::resolve).toArray();
-		for(int idx = 0; idx < args.length; ) {
-			Object key = args[idx++];
-			result.put(key, args[idx++]);
+		List<Object> args = map(ce.elements, this::resolve);
+		int top = args.size();
+		for(int idx = 0; idx < top; ) {
+			Object key = args.get(idx++);
+			result.put(key, args.get(idx++));
 		}
 		return result;
 	}
 
 	Object eval(ArrayExpression ce) {
-		return ce.elements.stream().map(this::resolve).collect(toList());
+		return map(ce.elements, this::resolve);
 	}
 
 	Object eval(AssignmentExpression ce) {
 		if(!(ce.lhs instanceof TypeNameExpression))
 			throw new TypeResolverException("LHS of assignment expression must be a Type name");
 
-		return declareType(((TypeNameExpression)ce.lhs).name, ce.rhs, loader().getNameAuthority()).resolve(this);
+		return declareType(((TypeNameExpression)ce.lhs).name, ce.rhs, loader().getNameAuthority()).resolve();
 	}
 
 	Object eval(RegexpExpression ce) {
@@ -230,7 +228,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 			return "object".equals(dcName) ? objectType(null, i12nExpr) : typeSetType(null, loader().getNameAuthority(), i12nExpr);
 		}
 
-		Object[] args = ae.elements.stream().map(this::resolve).toArray();
+		Object[] args = map(ae.elements, this::resolve).toArray();
 		switch(dcName) {
 		case "array":
 			switch(assertParameterCount(1, 3, args, te.name)) {
@@ -285,7 +283,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 			}
 		case "enum":
 			assertParameterCount(1, Integer.MAX_VALUE, args, te.name);
-			return enumType(range(0, args.length).mapToObj(paramNo -> assertClass(String.class, args, paramNo, te.name)));
+			return enumType(mapRange(0, args.length, paramNo -> assertClass(String.class, args, paramNo, te.name)));
 		case "float":
 			switch(assertParameterCount(1, 2, args, te.name)) {
 			case 1:
@@ -330,7 +328,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 			return optionalType(assertTypeOrString(args, 0, te.name));
 		case "pattern":
 			assertParameterCount(1, Integer.MAX_VALUE, args, te.name);
-			return patternType(range(0, args.length).mapToObj(paramNo -> assertClass(RegexpType.class, args, paramNo, te
+			return patternType(mapRange(0, args.length, paramNo -> assertClass(RegexpType.class, args, paramNo, te
 					.name)));
 		case "regexp":
 			assertParameterCount(1, 1, args, te.name);
@@ -363,7 +361,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 			return runtimeType(assertClass(String.class, args, 0, te.name), assertClass(String.class, args, 1, te.name));
 		case "semver":
 			assertParameterCount(1, Integer.MAX_VALUE, args, te.name);
-			return semVerType(range(0, args.length).mapToObj(paramNo -> VersionRange.create(assertClass(String.class,
+			return semVerType(mapRange(0, args.length, paramNo -> VersionRange.create(assertClass(String.class,
 					args, paramNo, te.name))));
 		case "sensitive":
 			assertParameterCount(1, 1, args, te.name);
@@ -382,7 +380,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 		case "struct":
 			assertParameterCount(1, 1, args, te.name);
 			Map<?,?> members = assertClass(Map.class, args, 0, te.name);
-			return structType(members.entrySet().stream().map(entry -> {
+			return structType(map(members.entrySet(), entry -> {
 				Object key = entry.getKey();
 				Object value = entry.getValue();
 				if(!(value instanceof AnyType))
@@ -466,7 +464,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 		Loader loader = loader();
 		TypedName typedName = new TypedName("type", te.name, loader.getNameAuthority());
 		AnyType found = (AnyType)loader.loadOrNull(typedName);
-		return found == null ? typeReferenceType(te.name) : found.resolve(this);
+		return found == null ? typeReferenceType(te.name) : found.resolve();
 	}
 
 	private <T> T assertClass(Class<T> cls, Object[] args, int paramNo, String name) {
@@ -596,8 +594,8 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 		return arg instanceof String ? stringType((String)arg) : assertOneParam(AnyType.class, arg, paramNo, name);
 	}
 
-	private Stream<AnyType> assertTypes(Object[] args, String name) {
-		return range(0, args.length).mapToObj(paramNo -> assertType(args, paramNo, name));
+	private List<AnyType> assertTypes(Object[] args, String name) {
+		return mapRange(0, args.length, paramNo -> assertType(args, paramNo, name));
 	}
 
 	private boolean isRangeParameter(Object val) {

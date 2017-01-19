@@ -5,6 +5,7 @@ import com.puppet.pcore.impl.PcoreImpl;
 
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
+import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
@@ -87,8 +88,8 @@ public class HashType extends CollectionType {
 			// hash must accept all value types
 			// hash must accept the attributeCount of the struct
 			StructType st = (StructType)t;
-			return size.isAssignable(st.size, guard) && st.elements.stream().allMatch(member -> keyType.isAssignable(member
-					.key.actualType(), guard) && type.isAssignable(member.value, guard));
+			return size.isAssignable(st.size, guard) &&
+					all(st.elements, member -> keyType.isAssignable(member.key.actualType(), guard) && type.isAssignable(member.value, guard));
 		}
 		return false;
 	}

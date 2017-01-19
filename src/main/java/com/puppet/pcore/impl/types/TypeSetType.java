@@ -4,7 +4,6 @@ import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.TypeResolverException;
-import com.puppet.pcore.impl.Assertions;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import com.puppet.pcore.impl.loader.TypeSetLoader;
@@ -67,13 +66,13 @@ public class TypeSetType extends MetaType {
 			return result;
 		}
 
-		public void resolve(TypeEvaluator evaluator) {
+		public void resolve() {
 			TypedName tn = new TypedName("type", name, nameAuthority);
 			Object type = Pcore.loader().load(tn);
 			if(!(type instanceof TypeSetType))
 				throw new TypeResolverException(format("%s resolves to a %s", this, type));
 
-			this.typeSet = (TypeSetType)((TypeSetType)type).resolve(evaluator);
+			this.typeSet = (TypeSetType)((TypeSetType)type).resolve();
 			if(!versionRange.isIncluded(typeSet.version))
 				throw new TypeResolverException(format(
 						"%s resolves to an incompatible version. Expected %s, got %s", this, versionRange, typeSet.version));
@@ -249,13 +248,13 @@ public class TypeSetType extends MetaType {
 	}
 
 	@Override
-	public AnyType resolve(TypeEvaluator evaluator) {
-		super.resolve(evaluator);
+	public AnyType resolve() {
+		super.resolve();
 		for(Reference ref : references.values())
-			ref.resolve(evaluator);
+			ref.resolve();
 		return Pcore.withTypeSetLoader(this, () -> {
 			for(Map.Entry<String,AnyType> entry : types.entrySet())
-				entry.setValue(entry.getValue().resolve(evaluator));
+				entry.setValue(entry.getValue().resolve());
 			return this;
 		});
 	}
@@ -353,17 +352,17 @@ public class TypeSetType extends MetaType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	Map<String,Object> resolveHash(TypeEvaluator evaluator, Map<String,Object> i12nHash) {
+	Map<String,Object> resolveHash(Map<String,Object> i12nHash) {
 		Map<String,Object> result = new LinkedHashMap<>();
 		for(Map.Entry<String,Object> entry : i12nHash.entrySet()) {
 			String key = entry.getKey();
 			Object value = entry.getValue();
 			if(!KEY_TYPES.equals(key) && value instanceof Map)
-				value = resolveTypeRefs(evaluator, value);
+				value = resolveTypeRefs(value);
 			result.put(key, value);
 		}
 
-		URI nameAuth = resolveNameAuthority(result, evaluator);
+		URI nameAuth = resolveNameAuthority(result);
 		Map<String,Object> types = (Map<String,Object>)result.get(KEY_TYPES);
 		if(types != null) {
 			for(Map.Entry<String,Object> entry : types.entrySet()) {
@@ -371,22 +370,23 @@ public class TypeSetType extends MetaType {
 				if(value instanceof Map)
 					value = objectType((Map<String,Object>)value);
 				else {
-					value = resolveTypeRefs(evaluator, value);
+					value = resolveTypeRefs(value);
 					if(!(value instanceof AnyType))
 						throw new TypeResolverException(format("Unexpected value of class '%s' in types hash", value.getClass().getName()));
 				}
 				types.put(
 						entry.getKey(),
-						((TypeEvaluatorImpl)evaluator).bindByName(name + "::" + entry.getKey(), (AnyType)value, nameAuth));
+						((TypeEvaluatorImpl)Pcore.typeEvaluator()).bindByName(name + "::" + entry.getKey(), (AnyType)value, nameAuth));
 			}
 		}
 		return result;
 	}
 
 	@Override
-	Map<String,Object> resolveLiteralHash(TypeEvaluator evaluator, HashExpression i12e) {
+	Map<String,Object> resolveLiteralHash(HashExpression i12e) {
 		Map<String,Object> result = new LinkedHashMap<>();
 
+		TypeEvaluator evaluator = Pcore.typeEvaluator();
 		List<Expression> elements = i12e.elements;
 		int top = elements.size();
 		for(int idx = 0; idx < top; ) {
@@ -411,7 +411,7 @@ public class TypeSetType extends MetaType {
 				result.put((String)key, evaluator.resolve(value));
 		}
 
-		URI nameAuth = resolveNameAuthority(result, evaluator);
+		URI nameAuth = resolveNameAuthority(result);
 		Object types = result.get(KEY_TYPES);
 		if(types instanceof Map<?,?>) {
 			Map<String,Object> typesMap = (Map<String,Object>)types;
@@ -425,7 +425,7 @@ public class TypeSetType extends MetaType {
 		return dcToCcMap.get(name.toLowerCase(Locale.ENGLISH));
 	}
 
-	private URI resolveNameAuthority(Map<String,Object> i12nHash, TypeEvaluator evaluator) {
+	private URI resolveNameAuthority(Map<String,Object> i12nHash) {
 		URI nameAuth = nameAuthority;
 		if(nameAuth != null)
 			return nameAuth;

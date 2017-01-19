@@ -130,6 +130,6 @@ public class TupleType extends TypesContainerType {
 	@Override
 	AnyType notAssignableSameClassCommon(AnyType other) {
 		TupleType tt = (TupleType)other;
-		return arrayType(TypeCalculator.SINGLETON.reduceType(Helpers.mergeUnique(types, tt.types).stream()));
+		return arrayType(TypeCalculator.SINGLETON.reduceType(Helpers.mergeUnique(types, tt.types)));
 	}
 }

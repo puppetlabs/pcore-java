@@ -3,7 +3,6 @@ package com.puppet.pcore.impl;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeAssertionException;
 import com.puppet.pcore.TypeEvaluator;
-import com.puppet.pcore.impl.loader.BasicLoader;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.time.InstantFormat;
@@ -455,7 +454,7 @@ public class TypeEvaluatorTest {
 			@Test
 			@DisplayName("declares a TypeAlias")
 			public void typeAlias1() {
-				Assertions.assertEquals(typeAliasType("MyType", typeReferenceType("String[1,20]")).resolve(typeEvaluator), resolveType("MyType = String[1,20]"));
+				Assertions.assertEquals(typeAliasType("MyType", typeReferenceType("String[1,20]")).resolve(), resolveType("MyType = String[1,20]"));
 			}
 		}
 	}

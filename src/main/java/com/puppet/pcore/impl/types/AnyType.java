@@ -1,6 +1,7 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.*;
+import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.TypeFormatter;
 import com.puppet.pcore.impl.TypeMismatchDescriber;
@@ -99,7 +100,7 @@ public class AnyType extends ModelObject implements Type, PObject {
 		return this;
 	}
 
-	public AnyType resolve(TypeEvaluator evaluator) {
+	public AnyType resolve() {
 		return this;
 	}
 
@@ -184,7 +185,7 @@ public class AnyType extends ModelObject implements Type, PObject {
 
 		if(t instanceof VariantType) {
 			// Assignable if all contained variants are assignable
-			return ((VariantType)t).types.stream().allMatch(variant -> isAssignable(variant, guard));
+			return Helpers.all(((VariantType)t).types, variant -> isAssignable(variant, guard));
 		}
 
 		if(t instanceof NotUndefType) {

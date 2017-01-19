@@ -8,6 +8,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
+import static com.puppet.pcore.impl.Helpers.all;
+import static com.puppet.pcore.impl.Helpers.any;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Collections.singletonMap;
 
@@ -63,15 +65,14 @@ public class PatternType extends ScalarType {
 			if(regexps.isEmpty())
 				return true;
 			String value = ((StringType)t).value;
-			return value != null && regexps.stream().anyMatch(regexp -> regexp.matches(value));
+			return value != null && any(regexps, regexp -> regexp.matches(value));
 		}
 
 		if(t instanceof EnumType) {
 			if(regexps.isEmpty())
 				return true;
 			List<String> enums = ((EnumType)t).enums;
-			return !enums.isEmpty() && enums.stream().allMatch(value -> regexps.stream().anyMatch(regexp -> regexp.matches
-					(value)));
+			return !enums.isEmpty() && all(enums, value -> any(regexps, regexp -> regexp.matches(value)));
 		}
 
 		return t instanceof PatternType && (regexps.isEmpty() || regexps.containsAll(((PatternType)t).regexps));

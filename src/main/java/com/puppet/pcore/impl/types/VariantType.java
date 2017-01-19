@@ -5,13 +5,10 @@ import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
 
 import java.util.*;
-import java.util.stream.Stream;
 
-import static com.puppet.pcore.impl.Helpers.asMap;
+import static com.puppet.pcore.impl.Helpers.*;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.groupingBy;
-import static java.util.stream.Collectors.toList;
 
 public class VariantType extends TypesContainerType {
 	public static final VariantType DEFAULT = new VariantType(Collections.emptyList());
@@ -41,7 +38,7 @@ public class VariantType extends TypesContainerType {
 	public AnyType generalize() {
 		return this.equals(DEFAULT)
 				? DEFAULT
-				: variantType(types.stream().map(AnyType::generalize).distinct());
+				: variantType(distinct(map(types, AnyType::generalize)));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -59,20 +56,20 @@ public class VariantType extends TypesContainerType {
 
 	@Override
 	int isReallyInstance(Object o, RecursionGuard guard) {
-		return types.stream().mapToInt(t -> t.isReallyInstance(o, guard)).reduce(-1, (memo, r) -> r > memo ? r : memo);
+		return reduce(map(types, t -> t.isReallyInstance(o, guard)), -1, (memo, r) -> r > memo ? r : memo);
 	}
 
 	@Override
 	boolean isUnsafeAssignable(AnyType type, RecursionGuard guard) {
 		if(type instanceof VariantType) {
 			//  A variant is assignable if all of its options are assignable to one of this type's options
-			return this == type || ((VariantType)type).types.stream().allMatch(other -> other instanceof DataType
+			return this == type || all(((VariantType)type).types, other -> other instanceof DataType
 					? isAssignable(DATA, guard)
 					: (other instanceof VariantType
 							? isAssignable(other, guard)
-							: types.stream().anyMatch(variant -> variant.isAssignable(other, guard))));
+							: any(types, variant -> variant.isAssignable(other, guard))));
 		}
-		return types.stream().anyMatch(variant -> variant.isAssignable(type, guard));
+		return any(types, variant -> variant.isAssignable(type, guard));
 	}
 
 	@Override
@@ -80,38 +77,34 @@ public class VariantType extends TypesContainerType {
 		return variantType(Helpers.mergeUnique(types, ((VariantType)other).types));
 	}
 
-	private static Stream<AnyType> mergeEnums(List<AnyType> enums) {
+	private static List<AnyType> mergeEnums(List<AnyType> enums) {
 		return enums.size() < 2
-				? enums.stream()
-				: Stream.of(enumType(enums.stream().flatMap(eos ->
-						eos instanceof StringType
-								? Stream.of(((StringType)eos).value)
-								: ((EnumType)eos).enums.stream()).distinct()));
+				? enums
+				: asList(enumType(distinct(flatten(map(enums, eos -> eos instanceof StringType ? ((StringType)eos).value : ((EnumType)eos).enums)))));
 	}
 
-	private static Stream<PatternType> mergePatterns(List<PatternType> patterns) {
+	private static List<PatternType> mergePatterns(List<PatternType> patterns) {
 		return patterns.size() < 2
-				? patterns.stream()
-				: Stream.of(patternType(patterns.stream().flatMap(pattern -> pattern.regexps.stream()).distinct()));
+				? patterns
+				: asList(patternType(distinct(flatten(map(patterns, pattern -> pattern.regexps)))));
 	}
 
 	@SuppressWarnings("unchecked")
 	private static List<AnyType> partitionAndMerge(List<? extends AnyType> types) {
-		Map<Class<? extends AnyType>,? extends List<? extends AnyType>> pm = types.stream().collect(
-				groupingBy(AnyType::getClass, LinkedHashMap::new, toList()));
+		Map<Class<? extends AnyType>,? extends List<? extends AnyType>> pm = groupBy(types, AnyType::getClass);
 
 		ArrayList<AnyType> enumsAndStrings = new ArrayList<>(remove(StringType.class, pm));
 		enumsAndStrings.addAll(remove(EnumType.class, pm));
 
-		return Stream.of(
+		return flatten(asList(
 				mergeEnums(enumsAndStrings),
 				mergePatterns(remove(PatternType.class, pm)),
 				Helpers.mergeRanges(remove(IntegerType.class, pm)),
 				Helpers.mergeRanges(remove(FloatType.class, pm)),
 				Helpers.mergeRanges(remove(TimeSpanType.class, pm)),
 				Helpers.mergeRanges(remove(TimestampType.class, pm)),
-				pm.values().stream().flatMap(Collection::stream)
-		).flatMap(x -> x).collect(toList());
+				pm.values()
+		));
 	}
 
 	@SuppressWarnings("unchecked")

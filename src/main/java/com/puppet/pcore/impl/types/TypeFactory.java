@@ -9,11 +9,9 @@ import java.time.Instant;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
 import static java.util.Arrays.asList;
-import static java.util.stream.Collectors.toList;
 
 @SuppressWarnings({"unused", "WeakerAccess" })
 public class TypeFactory {
@@ -109,15 +107,6 @@ public class TypeFactory {
 
 	public static EnumType enumType() {
 		return EnumType.DEFAULT;
-	}
-
-	public static EnumType enumType(Stream<String> enums) {
-		List<String> el = unmodifiableCopy(enums);
-		return el.isEmpty() ? EnumType.DEFAULT : new EnumType(el);
-	}
-
-	public static <E extends Enum<E>> EnumType enumType(E[] enums) {
-		return enumType(Stream.of(enums).map(Enum::name));
 	}
 
 	public static EnumType enumType(String... enums) {
@@ -248,11 +237,6 @@ public class TypeFactory {
 		return regexps.length == 0 ? PatternType.DEFAULT : new PatternType(unmodifiableCopy(regexps));
 	}
 
-	public static PatternType patternType(Stream<RegexpType> regexps) {
-		List<RegexpType> rxs = unmodifiableCopy(regexps);
-		return rxs.size() == 0 ? PatternType.DEFAULT : new PatternType(rxs);
-	}
-
 	public static PatternType patternType(List<RegexpType> regexps) {
 		return regexps.isEmpty() ? PatternType.DEFAULT : new PatternType(unmodifiableCopy(regexps));
 	}
@@ -313,11 +297,6 @@ public class TypeFactory {
 		return SemVerType.DEFAULT;
 	}
 
-	public static SemVerType semVerType(Stream<VersionRange> ranges) {
-		List<VersionRange> rl = unmodifiableCopy(ranges);
-		return rl.isEmpty() ? SemVerType.DEFAULT : new SemVerType(rl);
-	}
-
 	public static SemVerType semVerType(VersionRange... ranges) {
 		return ranges.length == 0 ? SemVerType.DEFAULT : new SemVerType(unmodifiableCopy(ranges));
 	}
@@ -371,11 +350,6 @@ public class TypeFactory {
 		return StructType.DEFAULT;
 	}
 
-	public static StructType structType(Stream<StructElement> members) {
-		List<StructElement> ml = unmodifiableCopy(members);
-		return ml.size() == 0 ? StructType.DEFAULT : new StructType(ml);
-	}
-
 	public static StructType structType(StructElement... elements) {
 		return elements.length == 0 ? StructType.DEFAULT : new StructType(unmodifiableCopy(elements));
 	}
@@ -408,10 +382,6 @@ public class TypeFactory {
 		return new TimestampType(min, max);
 	}
 
-	public static TupleType tupleType(Stream<AnyType> types) {
-		return tupleType(types, null);
-	}
-
 	public static TupleType tupleType() {
 		return TupleType.DEFAULT;
 	}
@@ -432,11 +402,6 @@ public class TypeFactory {
 				return TupleType.DEFAULT;
 		}
 		return new TupleType(unmodifiableCopy(types), size);
-	}
-
-	public static TupleType tupleType(Stream<AnyType> types, IntegerType size) {
-		List<AnyType> tl = unmodifiableCopy(types);
-		return tl.isEmpty() && IntegerType.POSITIVE.equals(size) ? TupleType.DEFAULT : new TupleType(tl, size);
 	}
 
 	public static TypeAliasType typeAliasType() {
@@ -485,10 +450,6 @@ public class TypeFactory {
 
 	public static UnitType unitType() {
 		return UnitType.DEFAULT;
-	}
-
-	public static AnyType variantType(Stream<AnyType> types) {
-		return variantType(types.collect(toList()));
 	}
 
 	public static AnyType variantType(AnyType... types) {

@@ -1,7 +1,7 @@
 package com.puppet.pcore.impl.types;
 
+import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Type;
-import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.TypeResolverException;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
@@ -12,9 +12,9 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Objects;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 import static com.puppet.pcore.impl.Helpers.asMap;
+import static com.puppet.pcore.impl.Helpers.filter;
 import static com.puppet.pcore.impl.types.TypeFactory.anyType;
 import static com.puppet.pcore.impl.types.TypeFactory.variantType;
 import static java.lang.String.format;
@@ -95,16 +95,16 @@ public class TypeAliasType extends AnyType {
 	}
 
 	@Override
-	public AnyType resolve(TypeEvaluator evaluator) {
+	public AnyType resolve() {
 		if(resolvedType == null) {
 			// resolved to TypeReferenceType.DEFAULT during resolve to avoid endless recursion
 			resolvedType = TypeReferenceType.DEFAULT;
 			selfRecursion = true; // assumed while it's being found out below
 			try {
 				if(typeExpression instanceof TypeReferenceType)
-					resolvedType = ((TypeReferenceType)typeExpression).resolve(evaluator);
+					resolvedType = ((TypeReferenceType)typeExpression).resolve();
 				else
-					resolvedType = ((TypeEvaluatorImpl)evaluator).resolveType((Expression)typeExpression);
+					resolvedType = ((TypeEvaluatorImpl)Pcore.typeEvaluator()).resolveType((Expression)typeExpression);
 
 				// Find out if this type is recursive. A recursive type has performance implications
 				// on several methods and this knowledge is used to avoid that for non-recursive
@@ -129,7 +129,7 @@ public class TypeAliasType extends AnyType {
 			// An alias may appoint an Object type that isn't resolved yet. The default type
 			// reference is used to prevent endless recursion and should not be resolved here.
 			if(!resolvedType.equals(TypeReferenceType.DEFAULT))
-				resolvedType.resolve(evaluator);
+				resolvedType.resolve();
 
 		return this;
 	}
@@ -226,13 +226,13 @@ public class TypeAliasType extends AnyType {
 		if(resolvedType instanceof VariantType) {
 			// Drop variants that are not real types
 			List<AnyType> resolvedTypes = ((VariantType)resolvedType).types;
-			List<AnyType> realTypes = resolvedTypes.stream().filter(type -> {
+			List<AnyType> realTypes = filter(resolvedTypes, type -> {
 				if(type == this)
 					return false;
 				AssertOtherTypeAcceptor realTypeAsserter = new AssertOtherTypeAcceptor();
 				type.accept(realTypeAsserter, new RecursionGuard());
 				return realTypeAsserter.otherTypeDetected;
-			}).collect(Collectors.toList());
+			});
 			if(realTypes.size() != resolvedTypes.size()) {
 				resolvedType = variantType(realTypes);
 				RecursionGuard guard = new RecursionGuard();

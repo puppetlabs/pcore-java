@@ -9,9 +9,10 @@ import org.junit.jupiter.api.Test;
 import java.util.List;
 import java.util.Map;
 
+import static com.puppet.pcore.impl.Helpers.all;
+import static com.puppet.pcore.impl.Helpers.partitionBy;
 import static com.puppet.pcore.impl.types.TypeFactory.iterableType;
 import static com.puppet.pcore.impl.types.TypeFactory.stringType;
-import static java.util.stream.Collectors.partitioningBy;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("unused")
@@ -60,9 +61,9 @@ public class IterableTypeTest {
 		@Test
 		@DisplayName("iterable types will produce an iterable")
 		public void test3() {
-			Map<Boolean,List<AnyType>> partitioned = TypeEvaluatorImpl.BASIC_TYPES.values().stream().collect(partitioningBy(AnyType::isIterable));
-			assertTrue(partitioned.get(true).stream().allMatch(type -> type.asIterableType() != null));
-			assertTrue(partitioned.get(false).stream().allMatch(type -> type.asIterableType() == null));
+			Map<Boolean,List<AnyType>> partitioned = partitionBy(TypeEvaluatorImpl.BASIC_TYPES.values(), AnyType::isIterable);
+			assertTrue(all(partitioned.get(true), type -> type.asIterableType() != null));
+			assertTrue(all(partitioned.get(false), type -> type.asIterableType() == null));
 		}
 	}
 }

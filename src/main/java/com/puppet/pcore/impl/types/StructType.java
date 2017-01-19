@@ -1,6 +1,7 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.Type;
+import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
 
 import java.util.Collections;
@@ -8,7 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
-import static com.puppet.pcore.impl.Helpers.asMap;
+import static com.puppet.pcore.impl.Helpers.*;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.unmodifiableMap;
@@ -25,7 +26,7 @@ public class StructType extends AnyType {
 
 	StructType(List<StructElement> elements) {
 		this.elements = elements;
-		size = integerType(elements.stream().filter(m -> !m.key.isAssignable(UndefType.DEFAULT)).count(), elements.size());
+		size = integerType(count(elements, m -> !m.key.isAssignable(UndefType.DEFAULT)), elements.size());
 	}
 
 	@Override
@@ -75,8 +76,8 @@ public class StructType extends AnyType {
 		if(this.equals(DEFAULT))
 			return iterableType(HashType.DEFAULT_KEY_PAIR_TUPLE);
 		return iterableType(tupleType(asList(
-				variantType(elements.stream().map(member -> member.key)),
-				variantType(elements.stream().map(member -> member.value))), HashType.KEY_PAIR_TUPLE_SIZE));
+				variantType(map(elements, member -> member.key)),
+				variantType(map(elements, member -> member.value))), HashType.KEY_PAIR_TUPLE_SIZE));
 	}
 
 	@Override
@@ -90,7 +91,7 @@ public class StructType extends AnyType {
 			StructType ht = (StructType)t;
 			Map<String,StructElement> h2 = ht.hashedMembers();
 			int[] matched = {0};
-			return elements.stream().allMatch(e1 -> {
+			return all(elements, e1 -> {
 				StructElement e2 = h2.get(e1.name);
 				if(e2 == null)
 					return e1.key.isAssignable(undefType(), guard);
@@ -102,7 +103,7 @@ public class StructType extends AnyType {
 		if(t instanceof HashType) {
 			HashType ht = (HashType)t;
 			int[] required = {0};
-			boolean requiredMembersAssignable = elements.stream().allMatch(e -> {
+			boolean requiredMembersAssignable = all(elements, e -> {
 				AnyType key = e.key;
 				if(key.isAssignable(undefType(), guard))
 					// StructElement is optional so Hash does not need to provide it

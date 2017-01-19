@@ -10,6 +10,7 @@ import java.util.Collections;
 import java.util.List;
 
 import static com.puppet.pcore.impl.Helpers.asMap;
+import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class EnumType extends ScalarDataType {
@@ -77,7 +78,7 @@ public class EnumType extends ScalarDataType {
 				all.add(value);
 				return enumType(all);
 			}
-			return stringType((IntegerType)TypeCalculator.SINGLETON.reduceType(enums.stream().map(str -> {
+			return stringType((IntegerType)TypeCalculator.SINGLETON.reduceType(map(enums, str -> {
 				int sz = str.length();
 				return integerType(sz, sz);
 			})));

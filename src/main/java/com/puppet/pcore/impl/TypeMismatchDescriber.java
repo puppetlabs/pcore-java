@@ -6,13 +6,13 @@ import com.puppet.pcore.impl.types.*;
 
 import java.lang.reflect.InvocationTargetException;
 import java.util.*;
-import java.util.stream.IntStream;
 
+import static com.puppet.pcore.impl.Helpers.*;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
+import static java.lang.String.join;
 import static java.util.Arrays.asList;
 import static java.util.Collections.*;
-import static java.util.stream.Collectors.*;
 
 @SuppressWarnings("unused")
 public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismatchDescriber.Mismatch>> {
@@ -68,7 +68,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 					p = new ArrayList<>(p);
 					p.remove(0);
 				}
-				position = p.stream().map(PathElement::toString).collect(joining(" "));
+				position = join(" ", map(p, PathElement::toString));
 			}
 			return message(variant, position);
 		}
@@ -85,7 +85,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 
 		List<PathElement> canonicalPath() {
 			if(canonicalPath == null)
-				canonicalPath = path.stream().filter(p -> p.pathType != PathType.VARIANT).collect(toList());
+				canonicalPath = filter(path, p -> p.pathType != PathType.VARIANT);
 			return canonicalPath;
 		}
 
@@ -110,7 +110,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		}
 
 		String pathString() {
-			return path.stream().map(PathElement::toString).collect(joining(" "));
+			return join(" ", map(path, PathElement::toString));
 		}
 
 		T removeElementAt(int elementIndex) {
@@ -281,9 +281,9 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 				List<String> els;
 				if(reportDetailed(el, a)) {
 					as = detailedActualToS(el, a);
-					els = el.stream().map(AnyType::toExpandedString).collect(toList());
+					els = map(el, AnyType::toExpandedString);
 				} else {
-					els = el.stream().map(AnyType::name).distinct().collect(toList());
+					els = distinct(map(el, AnyType::name));
 					as = a.name();
 				}
 				switch(els.size()) {
@@ -295,7 +295,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 					multi = true;
 					break;
 				default:
-					es = els.stream().limit(els.size() - 1).collect(joining(", ")) + " or " + els.get(els.size() - 1);
+					es = join(", ", els.subList(0, - 1)) + " or " + els.get(els.size() - 1);
 					multi = true;
 				}
 			} else {
@@ -322,7 +322,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		}
 
 		private List<AnyType> allResolved(List<AnyType> tl) {
-			return tl.stream().map(this::allResolved).collect(toList());
+			return map(tl, this::allResolved);
 		}
 
 		private AnyType allResolved(AnyType t) {
@@ -330,7 +330,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		}
 
 		private boolean alwaysFullyDetailed(List<AnyType> el, AnyType a) {
-			return el.stream().anyMatch(e -> alwaysFullyDetailed(e, a));
+			return any(el, e -> alwaysFullyDetailed(e, a));
 		}
 
 		// Decides whether or not the report must be fully detailed, or if generalization can be permitted
@@ -342,7 +342,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		}
 
 		private boolean anyAssignable(List<AnyType> el, AnyType a) {
-			return el.stream().anyMatch(e -> e.isAssignable(a));
+			return any(el, e -> e.isAssignable(a));
 		}
 
 		private boolean anyAssignable(AnyType e, AnyType a) {
@@ -370,7 +370,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		}
 
 		private boolean reportDetailed(List<AnyType> el, AnyType a) {
-			return el.stream().anyMatch(e -> alwaysFullyDetailed(e, a) || assignableToGeneric(e, a));
+			return any(el, e -> alwaysFullyDetailed(e, a) || assignableToGeneric(e, a));
 		}
 
 		private boolean reportDetailed(AnyType e, AnyType a) {
@@ -600,10 +600,10 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 
 	List<? extends Mismatch> _describe(TypeAliasType expected, AnyType actual, List<PathElement> path) {
 		AnyType resolvedType = expected.resolvedType().normalize();
-		return doDescribe(resolvedType, actual, path).stream().map(description ->
+		return map(doDescribe(resolvedType, actual, path), description ->
 				description instanceof ExpectedActualMismatch<?>
 						? ((ExpectedActualMismatch)description).swapExpected(expected)
-						: description).collect(toList());
+						: description);
 	}
 
 	List<? extends Mismatch> _describe(VariantType expected, AnyType actual, List<PathElement> path) {
@@ -649,12 +649,13 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 			return singletonList(new SizeMismatch(path, expected.size, actual.givenOrActualSize));
 
 		List<Mismatch> descriptions = new ArrayList<>();
-		IntStream.range(0, actual.types.size()).forEach(idx -> {
+		int top = actual.types.size();
+		for(int idx = 0; idx < top; ++idx) {
 			AnyType type = actual.types.get(idx);
 			if(!expected.type.isAssignable(type))
 				descriptions.addAll(doDescribe(expected.type, type,
 						append(path, new PathElement(PathType.INDEX, Integer.toString(idx)))));
-		});
+		}
 		return descriptions;
 	}
 
@@ -687,11 +688,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 
 	private List<? extends Mismatch> describeStructSignature(StructType paramsStruct, Map<String,Object> paramHash, boolean missingOk) {
 		Map<String,StructElement> paramTypeHash = paramsStruct.hashedMembers();
-		List<Mismatch> result = paramHash.keySet().stream()
-				.filter(p -> !paramTypeHash.containsKey(p))
-				.map(p -> new InvalidParameter(null, p))
-				.collect(toCollection(ArrayList::new));
-
+		List<Mismatch> result = map(filter(paramHash.keySet(), p -> !paramTypeHash.containsKey(p)), p -> new InvalidParameter(null, p));
 		paramsStruct.elements.forEach(member -> {
 			Object value = paramHash.get(member.name);
 			if(paramHash.containsKey(member.name))
@@ -743,12 +740,13 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 					: new SizeMismatch(path, expected.givenOrActualSize, actual.size));
 
 		List<Mismatch> descriptions = new ArrayList<>();
-		IntStream.range(0, expected.types.size()).forEach(idx -> {
+		int top = expected.types.size();
+		for(int idx = 0; idx < top; ++idx) {
 			AnyType type = expected.types.get(idx);
 			if(!type.isAssignable(actual.type))
 				descriptions.addAll(doDescribe(type, actual.type, append(path, new PathElement(PathType.INDEX, Integer
 						.toString(idx)))));
-		});
+		}
 		return descriptions;
 	}
 
@@ -765,13 +763,14 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 			return emptyList();
 
 		List<Mismatch> descriptions = new ArrayList<>();
-		IntStream.range(0, actual.types.size()).forEach(idx -> {
+		int top = actual.types.size();
+		for(int idx = 0; idx < top; ++idx) {
 			AnyType type = actual.types.get(idx);
 			int adx = idx >= expectedSize ? expectedSize : idx;
 			descriptions.addAll(doDescribe(expected.types.get(adx), type, append(path, new PathElement(
 					PathType.INDEX,
 					Integer.toString(idx)))));
-		});
+		}
 		return descriptions;
 	}
 
@@ -793,7 +792,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		case 1:
 			return errors.get(0).format();
 		default:
-			return errors.stream().map(Mismatch::format).collect(joining("\n "));
+			return join("\n ", map(errors, Mismatch::format));
 		}
 	}
 
@@ -803,10 +802,10 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 			List<Mismatch> descriptions) {
 		for(Class<? extends Mismatch> mc : asList(mismatchClass, MissingRequiredBlock.class, UnexpectedBlock.class,
 				TypeMismatch.class)) {
-			List<Mismatch> mismatches = descriptions.stream().filter(mc::isInstance).collect(toList());
+			List<Mismatch> mismatches = filter(descriptions, mc::isInstance);
 			if(mismatches.size() == descriptions.size()) {
 				// If all have the same canonical path, then we can compact this into one
-				Mismatch<?> generic = mismatches.stream().reduce(null, (prev, curr) ->
+				Mismatch<?> generic = reduce(mismatches, (Mismatch)null, (prev, curr) ->
 						prev == null
 								? curr
 								: (curr == null || !curr.canonicalPath().equals(prev.canonicalPath())

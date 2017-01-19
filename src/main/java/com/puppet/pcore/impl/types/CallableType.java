@@ -1,7 +1,6 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.Type;
-import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.impl.PcoreImpl;
 
 import java.util.Objects;
@@ -62,13 +61,13 @@ public class CallableType extends AnyType {
 	}
 
 	@Override
-	public synchronized AnyType resolve(TypeEvaluator evaluator) {
+	public synchronized AnyType resolve() {
 		if(resolved)
 			return this;
 
-		CallableType rsBlockType = blockType == null ? null : (CallableType)blockType.resolve(evaluator);
-		TupleType rsParametersType = (TupleType)parametersType.resolve(evaluator);
-		AnyType rsReturnType = returnType == null ? null : returnType.resolve(evaluator);
+		CallableType rsBlockType = blockType == null ? null : (CallableType)blockType.resolve();
+		TupleType rsParametersType = (TupleType)parametersType.resolve();
+		AnyType rsReturnType = returnType == null ? null : returnType.resolve();
 		if(blockType == rsBlockType && parametersType == rsParametersType && returnType == rsReturnType) {
 			resolved = true;
 			return this;

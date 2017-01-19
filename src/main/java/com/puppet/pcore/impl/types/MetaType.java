@@ -1,6 +1,6 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.TypeEvaluator;
+import com.puppet.pcore.Pcore;
 import com.puppet.pcore.impl.parser.HashExpression;
 import com.puppet.pcore.parser.Expression;
 
@@ -41,7 +41,7 @@ abstract class MetaType extends AnyType implements Annotatable {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public AnyType resolve(TypeEvaluator evaluator) {
+	public AnyType resolve() {
 		if(i12nHashExpression != null) {
 			selfRecursion = true;
 
@@ -49,11 +49,11 @@ abstract class MetaType extends AnyType implements Annotatable {
 			if(i12nHashExpression instanceof HashExpression) {
 				HashExpression i12e = (HashExpression)i12nHashExpression;
 				i12nHashExpression = null;
-				i12nHash = resolveLiteralHash(evaluator, i12e);
+				i12nHash = resolveLiteralHash(i12e);
 			} else {
 				i12nHash = (Map<String,Object>)i12nHashExpression;
 				i12nHashExpression = null;
-				i12nHash = resolveHash(evaluator, i12nHash);
+				i12nHash = resolveHash(i12nHash);
 			}
 			initializeFromHash(i12nHash);
 
@@ -75,21 +75,21 @@ abstract class MetaType extends AnyType implements Annotatable {
 	}
 
 	@SuppressWarnings("unchecked")
-	Map<String,Object> resolveHash(TypeEvaluator evaluator, Map<String,Object> i12nHash) {
-		return (Map<String,Object>)resolveTypeRefs(evaluator, i12nHash);
+	Map<String,Object> resolveHash(Map<String,Object> i12nHash) {
+		return (Map<String,Object>)resolveTypeRefs(i12nHash);
 	}
 
 	@SuppressWarnings("unchecked")
-	Map<String,Object> resolveLiteralHash(TypeEvaluator evaluator, HashExpression i12e) {
-		return (Map<String,Object>)evaluator.resolve(i12e);
+	Map<String,Object> resolveLiteralHash(HashExpression i12e) {
+		return (Map<String,Object>)Pcore.typeEvaluator().resolve(i12e);
 	}
 
 	@SuppressWarnings("unchecked")
-	Object resolveTypeRefs(TypeEvaluator evaluator, Object value) {
+	Object resolveTypeRefs(Object value) {
 		if(value instanceof Map<?,?>) {
 			Map<Object,Object> result = new LinkedHashMap<>();
 			for(Map.Entry<?,?> p : ((Map<Object,Object>)value).entrySet())
-				result.put(resolveTypeRefs(evaluator, p.getKey()), resolveTypeRefs(evaluator, p.getValue()));
+				result.put(resolveTypeRefs(p.getKey()), resolveTypeRefs(p.getValue()));
 			return result;
 		}
 
@@ -97,11 +97,11 @@ abstract class MetaType extends AnyType implements Annotatable {
 			List<Object> source = (List<Object>)value;
 			List<Object> result = new ArrayList<>(source.size());
 			for(Object elem : source)
-				result.add(resolveTypeRefs(evaluator, elem));
+				result.add(resolveTypeRefs(elem));
 			return result;
 		}
 
-		return value instanceof AnyType ? ((AnyType)value).resolve(evaluator) : value;
+		return value instanceof AnyType ? ((AnyType)value).resolve() : value;
 	}
 
 	void setI12nHashExpression(Map<String,Object> unresolvedI12nHash) {

@@ -15,10 +15,12 @@ import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Constants.*;
 import static com.puppet.pcore.impl.Helpers.getArgument;
+import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
 import static java.lang.Thread.currentThread;
+import static java.util.Arrays.asList;
 import static java.util.Collections.*;
 
 public class ObjectType extends MetaType {
@@ -214,8 +216,7 @@ public class ObjectType extends MetaType {
 	private enum MemberType {attribute, function, all}
 
 	public static final ObjectType DEFAULT = new ObjectType();
-	private static final AnyType TYPE_ATTRIBUTE_KIND = enumType(Arrays.copyOf(AttributeKind.values(), AttributeKind
-			.values().length - 1));
+	private static final AnyType TYPE_ATTRIBUTE_KIND = enumType(map(asList(AttributeKind.values()).subList(0, AttributeKind.values().length - 1), Enum::name));
 	private static final AnyType TYPE_MEMBER_NAME = patternType(regexpType(Pattern.compile("\\A[a-z_]\\w*\\z")));
 	private static final AnyType TYPE_ATTRIBUTE = variantType(typeType(), structType(
 			structElement(KEY_TYPE, typeType()),

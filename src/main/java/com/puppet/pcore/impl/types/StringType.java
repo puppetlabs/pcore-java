@@ -10,6 +10,7 @@ import java.util.Objects;
 
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
+import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
@@ -92,7 +93,7 @@ public class StringType extends ScalarDataType {
 		if(t instanceof EnumType) {
 			EnumType et = (EnumType)t;
 			if(value == null)
-				return size.equals(IntegerType.POSITIVE) || et.enums.stream().allMatch(e -> size.isInstance(e.length()));
+				return size.equals(IntegerType.POSITIVE) || all(et.enums, e -> size.isInstance(e.length()));
 			return et.enums.size() == 1 && value.equals(et.enums.get(0));
 		}
 		return false;

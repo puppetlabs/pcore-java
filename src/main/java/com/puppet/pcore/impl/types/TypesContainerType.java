@@ -1,7 +1,5 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.TypeEvaluator;
-
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,7 +26,7 @@ abstract class TypesContainerType extends AnyType {
 	}
 
 	@Override
-	public synchronized AnyType resolve(TypeEvaluator evaluator) {
+	public synchronized AnyType resolve() {
 		if(resolved)
 			return this;
 
@@ -36,7 +34,7 @@ abstract class TypesContainerType extends AnyType {
 		boolean changed = false;
 		ArrayList<AnyType> rsTypes = new ArrayList<>(types.size());
 		for(AnyType type : types) {
-			AnyType rsType = type.resolve(evaluator);
+			AnyType rsType = type.resolve();
 			if(type != rsType)
 				changed = true;
 			rsTypes.add(rsType);

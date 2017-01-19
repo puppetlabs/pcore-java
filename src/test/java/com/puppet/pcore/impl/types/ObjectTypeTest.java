@@ -1,7 +1,6 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.*;
-import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.types.ObjectType.Attribute;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.BeforeEach;
@@ -649,7 +648,7 @@ public class ObjectTypeTest extends  DeclaredTypeTest {
 			@DisplayName("Object[{name => 'MyObj', attributes => {'a' => Integer}}]")
 			public void pObjectType() {
 				Object result = resolveType("Pcore::ObjectType").newInstance(asMap("name", "MyObj", "attributes", asMap("a", integerType())));
-				assertEquals("Object[{name => 'MyObj', attributes => {'a' => Integer}}]", ((ObjectType)result).resolve(Pcore.typeEvaluator()).toExpandedString());
+				assertEquals("Object[{name => 'MyObj', attributes => {'a' => Integer}}]", ((ObjectType)result).resolve().toExpandedString());
 			}
 
 			@Test

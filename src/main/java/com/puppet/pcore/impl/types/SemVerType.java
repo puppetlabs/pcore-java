@@ -9,6 +9,8 @@ import java.util.List;
 
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
+import static com.puppet.pcore.impl.Helpers.all;
+import static com.puppet.pcore.impl.Helpers.any;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Collections.emptyList;
@@ -61,8 +63,7 @@ public class SemVerType extends ScalarType {
 
 			// All ranges in st must be covered by at least one range in self
 			List<VersionRange> tRanges = ((SemVerType)t).ranges;
-			return !tRanges.isEmpty() && tRanges.stream().allMatch(oRange ->
-					ranges.stream().anyMatch(oRange::isAsRestrictiveAs));
+			return !tRanges.isEmpty() && all(tRanges, oRange -> any(ranges, oRange::isAsRestrictiveAs));
 		}
 		return false;
 	}

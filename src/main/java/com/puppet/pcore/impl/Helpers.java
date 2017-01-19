@@ -1,8 +1,11 @@
 package com.puppet.pcore.impl;
 
 import java.util.*;
+import java.util.function.BiFunction;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
+import java.util.function.Predicate;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
 public class Helpers {
 	private static final Pattern CLASS_NAME = Pattern.compile("^[A-Z]\\w*(?:::[A-Z]\\w*)*$");
@@ -81,12 +84,11 @@ public class Helpers {
 		return new ArrayList<>(new LinkedHashSet<T>(a));
 	}
 
-	public static <T extends MergableRange<T>> Stream<T> mergeRanges(List<T> rangesToMerge) {
+	public static <T extends MergableRange<T>> List<T> mergeRanges(List<T> rangesToMerge) {
 		switch(rangesToMerge.size()) {
 		case 0:
-			return Stream.empty();
 		case 1:
-			return Stream.of(rangesToMerge.get(0));
+			return rangesToMerge;
 		default:
 			List<T> result = new ArrayList<>();
 			Stack<T> ranges = new Stack<>();
@@ -94,7 +96,7 @@ public class Helpers {
 			while(!ranges.isEmpty()) {
 				Stack<T> unmerged = new Stack<>();
 				T x = ranges.pop();
-				result.add(ranges.stream().reduce(x, (memo, y) -> {
+				result.add(reduce(ranges, x, (memo, y) -> {
 					T merged = memo.merge(y);
 					if(merged == null)
 						unmerged.add(y);
@@ -104,7 +106,7 @@ public class Helpers {
 				}));
 				ranges = unmerged;
 			}
-			return result.stream();
+			return result;
 		}
 	}
 
@@ -198,11 +200,6 @@ public class Helpers {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> List<T> unmodifiableCopy(Stream<? extends T> stream) {
-		return unmodifiableList((T[])stream.toArray());
-	}
-
-	@SuppressWarnings("unchecked")
 	public static <T> List<T> unmodifiableCopy(List<? extends T> collection) {
 		switch(collection.size()) {
 		case 0:
@@ -227,5 +224,98 @@ public class Helpers {
 		default:
 			return Collections.unmodifiableList(Arrays.asList(array));
 		}
+	}
+
+	public static <R> List<R> mapRange(int start, int end, Function<Integer, ? extends R> mapper) {
+		List<R> result = new ArrayList<R>(end - start);
+		for(int idx = start; idx < end; ++idx)
+			result.add(mapper.apply(idx));
+		return result;
+	}
+
+	public static <T> boolean all(Collection<? extends T> collection, Predicate<? super T> condition) {
+		for(T elem : collection)
+			if(!condition.test(elem))
+				return false;
+		return true;
+	}
+
+	public static <T> List<T> filter(Collection<? extends T> collection, Predicate<? super T> condition) {
+		int top = collection.size();
+		List<T> result = new ArrayList<T>(top);
+		for(T elem : collection)
+			if(condition.test(elem))
+				result.add(elem);
+		return result;
+	}
+
+	public static <T> int count(Collection<? extends T> collection, Predicate<? super T> condition) {
+		int counter = 0;
+		for(T elem : collection)
+			if(condition.test(elem))
+				++counter;
+		return counter;
+	}
+
+	public static <T, R> List<R> map(Collection<? extends T> collection, Function<? super T, ? extends R> mapper) {
+		int top = collection.size();
+		List<R> result = new ArrayList<R>(top);
+		for(T elem : collection)
+			result.add(mapper.apply(elem));
+		return result;
+	}
+
+	public static <T, R> R reduce(Collection<? extends T> collection, R identity, BiFunction<R, T, R> accumulator) {
+		R result = identity;
+		for(T elem : collection)
+       result = accumulator.apply(result, elem);
+     return result;
+	}
+
+	public static <T> boolean any(Collection<? extends T> collection, Predicate<? super T> condition) {
+		for(T elem : collection)
+			if(condition.test(elem))
+				return true;
+		return false;
+	}
+
+	public static <T> List<T> flatten(Collection<?> collection) {
+		ArrayList<T> result = new ArrayList<>();
+		for(Object elem : collection)
+			if(elem instanceof Collection)
+				result.addAll(flatten((Collection)elem));
+			else
+				result.add((T)elem);
+		return result;
+	}
+
+	public static <T> List<T> distinct(Collection<? extends T> collection) {
+		return new ArrayList<>(new LinkedHashSet<>(collection));
+	}
+
+	public static <T> Map<Boolean, List<T>> partitionBy(Collection<T> collection, Predicate<? super T> condition) {
+		List<T> trueList = new ArrayList<>();
+		List<T> falseList = new ArrayList<>();
+		for(T elem : collection) {
+			if(condition.test(elem))
+				trueList.add(elem);
+			else
+				falseList.add(elem);
+		}
+		return asMap(true, trueList, false, falseList);
+	}
+
+	public static <T, G> Map<G, List<T>> groupBy(Collection<T> collection, Function<? super T, ? extends G> grouper) {
+		Map<G, List<T>> result = new LinkedHashMap<G,List<T>>();
+		for(T elem : collection) {
+			G group = grouper.apply(elem);
+			List<T> groupList = result.get(group);
+			if(groupList == null) {
+				groupList = new ArrayList<>();
+				result.put(group, groupList);
+			}
+			groupList.add(elem);
+		}
+		return result;
 	}
 }

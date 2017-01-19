@@ -101,7 +101,7 @@ public class TypeAliasTypeTest extends DeclaredTypeTest {
 	@Test
 	@DisplayName("can be resolved using a TypeReference")
 	public void test9() {
-		AnyType ta = typeAliasType("Foo", typeReferenceType("Integer[0]")).resolve(Pcore.typeEvaluator());
+		AnyType ta = typeAliasType("Foo", typeReferenceType("Integer[0]")).resolve();
 		assertTrue(ta.isInstance(3));
 		assertFalse(ta.isInstance(-3));
 	}

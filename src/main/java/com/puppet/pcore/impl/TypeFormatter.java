@@ -469,7 +469,7 @@ public class TypeFormatter extends Polymorphic {
 		if(paramTypes.isEmpty() && IntegerType.ZERO_SIZE.equals(t.parametersType.size))
 			appendValues(true, 0, 0);
 		else {
-			appendValues(true, paramTypes.stream().filter(pt -> !(pt instanceof UnitType)).toArray());
+			appendValues(true, filter(paramTypes, pt -> !(pt instanceof UnitType)).toArray());
 			appendFormatted(true, rangeArrayPart(t.parametersType.size, false));
 		}
 		if(t.blockType != null)

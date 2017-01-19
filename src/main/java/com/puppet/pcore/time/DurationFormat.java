@@ -4,8 +4,9 @@ import java.time.Duration;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
+
+import static com.puppet.pcore.impl.Helpers.map;
+import static java.util.Arrays.asList;
 
 public class DurationFormat {
 	static abstract class Segment {
@@ -392,8 +393,7 @@ public class DurationFormat {
 	}
 
 	public static final List<DurationFormat> DEFAULTS = Collections.unmodifiableList(
-			Stream.of("%D-%H:%M:%S.%-N", "%H:%M:%S.%-N", "%M:%S.%-N", "%S.%-N", "%D-%H:%M:%S", "%H:%M:%S", "%D-%H:%M", "%S").
-					map(FormatParser.singleton::parseFormat).collect(Collectors.toList()));
+			map(asList("%D-%H:%M:%S.%-N", "%H:%M:%S.%-N", "%M:%S.%-N", "%S.%-N", "%D-%H:%M:%S", "%H:%M:%S", "%D-%H:%M", "%S"), FormatParser.singleton::parseFormat));
 	private static final long NSECS_PER_USEC = 1000;
 	private static final long NSECS_PER_MSEC = NSECS_PER_USEC * 1000;
 	private static final long NSECS_PER_SEC = NSECS_PER_MSEC * 1000;

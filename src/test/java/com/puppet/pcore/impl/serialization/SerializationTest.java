@@ -1,9 +1,6 @@
 package com.puppet.pcore.impl.serialization;
 
 import com.puppet.pcore.*;
-import com.puppet.pcore.impl.PcoreImpl;
-import com.puppet.pcore.impl.TypeEvaluatorImpl;
-import com.puppet.pcore.impl.loader.BasicLoader;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -484,8 +481,8 @@ public class SerializationTest {
 
 	void assertWriteAndRead(String typeString, String factoryName) throws IOException {
 		TypeEvaluator te = typeEvaluator();
-		Type type = ((AnyType)te.resolveType(typeString)).resolve(te);
-		assertEquals(type, ((AnyType)writeAndRead(type, factoryName)).resolve(te));
+		Type type = ((AnyType)te.resolveType(typeString)).resolve();
+		assertEquals(type, ((AnyType)writeAndRead(type, factoryName)).resolve());
 	}
 
 	Object writeAndRead(Object value, String factoryName) throws IOException {

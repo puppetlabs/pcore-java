@@ -4,6 +4,7 @@ import com.puppet.pcore.Binary;
 import com.puppet.pcore.Default;
 import com.puppet.pcore.PObject;
 import com.puppet.pcore.Pcore;
+import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.Polymorphic;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -15,8 +16,10 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
-import java.util.stream.Stream;
 
+import static com.puppet.pcore.impl.Helpers.all;
+import static com.puppet.pcore.impl.Helpers.map;
+import static com.puppet.pcore.impl.Helpers.reduce;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 @SuppressWarnings("unused")
@@ -140,28 +143,28 @@ class TypeCalculator extends Polymorphic<AnyType> {
 	}
 
 	AnyType inferAndReduceType(Collection<?> objects) {
-		return reduceType(objects.stream().map(this::infer));
+		return reduceType(map(objects, this::infer));
 	}
 
 	AnyType inferSet(Object o) {
 		if(o instanceof Collection<?>) {
 			Collection<?> cv = (Collection<?>)o;
-			return cv.isEmpty() ? ArrayType.EMPTY : tupleType(cv.stream().map(this::inferSet));
+			return cv.isEmpty() ? ArrayType.EMPTY : tupleType(map(cv, this::inferSet));
 		}
 		if(o instanceof Map<?,?>) {
 			Map<?,?> ho = (Map<?,?>)o;
-			if(ho.keySet().stream().allMatch(StringType.NOT_EMPTY::isInstance))
-				return structType(ho.entrySet().stream().map(e -> new StructElement(stringType((String)e.getKey()), inferSet(e.getValue()))));
+			if(all(ho.keySet(), StringType.NOT_EMPTY::isInstance))
+				return structType(map(ho.entrySet(), e -> new StructElement(stringType((String)e.getKey()), inferSet(e.getValue()))));
 
-			AnyType keyType = variantType(ho.keySet().stream().map(this::inferSet));
-			AnyType valueType = variantType(ho.values().stream().map(this::inferSet));
+			AnyType keyType = variantType(map(ho.keySet(), this::inferSet));
+			AnyType valueType = variantType(map(ho.values(), this::inferSet));
 			return hashType(keyType, valueType, sizeAsType(ho));
 		}
 		return infer(o);
 	}
 
-	AnyType reduceType(Stream<AnyType> types) {
-		return types.reduce(unitType(), AnyType::common);
+	AnyType reduceType(Collection<AnyType> types) {
+		return reduce(types, unitType(), AnyType::common);
 	}
 
 	private IntegerType sizeAsType(Collection<?> c) {

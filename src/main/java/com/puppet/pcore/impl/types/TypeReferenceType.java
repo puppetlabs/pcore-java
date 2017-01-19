@@ -1,7 +1,7 @@
 package com.puppet.pcore.impl.types;
 
+import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Type;
-import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.impl.PcoreImpl;
 
 import static com.puppet.pcore.impl.Helpers.asMap;
@@ -35,8 +35,8 @@ public class TypeReferenceType extends AnyType {
 	}
 
 	@Override
-	public AnyType resolve(TypeEvaluator evaluator) {
-		return typeString.equals(DEFAULT.typeString) ? this : (AnyType)evaluator.resolveType(typeString);
+	public AnyType resolve() {
+		return typeString.equals(DEFAULT.typeString) ? this : (AnyType)Pcore.typeEvaluator().resolveType(typeString);
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {

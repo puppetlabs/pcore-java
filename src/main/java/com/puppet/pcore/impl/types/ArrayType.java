@@ -6,6 +6,7 @@ import com.puppet.pcore.impl.PcoreImpl;
 import static com.puppet.pcore.impl.Assertions.assertNotNull;
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
+import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
@@ -55,8 +56,7 @@ public class ArrayType extends CollectionType {
 	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		if(t instanceof TupleType)
-			return super.isUnsafeAssignable(t, guard)
-					&& ((TupleType)t).types.stream().allMatch(tt -> type.isAssignable(tt, guard));
+			return super.isUnsafeAssignable(t, guard) && all(((TupleType)t).types, tt -> type.isAssignable(tt, guard));
 
 		return t instanceof ArrayType && super.isUnsafeAssignable(t, guard) && type.isAssignable(
 				((ArrayType)t).type,

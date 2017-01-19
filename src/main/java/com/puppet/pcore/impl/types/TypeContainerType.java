@@ -1,7 +1,5 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.TypeEvaluator;
-
 import java.util.Objects;
 
 abstract class TypeContainerType extends AnyType {
@@ -26,10 +24,10 @@ abstract class TypeContainerType extends AnyType {
 	}
 
 	@Override
-	public synchronized AnyType resolve(TypeEvaluator evaluator) {
+	public synchronized AnyType resolve() {
 		if(type == null || resolved)
 			return this;
-		AnyType resolvedType = type.resolve(evaluator);
+		AnyType resolvedType = type.resolve();
 		if(resolvedType == type) {
 			resolved = true;
 			return this;

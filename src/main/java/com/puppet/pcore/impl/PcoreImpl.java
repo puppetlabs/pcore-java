@@ -44,7 +44,7 @@ public class PcoreImpl {
 				metaTypes.add((ObjectType)registerPtypeMethod.invoke(null, this));
 			}
 			for(ObjectType metaType : metaTypes)
-				metaType.resolve(typeEvaluator);
+				metaType.resolve();
 		} catch(NoSuchMethodException | IllegalAccessException e) {
 			throw new PCoreException(e);
 		} catch(InvocationTargetException e) {
