@@ -27,6 +27,11 @@ public class DeserializerImpl implements Deserializer {
 	}
 
 	@Override
+	public Reader getReader() {
+		return reader;
+	}
+
+	@Override
 	public Object read() throws IOException {
 		Object val = reader.read();
 		if(val instanceof Tabulation)

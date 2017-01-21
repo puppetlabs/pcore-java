@@ -12,6 +12,11 @@ import java.util.Map;
 
 public class MsgPackSerializationFactory extends SerializationFactoryImpl {
 	@Override
+	protected Reader reader() {
+		throw new UnsupportedOperationException(getClass().getName() + " does not support partial read of data chunks");
+	}
+
+	@Override
 	public Reader readerOn(InputStream in) {
 		return new MsgPackReader(new MsgUnpacker(MessagePack.newDefaultUnpacker(in)));
 	}

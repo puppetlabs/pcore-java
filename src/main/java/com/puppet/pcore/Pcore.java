@@ -5,7 +5,6 @@ import com.puppet.pcore.impl.types.TypeSetType;
 import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.serialization.SerializationFactory;
 
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -29,8 +28,12 @@ public class Pcore {
 		INSTANCE.initBaseTypeSystem();
 	}
 
-	public static <T> T withTypeSetLoader(TypeSetType typeSetType, Supplier<T> function) {
-		return INSTANCE.withTypeSetLoader(typeSetType, function);
+	public static <T> T withTypeSetScope(TypeSetType typeSetType, Supplier<T> function) {
+		return INSTANCE.withTypeSetScope(typeSetType, function);
+	}
+
+	public static <T> T withLocalScope(Supplier<T> function) {
+		return INSTANCE.withLocalScope(function);
 	}
 
 	public static ImplementationRegistry implementationRegistry() {

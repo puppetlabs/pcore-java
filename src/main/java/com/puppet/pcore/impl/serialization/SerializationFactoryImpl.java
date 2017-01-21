@@ -12,6 +12,11 @@ import java.util.Map;
 
 public abstract class SerializationFactoryImpl implements SerializationFactory {
 	@Override
+	public DeserializerImpl forInputChunks() {
+		return new DeserializerImpl(reader());
+	}
+
+	@Override
 	public DeserializerImpl forInput(InputStream in) throws IOException {
 		return new DeserializerImpl(readerOn(in));
 	}
@@ -20,6 +25,8 @@ public abstract class SerializationFactoryImpl implements SerializationFactory {
 	public SerializerImpl forOutput(Map<String,Object> options, OutputStream out) throws IOException {
 		return new SerializerImpl(writerOn(options, out));
 	}
+
+	protected abstract Reader reader();
 
 	protected abstract Reader readerOn(InputStream in) throws IOException;
 

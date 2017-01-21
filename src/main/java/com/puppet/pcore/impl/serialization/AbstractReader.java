@@ -13,6 +13,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
@@ -21,11 +22,16 @@ import static com.puppet.pcore.impl.types.TypeFactory.typeReferenceType;
 
 public abstract class AbstractReader implements Reader {
 	private final ArrayList<Object> objectsRead = new ArrayList<>();
-	private final ExtensionAwareUnpacker unpacker;
+	protected final ExtensionAwareUnpacker unpacker;
 
 	protected AbstractReader(ExtensionAwareUnpacker unpacker) {
 		this.unpacker = unpacker;
 		registerTypes();
+	}
+
+	@Override
+	public void initialize(List<?> data) {
+		throw new UnsupportedOperationException(getClass().getName() + " does not support partial read of data chunks");
 	}
 
 	@Override

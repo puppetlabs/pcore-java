@@ -10,11 +10,22 @@ public interface Loader {
 	 * Bind an object to a {@link TypedName}. Throws an exception if this loader or a loader
 	 * in the parent chain of loaders already has an object bound by the same name.
 	 *
+	 * @param type the type to use for the binding
 	 * @param name the name to use for the binding
 	 * @param toBeBound the object to bind
 	 * @throws TypeRedefinedException if an object is already bound by the same name.
 	 */
-	void bind(TypedName name, Object toBeBound) throws TypeRedefinedException;
+	void bind(String type, String name, Object toBeBound) throws TypeRedefinedException;
+
+	/**
+	 * Bind an object to a {@link TypedName}. Throws an exception if this loader or a loader
+	 * in the parent chain of loaders already has an object bound by the same typed name.
+	 *
+	 * @param typedName the typed name to use for the binding
+	 * @param toBeBound the object to bind
+	 * @throws TypeRedefinedException if an object is already bound by the same name.
+	 */
+	void bind(TypedName typedName, Object toBeBound) throws TypeRedefinedException;
 
 	/**
 	 * @return the default name authority for this loader.

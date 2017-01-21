@@ -255,7 +255,7 @@ public class TypeSetType extends MetaType {
 		super.resolve();
 		for(Reference ref : references.values())
 			ref.resolve();
-		return Pcore.withTypeSetLoader(this, () -> {
+		return Pcore.withTypeSetScope(this, () -> {
 			for(Map.Entry<String,AnyType> entry : types.entrySet())
 				entry.setValue(entry.getValue().resolve());
 			return this;

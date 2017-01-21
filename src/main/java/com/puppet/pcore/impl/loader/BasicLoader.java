@@ -15,6 +15,11 @@ public class BasicLoader implements Loader {
 	private final Map<TypedName,Object> boundObjects = new HashMap<>();
 
 	@Override
+	public void bind(String type, String name, Object toBeBound) throws TypeRedefinedException {
+		bind(new TypedName(type, name, getNameAuthority()), toBeBound);
+	}
+
+	@Override
 	public synchronized void bind(TypedName name, Object type) throws TypeRedefinedException {
 		if(loadOrNull(name) != null)
 			throw new TypeRedefinedException(name.toString());

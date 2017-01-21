@@ -16,5 +16,15 @@ public interface SerializationFactory {
 
 	Deserializer forInput(InputStream in) throws IOException;
 
+	/**
+	 * Returns a deserializer that can be initialize with input data that has already been
+	 * parsed by another parser into a list of values. This highly specialized deserializer
+	 * is used when reading a catalog containing rich data chunks. All chunks share the
+	 * same tabulation context.
+	 *
+	 * @return A deserializer that must be initialized with list data before a read can take place
+	 */
+	Deserializer forInputChunks();
+
 	Serializer forOutput(Map<String,Object> options, OutputStream out) throws IOException;
 }

@@ -2,6 +2,7 @@ package com.puppet.pcore.impl;
 
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.loader.BasicLoader;
+import com.puppet.pcore.impl.loader.ParentedLoader;
 import com.puppet.pcore.impl.loader.TypeSetLoader;
 import com.puppet.pcore.impl.serialization.SerializationException;
 import com.puppet.pcore.impl.serialization.json.JsonSerializationFactory;
@@ -103,6 +104,10 @@ public class PcoreImpl {
 		return implementationRegistry;
 	}
 
+	public <T> T withLocalScope(Supplier<T> function) {
+		return withLoader(new ParentedLoader(loader()), function);
+	}
+
 	/**
 	 * Execute function using a loader that is parented by the current loader and capable of finding things
 	 * in the given type set.
@@ -112,14 +117,8 @@ public class PcoreImpl {
 	 * @param <T>
 	 * @return the return value of the given function
 	 */
-	public <T> T withTypeSetLoader(TypeSetType typeSet, Supplier<T> function) {
-		Loader current = loader.get();
-		loader.set(new TypeSetLoader(current, typeSet));
-		try {
-			return function.get();
-		} finally {
-			loader.set(current);
-		}
+	public <T> T withTypeSetScope(TypeSetType typeSet, Supplier<T> function) {
+		return withLoader(new TypeSetLoader(loader(), typeSet), function);
 	}
 
 	public Loader loader() {
@@ -147,5 +146,15 @@ public class PcoreImpl {
 
 	public TypeEvaluator typeEvaluator() {
 		return typeEvaluator;
+	}
+
+	private <T> T withLoader(Loader localLoader, Supplier<T> function) {
+		Loader current = loader.get();
+		loader.set(localLoader);
+		try {
+			return function.get();
+		} finally {
+			loader.set(current);
+		}
 	}
 }

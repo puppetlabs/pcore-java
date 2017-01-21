@@ -12,4 +12,9 @@ public interface Deserializer {
 	 * @throws IOException
 	 */
 	Object read() throws IOException;
+
+	/**
+	 * @return the reader used by this deserializer
+	 */
+	Reader getReader();
 }

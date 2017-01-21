@@ -18,7 +18,15 @@ public class JsonUnpacker implements ExtensionAwareUnpacker {
 	private final Map<Byte,PayloadReaderFunction<?>> extensionMap = new HashMap<>();
 
 	JsonUnpacker(InputStream in) throws IOException {
-		etorStack.push(mapper.readValue(new BufferedInputStream(in), List.class).iterator());
+		this(mapper.readValue(new BufferedInputStream(in), List.class));
+	}
+
+	JsonUnpacker(List<?> values) {
+		initialize(values);
+	}
+
+	public void initialize(List<?> values) {
+		etorStack.push(values.iterator());
 	}
 
 	@Override
