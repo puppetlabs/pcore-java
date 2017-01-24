@@ -5,18 +5,17 @@ import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Sensitive;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.Constants;
+import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.serialization.extension.*;
 import com.puppet.pcore.impl.types.ObjectType;
 import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.loader.TypedName;
 import com.puppet.pcore.serialization.Deserializer;
 import com.puppet.pcore.serialization.Reader;
+import com.puppet.pcore.serialization.SerializationException;
 
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DeserializerImpl implements Deserializer {
 	private final List<Object> objectsRead = new ArrayList<>();
@@ -42,20 +41,22 @@ public class DeserializerImpl implements Deserializer {
 			return val;
 
 		if(val instanceof MapStart) {
-			int idx = ((MapStart)val).size;
-			Map<Object,Object> result = remember(new LinkedHashMap<>());
-			while(--idx >= 0) {
-				Object key = read();
-				result.put(key, read());
+			int top = ((MapStart)val).size * 2;
+			Object[] keyValuePairs = new Object[top];
+			Map<Object,Object> result = remember(Helpers.asWrappingMap(keyValuePairs));
+			for(int idx = 0; idx < top;) {
+				keyValuePairs[idx++] = read();
+				keyValuePairs[idx++] = read();
 			}
 			return result;
 		}
 
 		if(val instanceof ArrayStart) {
-			int idx = ((ArrayStart)val).size;
-			List<Object> result = remember(new ArrayList<>(idx));
-			while(--idx >= 0)
-				result.add(read());
+			final int top = ((ArrayStart)val).size;
+			Object[] values = new Object[top];
+			List<Object> result = remember(Helpers.asWrappingList(values));
+			for(int idx = 0; idx < top; ++idx)
+				values[idx] = read();
 			return result;
 		}
 

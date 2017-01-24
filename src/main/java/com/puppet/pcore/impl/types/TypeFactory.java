@@ -1,5 +1,6 @@
 package com.puppet.pcore.impl.types;
 
+import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.parser.Expression;
 import com.puppet.pcore.semver.VersionRange;
 
@@ -110,7 +111,7 @@ public class TypeFactory {
 	}
 
 	public static EnumType enumType(String... enums) {
-		return enums.length == 0 ? EnumType.DEFAULT : new EnumType(unmodifiableCopy(enums));
+		return enums.length == 0 ? EnumType.DEFAULT : new EnumType(Helpers.asList(enums));
 	}
 
 	public static EnumType enumType(List<String> enums) {
@@ -234,7 +235,7 @@ public class TypeFactory {
 	}
 
 	public static PatternType patternType(RegexpType... regexps) {
-		return regexps.length == 0 ? PatternType.DEFAULT : new PatternType(unmodifiableCopy(regexps));
+		return regexps.length == 0 ? PatternType.DEFAULT : new PatternType(Helpers.asList(regexps));
 	}
 
 	public static PatternType patternType(List<RegexpType> regexps) {
@@ -298,7 +299,7 @@ public class TypeFactory {
 	}
 
 	public static SemVerType semVerType(VersionRange... ranges) {
-		return ranges.length == 0 ? SemVerType.DEFAULT : new SemVerType(unmodifiableCopy(ranges));
+		return ranges.length == 0 ? SemVerType.DEFAULT : new SemVerType(Helpers.asList(ranges));
 	}
 
 	public static SemVerType semVerType(List<VersionRange> ranges) {
@@ -351,7 +352,7 @@ public class TypeFactory {
 	}
 
 	public static StructType structType(StructElement... elements) {
-		return elements.length == 0 ? StructType.DEFAULT : new StructType(unmodifiableCopy(elements));
+		return elements.length == 0 ? StructType.DEFAULT : new StructType(Helpers.asList(elements));
 	}
 
 	public static StructType structType(List<StructElement> elements) {

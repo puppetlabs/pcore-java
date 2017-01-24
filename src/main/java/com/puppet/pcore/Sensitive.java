@@ -16,6 +16,10 @@ public class Sensitive {
 		return o instanceof Sensitive && Objects.equals(value, ((Sensitive)o).value);
 	}
 
+	public int hashCode() {
+		return 29 + Objects.hashCode(value);
+	}
+
 	public String toString() {
 		return "Sensitive [value redacted]";
 	}

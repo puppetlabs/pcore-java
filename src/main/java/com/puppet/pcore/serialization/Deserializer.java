@@ -9,7 +9,7 @@ public interface Deserializer {
 	/**
 	 * Read the next object from the source
 	 * @return the object that was read
-	 * @throws IOException
+	 * @throws IOException propagated from the underlying reader
 	 */
 	Object read() throws IOException;
 

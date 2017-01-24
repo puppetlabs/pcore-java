@@ -91,7 +91,7 @@ public class VariantType extends TypesContainerType {
 
 	@SuppressWarnings("unchecked")
 	private static List<AnyType> partitionAndMerge(List<? extends AnyType> types) {
-		Map<Class<? extends AnyType>,? extends List<? extends AnyType>> pm = groupBy(types, AnyType::getClass);
+		Map<Class<? extends AnyType>,? extends List<? extends AnyType>> pm = new LinkedHashMap<>(groupBy(types, AnyType::getClass));
 
 		ArrayList<AnyType> enumsAndStrings = new ArrayList<>(remove(StringType.class, pm));
 		enumsAndStrings.addAll(remove(EnumType.class, pm));

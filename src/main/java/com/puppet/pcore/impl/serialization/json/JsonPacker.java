@@ -5,7 +5,7 @@ import com.fasterxml.jackson.core.JsonGenerator;
 import com.puppet.pcore.impl.Polymorphic;
 import com.puppet.pcore.impl.serialization.ExtensionAwarePacker;
 import com.puppet.pcore.impl.serialization.PayloadWriterFunction;
-import com.puppet.pcore.impl.serialization.SerializationException;
+import com.puppet.pcore.serialization.SerializationException;
 import com.puppet.pcore.impl.serialization.extension.Extension;
 import com.puppet.pcore.impl.serialization.extension.SequenceStart;
 
@@ -84,7 +84,7 @@ public class JsonPacker extends Polymorphic<Void> implements ExtensionAwarePacke
 	}
 
 	void _write(Object val) throws IOException {
-		Extension ed = extensionMap.get(val.getClass());
+		@SuppressWarnings("unchecked") Extension<Object> ed = (Extension<Object>)extensionMap.get(val.getClass());
 		if(ed == null)
 			throw new SerializationException(String.format("Unable to serialize a %s", val.getClass().getName()));
 

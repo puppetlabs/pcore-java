@@ -52,7 +52,8 @@ public class PatternType extends ScalarType {
 
 	@Override
 	void accept(Visitor visitor, RecursionGuard guard) {
-		regexps.forEach(regexp -> regexp.accept(visitor, guard));
+		for(RegexpType regexp : regexps)
+			regexp.accept(visitor, guard);
 		super.accept(visitor, guard);
 	}
 

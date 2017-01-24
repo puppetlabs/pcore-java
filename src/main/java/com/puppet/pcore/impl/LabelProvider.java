@@ -4,10 +4,10 @@ public class LabelProvider {
 	static final char[] vowels = new char[]{'a', 'e', 'i', 'o', 'u', 'y', 'A', 'E', 'I', 'O', 'U', 'Y'};
 
 	/**
-	 * Produces a label for the given text with indefinite article (a/an)
+	 * Produces a label for the given object with indefinite article (a/an)
 	 *
-	 * @param o
-	 * @return
+	 * @param o the object to produce a label for
+	 * @return the label
 	 */
 	public static String aOrAn(Object o) {
 		String txt = label(o);
@@ -15,10 +15,10 @@ public class LabelProvider {
 	}
 
 	/**
-	 * Produces a label for the given text with indefinite article (A/An)
+	 * Produces a label for the given object with indefinite article (A/An)
 	 *
-	 * @param o
-	 * @return
+	 * @param o the object to produce a label for
+	 * @return the label
 	 */
 	public static String aOrAnUc(Object o) {
 		String txt = label(o);
@@ -39,8 +39,8 @@ public class LabelProvider {
 	/**
 	 * Provides a label for the given object by calling {@link #toString()} on the object.
 	 *
-	 * @param o
-	 * @return
+	 * @param o the object to produce a label for
+	 * @return the label
 	 */
 	public static String label(Object o) {
 		return o.toString();

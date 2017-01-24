@@ -2,7 +2,7 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.impl.MergableRange;
 
-abstract class TimeDataType<T extends TimeDataType, E extends Comparable<E>> extends ScalarType implements
+abstract class TimeDataType<T extends TimeDataType<T,E>, E extends Comparable<E>> extends ScalarType implements
 		MergableRange<T> {
 	public final E max;
 	public final E min;

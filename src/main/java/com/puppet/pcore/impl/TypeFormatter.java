@@ -21,7 +21,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 @SuppressWarnings("unused")
-public class TypeFormatter extends Polymorphic {
+public class TypeFormatter extends Polymorphic<Void> {
 
 	interface ArgsAppender {
 		void append();
@@ -259,10 +259,10 @@ public class TypeFormatter extends Polymorphic {
 
 	void _format(PatternType t) {
 		appendArray("Pattern", t.regexps.isEmpty(), () -> {
-			t.regexps.forEach(rx -> {
+			for(RegexpType rx : t.regexps) {
 				puppetRegexp(rx.patternString, out);
 				out.append(COMMA_SEP);
-			});
+			}
 			chompList();
 		});
 	}
@@ -390,33 +390,32 @@ public class TypeFormatter extends Polymorphic {
 		appendArray("TypeReference", t == typeReferenceType(), () -> appendValues(false, t.typeString));
 	}
 
+	@SuppressWarnings("unchecked")
 	void _format(TypeSetType t) {
-		appendArray("TypeSet", () -> {
-			appendHash(t.i12nHash(), (k) -> out.append(symbolicKey(k)), (e) -> {
-				switch(e.getKey()) {
-				case KEY_TYPES:
-					TypeSetType saveTS = typeSet;
-					typeSet = t;
-					try {
-						appendHash((Map<String,Object>)e.getValue(), (tk) -> out.append(symbolicKey(tk)), (te) -> {
-							if(te.getValue() instanceof Map<?,?>)
-								appendObjectHash((Map<String,Object>)te.getValue());
-							else
-								appendValues(false, te.getValue());
-						});
-					} finally {
-						typeSet = saveTS;
-					}
-					break;
-				case KEY_REFERENCES:
-					appendHash((Map<String,Object>)e.getValue(), (tk) -> out.append(symbolicKey(tk)), (te) ->
-							appendHash((Map<String,Object>)te.getValue(), (ttk) -> out.append(symbolicKey(ttk)), null));
-					break;
-				default:
-					appendValues(false, e.getValue());
+		appendArray("TypeSet", () -> appendHash(t.i12nHash(), (k) -> out.append(symbolicKey(k)), (e) -> {
+			switch(e.getKey()) {
+			case KEY_TYPES:
+				TypeSetType saveTS = typeSet;
+				typeSet = t;
+				try {
+					appendHash((Map<String,Object>)e.getValue(), (tk) -> out.append(symbolicKey(tk)), (te) -> {
+						if(te.getValue() instanceof Map<?,?>)
+							appendObjectHash((Map<String,Object>)te.getValue());
+						else
+							appendValues(false, te.getValue());
+					});
+				} finally {
+					typeSet = saveTS;
 				}
-			});
-		});
+				break;
+			case KEY_REFERENCES:
+				appendHash((Map<String,Object>)e.getValue(), (tk) -> out.append(symbolicKey(tk)), (te) ->
+						appendHash((Map<String,Object>)te.getValue(), (ttk) -> out.append(symbolicKey(ttk)), null));
+				break;
+			default:
+				appendValues(false, e.getValue());
+			}
+		}));
 	}
 
 	void _format(TypeType t) {

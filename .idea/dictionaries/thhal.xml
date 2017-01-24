@@ -6,8 +6,10 @@
       <w>assignability</w>
       <w>attrs</w>
       <w>catalogentry</w>
+      <w>deserializing</w>
       <w>dflt</w>
       <w>downcased</w>
+      <w>iter</w>
       <w>iterable</w>
       <w>mergable</w>
       <w>msec</w>
@@ -17,6 +19,7 @@
       <w>nsec</w>
       <w>nsecs</w>
       <w>parameterized</w>
+      <w>parsable</w>
       <w>pcore</w>
       <w>proc</w>
       <w>ptype</w>

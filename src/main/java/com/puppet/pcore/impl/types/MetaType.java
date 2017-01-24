@@ -2,15 +2,16 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.impl.Constants;
+import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.parser.HashExpression;
 import com.puppet.pcore.parser.Expression;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
 import static com.puppet.pcore.impl.Constants.KEY_ANNOTATIONS;
+import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.Helpers.getArgument;
 import static java.util.Collections.emptyMap;
 
@@ -67,7 +68,8 @@ abstract class MetaType extends AnyType implements Annotatable {
 
 	@Override
 	void accept(Visitor visitor, RecursionGuard guard) {
-		getAnnotations().keySet().forEach(key -> key.accept(visitor, guard));
+		for(AnyType key : getAnnotations().keySet())
+			key.accept(visitor, guard);
 		super.accept(visitor, guard);
 	}
 
@@ -88,18 +90,23 @@ abstract class MetaType extends AnyType implements Annotatable {
 	@SuppressWarnings("unchecked")
 	Object resolveTypeRefs(Object value) {
 		if(value instanceof Map<?,?>) {
-			Map<Object,Object> result = new LinkedHashMap<>();
-			for(Map.Entry<?,?> p : ((Map<Object,Object>)value).entrySet())
-				result.put(resolveTypeRefs(p.getKey()), resolveTypeRefs(p.getValue()));
-			return result;
+			Map<?,?> map = (Map<?,?>)value;
+			Object[] keyValuePairs = new Object[map.size() * 2];
+			int idx = 0;
+			for(Map.Entry<?,?> p : ((Map<Object,Object>)value).entrySet()) {
+				keyValuePairs[idx++] = resolveTypeRefs(p.getKey());
+				keyValuePairs[idx++] = resolveTypeRefs(p.getValue());
+			}
+			return asMap(keyValuePairs);
 		}
 
 		if(value instanceof List<?>) {
 			List<Object> source = (List<Object>)value;
-			List<Object> result = new ArrayList<>(source.size());
+			Object[] result = new Object[source.size()];
+			int idx = 0;
 			for(Object elem : source)
-				result.add(resolveTypeRefs(elem));
-			return result;
+				result[idx++] = resolveTypeRefs(elem);
+			return Helpers.asList(result);
 		}
 
 		return value instanceof AnyType ? ((AnyType)value).resolve() : value;

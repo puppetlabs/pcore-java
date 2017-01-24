@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -182,13 +183,15 @@ public class TypeCalculatorTest {
 		@Test
 		@DisplayName("Basic types")
 		public void inferBasicTypes() {
-			TypeEvaluatorImpl.BASIC_TYPES.values().forEach(type -> assertInfer(typeType(type), type));
+			for(AnyType type : TypeEvaluatorImpl.BASIC_TYPES.values())
+				assertInfer(typeType(type), type);
 		}
 
 		@Test
 		@DisplayName("Basic types _ptype")
 		public void inferBasicTypesPtype() {
-			TypeEvaluatorImpl.BASIC_TYPES.values().forEach(type -> String.format("Pcore::%sType", type.name()).equals(type._pType().name()));
+			for(AnyType type: TypeEvaluatorImpl.BASIC_TYPES.values())
+				String.format("Pcore::%sType", type.name()).equals(type._pType().name());
 		}
 
 		private void assertInfer(AnyType expected, Object value) {
@@ -203,7 +206,7 @@ public class TypeCalculatorTest {
 		@Test
 		@DisplayName("Struct[{'first' => Integer}]")
 		public void inferMap1() {
-			Map<String,Integer> m = new HashMap<>();
+			Map<String,Integer> m = new LinkedHashMap<>();
 			m.put("first", 1);
 			m.put("second", 2);
 			assertInferSet(structType(
@@ -214,7 +217,7 @@ public class TypeCalculatorTest {
 		@Test
 		@DisplayName("Struct[{'mode' => String, 'path' => Tuple}]")
 		public void inferMap2() {
-			Map<String,Object> m = new HashMap<>();
+			Map<String,Object> m = new LinkedHashMap<>();
 			m.put("mode", "read");
 			m.put("path", asList("foo", "fee"));
 			assertInferSet(structType(
@@ -225,7 +228,7 @@ public class TypeCalculatorTest {
 		@Test
 		@DisplayName("Struct[{1 => String, 'second' => String}]")
 		public void inferMap3() {
-			Map<Object,Object> m = new HashMap<>();
+			Map<Object,Object> m = new LinkedHashMap<>();
 			m.put(1, "first");
 			m.put("second", "second");
 			assertInferSet(hashType(variantType(integerType(1, 1), stringType("second")), enumType("first", "second"), 2, 2)

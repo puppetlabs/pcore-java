@@ -7,6 +7,7 @@ import com.puppet.pcore.impl.types.ObjectType;
 import com.puppet.pcore.impl.types.TypeReferenceType;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
+import com.puppet.pcore.serialization.SerializationException;
 import com.puppet.pcore.serialization.Serializer;
 import com.puppet.pcore.serialization.Writer;
 

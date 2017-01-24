@@ -14,6 +14,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.regex.Pattern;
 
@@ -332,9 +333,9 @@ public class TypeFormatterTest {
 
 	@Test
 	public void objectTypeWithStuff() {
-		Map<String,Object> i12nHash = new HashMap<>();
-		Map<String,Object> attrHash = new HashMap<>();
-		Map<String,Object> funcHash = new HashMap<>();
+		Map<String,Object> i12nHash = new LinkedHashMap<>();
+		Map<String,Object> attrHash = new LinkedHashMap<>();
+		Map<String,Object> funcHash = new LinkedHashMap<>();
 		i12nHash.put(Constants.KEY_NAME, "TestObj");
 		i12nHash.put(Constants.KEY_ATTRIBUTES, attrHash);
 		i12nHash.put(Constants.KEY_FUNCTIONS, funcHash);
@@ -343,7 +344,7 @@ public class TypeFormatterTest {
 		attrHash.put("a", integerType());
 		attrHash.put("n", integerType());
 
-		Map<String,Object> bHash = new HashMap<>();
+		Map<String,Object> bHash = new LinkedHashMap<>();
 		bHash.put("kind", "constant");
 		bHash.put("type", integerType());
 		bHash.put("value", 32);
@@ -354,7 +355,7 @@ public class TypeFormatterTest {
 		assertEquals(
 				"Object[{" +
 						"name => 'TestObj', " +
-						"attributes => {'a' => Integer, 'b' => {type => Integer, kind => constant, value => 32}, 'n' => Integer}, " +
+						"attributes => {'a' => Integer, 'n' => Integer, 'b' => {type => Integer, kind => constant, value => 32}}, " +
 						"functions => {'f' => Callable}, " +
 						"equality => ['a', 'n']}]",
 				objectType(i12nHash).resolve().toExpandedString());

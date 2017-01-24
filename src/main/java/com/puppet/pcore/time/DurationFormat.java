@@ -261,7 +261,7 @@ public class DurationFormat {
 		private static final int MIN_MAX = 3;
 		private static final int HOUR_MAX = 4;
 		private static final int DAY_MAX = 5;
-		private static final Class[] SEGMENT_CLASS_BY_ORDINAL = {
+		private static final Class<?>[] SEGMENT_CLASS_BY_ORDINAL = {
 				NanosecondSegment.class, MillisecondSegment.class, SecondSegment.class, MinuteSegment.class, HourSegment.class, DaySegment.class
 		};
 		// States used by the #internal_parser function
@@ -271,7 +271,12 @@ public class DurationFormat {
 		private final Map<String,DurationFormat> formats = new HashMap<>();
 
 		DurationFormat parseFormat(String format) {
-			return formats.computeIfAbsent(format, k -> internalParse(format));
+			DurationFormat durationFormat = formats.get(format);
+			if(durationFormat == null) {
+				durationFormat = internalParse(format);
+				formats.put(format, durationFormat);
+			}
+			return durationFormat;
 		}
 
 		private void appendLiteral(List<Segment> bld, char c) {

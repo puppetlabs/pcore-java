@@ -1,7 +1,6 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.Type;
-import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
 
 import java.util.Collections;
@@ -50,7 +49,8 @@ public class StructType extends AnyType {
 	public Map<String,StructElement> hashedMembers() {
 		if(hashedMembers == null) {
 			Map<String,StructElement> hm = new LinkedHashMap<>();
-			elements.forEach(m -> hm.put(m.name, m));
+			for(StructElement m : elements)
+				hm.put(m.name, m);
 			hashedMembers = unmodifiableMap(hm);
 		}
 		return hashedMembers;
@@ -67,7 +67,8 @@ public class StructType extends AnyType {
 
 	@Override
 	void accept(Visitor visitor, RecursionGuard guard) {
-		elements.forEach(member -> member.accept(visitor, guard));
+		for(StructElement m : elements)
+		  m.accept(visitor, guard);
 		super.accept(visitor, guard);
 	}
 

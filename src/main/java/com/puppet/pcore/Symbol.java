@@ -1,6 +1,8 @@
 package com.puppet.pcore;
 
 public class Symbol implements java.io.Serializable, Comparable<Symbol>, CharSequence {
+	private static final long serialVersionUID = -1;
+
 	private final String content;
 
 	public Symbol(String content) {

@@ -20,6 +20,7 @@ import java.util.*;
 
 import static com.puppet.pcore.Pcore.loader;
 import static com.puppet.pcore.impl.Constants.KEY_NAME_AUTHORITY;
+import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.impl.Helpers.mapRange;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
@@ -27,7 +28,7 @@ import static java.lang.String.format;
 import static java.util.Arrays.asList;
 
 @SuppressWarnings("unused")
-public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
+public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvaluator {
 
 	public static final Long ZERO = 0L;
 	public static final Map<String,AnyType> BASIC_TYPES;
@@ -191,14 +192,7 @@ public class TypeEvaluatorImpl extends Polymorphic implements TypeEvaluator {
 	}
 
 	Object eval(HashExpression ce) {
-		Map<Object,Object> result = new LinkedHashMap<>();
-		List<Object> args = map(ce.elements, this::resolve);
-		int top = args.size();
-		for(int idx = 0; idx < top; ) {
-			Object key = args.get(idx++);
-			result.put(key, args.get(idx++));
-		}
-		return result;
+		return asMap(map(ce.elements, this::resolve));
 	}
 
 	Object eval(ArrayExpression ce) {

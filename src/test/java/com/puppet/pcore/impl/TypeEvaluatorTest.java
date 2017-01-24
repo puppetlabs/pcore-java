@@ -27,7 +27,8 @@ public class TypeEvaluatorTest {
 		@Test
 		@DisplayName("can resolve all core types")
 		public void resolvesCoreTypes() {
-			TypeEvaluatorImpl.BASIC_TYPES.values().forEach(type -> Assertions.assertEquals(type, resolveType(type.toString())));
+			for(AnyType type : TypeEvaluatorImpl.BASIC_TYPES.values())
+				Assertions.assertEquals(type, resolveType(type.toString()));
 		}
 	}
 

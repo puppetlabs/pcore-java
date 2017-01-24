@@ -25,7 +25,7 @@ public interface ArgumentsAccessor {
 
 	/**
 	 * The type that the arguments are intended for
-	 * @return
+	 * @return the argument type
 	 */
 	Type getType();
 

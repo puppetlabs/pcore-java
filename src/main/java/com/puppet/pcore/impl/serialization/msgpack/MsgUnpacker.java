@@ -2,7 +2,7 @@ package com.puppet.pcore.impl.serialization.msgpack;
 
 import com.puppet.pcore.impl.serialization.ExtensionAwareUnpacker;
 import com.puppet.pcore.impl.serialization.PayloadReaderFunction;
-import com.puppet.pcore.impl.serialization.SerializationException;
+import com.puppet.pcore.serialization.SerializationException;
 import org.msgpack.core.MessageUnpacker;
 import org.msgpack.value.ExtensionValue;
 import org.msgpack.value.Variable;
@@ -38,7 +38,7 @@ public class MsgUnpacker implements ExtensionAwareUnpacker {
 			return variable.asBooleanValue().getBoolean();
 		case EXTENSION:
 			ExtensionValue ev = variable.asExtensionValue();
-			PayloadReaderFunction plr = extensionMap.get(ev.getType());
+			PayloadReaderFunction<?> plr = extensionMap.get(ev.getType());
 			if(plr == null)
 				throw new SerializationException(format("Invalid input. %d is not a valid extension number", ev.getType()));
 			return plr.apply(ev.getData());

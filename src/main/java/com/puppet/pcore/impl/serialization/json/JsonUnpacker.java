@@ -2,7 +2,7 @@ package com.puppet.pcore.impl.serialization.json;
 
 import com.puppet.pcore.impl.serialization.ExtensionAwareUnpacker;
 import com.puppet.pcore.impl.serialization.PayloadReaderFunction;
-import com.puppet.pcore.impl.serialization.SerializationException;
+import com.puppet.pcore.serialization.SerializationException;
 
 import java.io.BufferedInputStream;
 import java.io.IOException;

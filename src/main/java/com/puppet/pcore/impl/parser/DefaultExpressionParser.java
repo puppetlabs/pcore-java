@@ -2,6 +2,7 @@ package com.puppet.pcore.impl.parser;
 
 import com.puppet.pcore.Default;
 import com.puppet.pcore.parser.Expression;
+import com.puppet.pcore.parser.ParseException;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -200,9 +201,11 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 				case '\n':
 					currentToken = TOKEN_MINUS;
 					++tokenPos;
+					break;
 				case '(':
 					currentToken = TOKEN_UNARY_MINUS;
 					++tokenPos;
+					break;
 				default:
 					currentToken = isLetterOrDigit(c) ? TOKEN_UNARY_MINUS : TOKEN_MINUS;
 					++tokenPos;

@@ -14,7 +14,7 @@ public interface ImplementationRegistry {
 	/**
 	 * Find the ObjectWriter for the given implementation class.
 	 *
-	 * @param implClass
+	 * @param implClass the implementation class
 	 * @return the ObjectWriter, or <code>null</code> if not found.
 	 */
 	<T> Function<T,Object[]> attributeProviderFor(Class<T> implClass);
@@ -40,7 +40,7 @@ public interface ImplementationRegistry {
 	/**
 	 * Find the {@link FactoryFunction} for the given implementation class.
 	 *
-	 * @param implClass
+	 * @param implClass the implementation class
 	 * @return the ObjectReader, or <code>null</code> if not found.
 	 */
 	<T> FactoryFunction<T> creatorFor(Class<T> implClass);

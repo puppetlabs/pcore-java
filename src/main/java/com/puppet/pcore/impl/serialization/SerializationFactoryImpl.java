@@ -1,6 +1,5 @@
 package com.puppet.pcore.impl.serialization;
 
-import com.puppet.pcore.Pcore;
 import com.puppet.pcore.serialization.Reader;
 import com.puppet.pcore.serialization.SerializationFactory;
 import com.puppet.pcore.serialization.Writer;

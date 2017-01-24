@@ -1,8 +1,9 @@
 package com.puppet.pcore.impl;
 
+import clojure.lang.*;
+
 import java.util.*;
 import java.util.function.BiFunction;
-import java.util.function.BinaryOperator;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -13,22 +14,60 @@ public class Helpers {
 
 	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K,V> asMap(Object... keyValuePairs) {
-		int len = keyValuePairs.length;
-		switch(len) {
-		case 0:
-			return Collections.emptyMap();
-		case 2:
-			return Collections.singletonMap((K)keyValuePairs[0], (V)keyValuePairs[1]);
-		default:
-			if((len % 2) != 0)
-				throw new IllegalArgumentException("asMap must be given an even number of arguments");
-			Map<K,V> result = new LinkedHashMap<>();
-			for(int idx = 0; idx < len; ) {
-				Object key = keyValuePairs[idx++];
-				result.put((K)key, (V)keyValuePairs[idx++]);
+		return keyValuePairs.length == 0 ? PersistentArrayMap.EMPTY : new PersistentArrayMap(Arrays.copyOf(keyValuePairs, keyValuePairs.length));
+	}
+
+	public static <K, V> Map<K,V> asMap(List<?> keyValuePairs) {
+		return asWrappingMap(keyValuePairs.toArray(new Object[keyValuePairs.size()]));
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> List<T> asList(T... values) {
+		return values.length == 0 ? PersistentVector.EMPTY : PersistentVector.create((Object[])values);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K,V> asWrappingMap(Object[] keyValuePairs) {
+		return keyValuePairs.length == 0 ? PersistentArrayMap.EMPTY : new PersistentArrayMap(keyValuePairs);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> List<T> asWrappingList(T[] values) {
+		return values.length == 0 ? PersistentVector.EMPTY  : (List<T>)RT.vector((Object[])values);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <T> List<T> unmodifiableCopy(Collection<T> collection) {
+		return collection.isEmpty() ? PersistentVector.EMPTY : PersistentVector.create(collection);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K, V> unmodifiableCopy(Map<K, V> map) {
+		return map.isEmpty() ? PersistentArrayMap.EMPTY : (Map<K, V>)PersistentArrayMap.create(map);
+	}
+
+	public static Object freeze(Object value) {
+		if(value instanceof Map<?,?>) {
+			Map<?,?> map = (Map<?,?>)value;
+			Object[] keyPairs = new Object[map.size() * 2];
+			int idx = 0;
+			for(Map.Entry<?,?> entry : map.entrySet()) {
+				keyPairs[idx++] = freeze(entry.getKey());
+				keyPairs[idx++] = freeze(entry.getValue());
 			}
-			return result;
+			return asWrappingMap(keyPairs);
 		}
+
+		if(value instanceof Collection<?>) {
+			Collection<?> coll = (Collection<?>)value;
+			int top = coll.size();
+			Object[] values = new Object[top];
+			int idx = 0;
+			for(Object elem : coll)
+				values[idx++] = freeze(elem);
+			return asWrappingList(values);
+		}
+		return value;
 	}
 
 	public static String capitalizeSegment(String segment) {
@@ -47,12 +86,26 @@ public class Helpers {
 		if(CLASS_NAME.matcher(typeName).matches())
 			return typeName;
 		String[] segments = COLON_SPLIT.split(typeName);
-		if(segments.length == 1)
-			return capitalizeSegment(segments[0]);
-		StringJoiner joiner = new StringJoiner("::");
-		for(String segment : segments)
-			joiner.add(capitalizeSegment(segment));
-		return joiner.toString();
+		int idx = segments.length;
+		while(--idx >= 0)
+			segments[idx] =  capitalizeSegment(segments[idx]);
+		return join("::", Arrays.asList(segments));
+	}
+
+	public static String join(String delimiter, Iterable<? extends CharSequence> strings) {
+		Iterator<? extends CharSequence> iter = strings.iterator();
+		if(!iter.hasNext())
+			return "";
+		CharSequence first = iter.next();
+		if(!iter.hasNext())
+			return first.toString();
+		StringBuilder bld = new StringBuilder();
+		bld.append(first);
+		do {
+			bld.append(delimiter);
+			bld.append(iter.next());
+		} while(iter.hasNext());
+		return bld.toString();
 	}
 
 	@SuppressWarnings("unchecked")
@@ -81,7 +134,7 @@ public class Helpers {
 	}
 
 	public static <T> List<T> makeUnique(List<? extends T> a) {
-		return new ArrayList<>(new LinkedHashSet<T>(a));
+		return unmodifiableCopy(new LinkedHashSet<T>(a));
 	}
 
 	public static <T extends MergableRange<T>> List<T> mergeRanges(List<T> rangesToMerge) {
@@ -106,14 +159,14 @@ public class Helpers {
 				}));
 				ranges = unmerged;
 			}
-			return result;
+			return unmodifiableCopy(result);
 		}
 	}
 
 	public static <T> List<T> mergeUnique(List<? extends T> a, List<? extends T> b) {
 		Set<T> uniqueSet = new LinkedHashSet<>(a);
 		uniqueSet.addAll(b);
-		return new ArrayList<>(uniqueSet);
+		return unmodifiableCopy(uniqueSet);
 	}
 
 	public static void puppetQuote(String s, StringBuilder bld) {
@@ -199,38 +252,11 @@ public class Helpers {
 		return COLON_SPLIT.split(qname);
 	}
 
-	@SuppressWarnings("unchecked")
-	public static <T> List<T> unmodifiableCopy(List<? extends T> collection) {
-		switch(collection.size()) {
-		case 0:
-			return Collections.emptyList();
-		case 1:
-			return Collections.unmodifiableList(Collections.singletonList(collection.get(0)));
-		default:
-			return Collections.unmodifiableList(Arrays.asList((T[])collection.toArray()));
-		}
-	}
-
-	public static <T> List<T> unmodifiableCopy(T[] array) {
-		return unmodifiableList(array.clone());
-	}
-
-	public static <T> List<T> unmodifiableList(T[] array) {
-		switch(array.length) {
-		case 0:
-			return Collections.emptyList();
-		case 1:
-			return Collections.unmodifiableList(Collections.singletonList(array[0]));
-		default:
-			return Collections.unmodifiableList(Arrays.asList(array));
-		}
-	}
-
 	public static <R> List<R> mapRange(int start, int end, Function<Integer, ? extends R> mapper) {
-		List<R> result = new ArrayList<R>(end - start);
+		@SuppressWarnings("unchecked") R[] result = (R[])new Object[end - start];
 		for(int idx = start; idx < end; ++idx)
-			result.add(mapper.apply(idx));
-		return result;
+			result[idx - start] = mapper.apply(idx);
+		return asList(result);
 	}
 
 	public static <T> boolean all(Collection<? extends T> collection, Predicate<? super T> condition) {
@@ -242,11 +268,11 @@ public class Helpers {
 
 	public static <T> List<T> filter(Collection<? extends T> collection, Predicate<? super T> condition) {
 		int top = collection.size();
-		List<T> result = new ArrayList<T>(top);
+		List<T> result = new ArrayList<>(top);
 		for(T elem : collection)
 			if(condition.test(elem))
 				result.add(elem);
-		return result;
+		return unmodifiableCopy(result);
 	}
 
 	public static <T> int count(Collection<? extends T> collection, Predicate<? super T> condition) {
@@ -259,10 +285,11 @@ public class Helpers {
 
 	public static <T, R> List<R> map(Collection<? extends T> collection, Function<? super T, ? extends R> mapper) {
 		int top = collection.size();
-		List<R> result = new ArrayList<R>(top);
+		@SuppressWarnings("unchecked") R[] result = (R[])new Object[top];
+		int idx = 0;
 		for(T elem : collection)
-			result.add(mapper.apply(elem));
-		return result;
+			result[idx++] = mapper.apply(elem);
+		return asList(result);
 	}
 
 	public static <T, R> R reduce(Collection<? extends T> collection, R identity, BiFunction<R, T, R> accumulator) {
@@ -279,6 +306,7 @@ public class Helpers {
 		return false;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> List<T> flatten(Collection<?> collection) {
 		ArrayList<T> result = new ArrayList<>();
 		for(Object elem : collection)
@@ -286,11 +314,11 @@ public class Helpers {
 				result.addAll(flatten((Collection)elem));
 			else
 				result.add((T)elem);
-		return result;
+		return unmodifiableCopy(result);
 	}
 
 	public static <T> List<T> distinct(Collection<? extends T> collection) {
-		return new ArrayList<>(new LinkedHashSet<>(collection));
+		return unmodifiableCopy(new LinkedHashSet<>(collection));
 	}
 
 	public static <T> Map<Boolean, List<T>> partitionBy(Collection<T> collection, Predicate<? super T> condition) {
@@ -306,7 +334,7 @@ public class Helpers {
 	}
 
 	public static <T, G> Map<G, List<T>> groupBy(Collection<T> collection, Function<? super T, ? extends G> grouper) {
-		Map<G, List<T>> result = new LinkedHashMap<G,List<T>>();
+		Map<G, List<T>> result = new LinkedHashMap<>();
 		for(T elem : collection) {
 			G group = grouper.apply(elem);
 			List<T> groupList = result.get(group);
@@ -316,6 +344,6 @@ public class Helpers {
 			}
 			groupList.add(elem);
 		}
-		return result;
+		return unmodifiableCopy(result);
 	}
 }

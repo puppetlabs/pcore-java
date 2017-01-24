@@ -1,8 +1,5 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.impl.Constants;
-
-import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static com.puppet.pcore.impl.types.TypeFactory.*;

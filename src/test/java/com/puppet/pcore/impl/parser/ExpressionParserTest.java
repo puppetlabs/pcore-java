@@ -1,6 +1,7 @@
 package com.puppet.pcore.impl.parser;
 
 import com.puppet.pcore.parser.Expression;
+import com.puppet.pcore.parser.ParseException;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

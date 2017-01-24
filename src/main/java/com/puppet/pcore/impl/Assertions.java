@@ -1,6 +1,5 @@
 package com.puppet.pcore.impl;
 
-import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeAssertionException;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.IntegerType;

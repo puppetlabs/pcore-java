@@ -13,7 +13,7 @@ public class HashExpression extends ExpressionList {
 	/**
 	 * Finds an expression with that represents the string given by {@code key} and returns it.
 	 *
-	 * @param key
+	 * @param key the key to search for
 	 * @return the found expression or {@code null} if no expression matches the given key.
 	 */
 	public Expression getValue(String key) {

@@ -1,7 +1,5 @@
 package com.puppet.pcore;
 
-import org.junit.platform.commons.util.StringUtils;
-
 import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
@@ -35,6 +33,6 @@ public class TestHelper {
 	}
 
 	private static String buildPrefix(String message) {
-		return (StringUtils.isNotBlank(message) ? message + " ==> " : "");
+		return ((message == null || message.trim().length() == 0) ? "" : message + " ==> ");
 	}
 }

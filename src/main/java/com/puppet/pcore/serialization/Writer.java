@@ -23,15 +23,15 @@ import java.io.IOException;
 public interface Writer {
 	/**
 	 * Finish writing (flush output).
-	 * @throws IOException
+	 * @throws IOException propagated from the underlying packer
 	 */
 	void finish() throws IOException;
 
 	/**
 	 * Write an object
 	 *
-	 * @param value
-	 * @throws IOException
+	 * @param value the object to write
+	 * @throws IOException propagated from the underlying packer
 	 */
 	void write(Object value) throws IOException;
 }

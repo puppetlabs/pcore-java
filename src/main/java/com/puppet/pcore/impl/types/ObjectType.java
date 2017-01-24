@@ -105,7 +105,8 @@ public class ObjectType extends MetaType {
 
 		@Override
 		void accept(Visitor visitor, RecursionGuard guard) {
-			getAnnotations().keySet().forEach(key -> key.accept(visitor, guard));
+			for(AnyType key : getAnnotations().keySet())
+				key.accept(visitor, guard);
 			type.accept(visitor, guard);
 		}
 
@@ -183,7 +184,7 @@ public class ObjectType extends MetaType {
 			}
 			if(value != UNDEF)
 				result.put(KEY_VALUE, value);
-			return result;
+			return unmodifiableCopy(result);
 		}
 
 		@Override
@@ -212,6 +213,12 @@ public class ObjectType extends MetaType {
 		String featureType() {
 			return "function";
 		}
+
+		@Override
+		public Map<String,Object> i12nHash() {
+			Map<String,Object> result = super.i12nHash();
+			return unmodifiableCopy(result);
+		}
 	}
 
 	private enum AttributeKind {constant, derived, given_or_derived, normal}
@@ -219,7 +226,7 @@ public class ObjectType extends MetaType {
 	private enum MemberType {attribute, function, all}
 
 	public static final ObjectType DEFAULT = new ObjectType();
-	private static final AnyType TYPE_ATTRIBUTE_KIND = enumType(map(asList(AttributeKind.values()).subList(0, AttributeKind.values().length - 1), Enum::name));
+	private static final AnyType TYPE_ATTRIBUTE_KIND = enumType(map(asList(AttributeKind.values()).subList(0, AttributeKind.values().length - 1), AttributeKind::name));
 	private static final AnyType TYPE_MEMBER_NAME = patternType(regexpType(Pattern.compile("\\A[a-z_]\\w*\\z")));
 	private static final AnyType TYPE_ATTRIBUTE = variantType(typeType(), structType(
 			structElement(KEY_TYPE, typeType()),
@@ -395,7 +402,7 @@ public class ObjectType extends MetaType {
 			result.put(KEY_SERIALIZATION, serialization);
 		if(!equalityIncludeType)
 			result.put(KEY_EQUALITY_INCLUDE_TYPE, false);
-		return result;
+		return unmodifiableCopy(result);
 	}
 
 	public synchronized StructType i12nType() {
@@ -420,7 +427,7 @@ public class ObjectType extends MetaType {
 	public Object newInstance(ArgumentsAccessor aa) throws IOException {
 		ImplementationRegistry ir = Pcore.implementationRegistry();
 		Class<?> implClass = ir.classFor(this, currentThread().getContextClassLoader());
-		FactoryFunction creator = implClass == null ? null : ir.creatorFor(implClass);
+		FactoryFunction<?> creator = implClass == null ? null : ir.creatorFor(implClass);
 		return creator == null ? new DynamicObjectImpl(aa) : aa.remember(creator.createInstance(aa));
 	}
 
@@ -598,7 +605,7 @@ public class ObjectType extends MetaType {
 		if(includeParent) {
 			AnyType parent = resolveParent();
 			if(parent instanceof ObjectType)
-				((ObjectType)parent).collectMembers(all, includeParent, memberType);
+				((ObjectType)parent).collectMembers(all, true, memberType);
 		}
 		switch(memberType) {
 		case attribute:

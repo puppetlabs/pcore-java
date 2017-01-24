@@ -4,6 +4,7 @@ import com.puppet.pcore.Binary;
 import com.puppet.pcore.Comment;
 import com.puppet.pcore.Default;
 import com.puppet.pcore.Symbol;
+import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.serialization.extension.*;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -13,8 +14,8 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
-import java.util.StringJoiner;
 import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.serialization.extension.Numbers.*;
@@ -51,10 +52,10 @@ public abstract class AbstractReader implements Reader {
 
 	private String readPayloadQName(ExtensionAwareUnpacker ep) throws IOException {
 		int segmentCount = ep.readInt();
-		StringJoiner joiner = new StringJoiner("::");
-		while(--segmentCount >= 0)
-			joiner.add(readPayloadString(ep));
-		return joiner.toString();
+		String[] segments = new String[segmentCount];
+		for(int idx = 0; idx < segmentCount; ++idx)
+			segments[idx] = readPayloadString(ep);
+		return Helpers.join("::", Arrays.asList(segments));
 	}
 
 	private String readPayloadString(ExtensionAwareUnpacker ep) throws IOException {

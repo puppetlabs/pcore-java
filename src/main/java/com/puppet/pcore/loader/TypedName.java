@@ -51,7 +51,7 @@ public class TypedName {
 	}
 
 	/**
-	 * Performs a case insenitive compare of type, name, and name authority.
+	 * Performs a case insensitive compare of type, name, and name authority.
 	 * @param o the object to compare with
 	 * @return {@code true} if the objects are equal
 	 */

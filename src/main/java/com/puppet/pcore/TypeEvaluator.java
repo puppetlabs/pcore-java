@@ -1,6 +1,5 @@
 package com.puppet.pcore;
 
-import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.parser.Expression;
 
 import java.net.URI;

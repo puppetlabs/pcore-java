@@ -4,7 +4,7 @@ import com.puppet.pcore.*;
 import com.puppet.pcore.impl.loader.BasicLoader;
 import com.puppet.pcore.impl.loader.ParentedLoader;
 import com.puppet.pcore.impl.loader.TypeSetLoader;
-import com.puppet.pcore.impl.serialization.SerializationException;
+import com.puppet.pcore.serialization.SerializationException;
 import com.puppet.pcore.impl.serialization.json.JsonSerializationFactory;
 import com.puppet.pcore.impl.serialization.msgpack.MsgPackSerializationFactory;
 import com.puppet.pcore.impl.types.AnyType;
@@ -32,7 +32,7 @@ import static java.util.Collections.emptyMap;
 public class PcoreImpl {
 	private final ImplementationRegistry implementationRegistry = new ImplementationRegistryImpl();
 	private final TypeEvaluator typeEvaluator = new TypeEvaluatorImpl();
-	private final ThreadLocal<Loader> loader = new ThreadLocal<Loader>();
+	private final ThreadLocal<Loader> loader = new ThreadLocal<>();
 
 	public void initBaseTypeSystem() {
 		loader.set(new BasicLoader());
@@ -112,9 +112,9 @@ public class PcoreImpl {
 	 * Execute function using a loader that is parented by the current loader and capable of finding things
 	 * in the given type set.
 	 *
-	 * @param typeSet
-	 * @param function
-	 * @param <T>
+	 * @param typeSet the type set to add on top of the current scope
+	 * @param function the function to execute with the new scope
+	 * @param <T> the return type
 	 * @return the return value of the given function
 	 */
 	public <T> T withTypeSetScope(TypeSetType typeSet, Supplier<T> function) {

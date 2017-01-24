@@ -49,7 +49,7 @@ public class TypeSetType extends MetaType {
 			Object versionRange = i12nHash.get(KEY_VERSION_RANGE);
 			this.versionRange = versionRange instanceof String ? VersionRange.create((String)versionRange) : (VersionRange)versionRange;
 			@SuppressWarnings("unchecked") Map<AnyType,Map<String,?>> annotations = (Map<AnyType,Map<String,?>>)i12nHash.get(KEY_ANNOTATIONS);
-			this.annotations = annotations == null ? emptyMap() : unmodifiableMap(new LinkedHashMap<>(annotations));
+			this.annotations = annotations == null ? emptyMap() : unmodifiableCopy(annotations);
 		}
 
 		@Override
@@ -66,7 +66,7 @@ public class TypeSetType extends MetaType {
 				result.put(KEY_NAME_AUTHORITY, nameAuthority.toString());
 			result.put(KEY_NAME, name);
 			result.put(KEY_VERSION_RANGE, versionRange.toString());
-			return result;
+			return unmodifiableCopy(result);
 		}
 
 		public void resolve() {
@@ -82,7 +82,8 @@ public class TypeSetType extends MetaType {
 		}
 
 		void accept(Visitor visitor, RecursionGuard guard) {
-			getAnnotations().keySet().forEach(key -> key.accept(visitor, guard));
+			for(AnyType key : getAnnotations().keySet())
+				key.accept(visitor, guard);
 		}
 	}
 	private static final AnyType TYPE_STRING_OR_VERSION = variantType(StringType.NOT_EMPTY, semVerType());
@@ -213,14 +214,14 @@ public class TypeSetType extends MetaType {
 			result.put(KEY_NAME, name);
 		result.put(KEY_VERSION, version);
 		if(!types.isEmpty())
-			result.put(KEY_TYPES, unmodifiableMap(types));
+			result.put(KEY_TYPES, unmodifiableCopy(types));
 		if(!references.isEmpty()) {
 			LinkedHashMap<String,Map<String,Object>> refs = new LinkedHashMap<>();
 			for(Map.Entry<String,Reference> entry : references.entrySet())
 				refs.put(entry.getKey(), entry.getValue().i12nHash());
-			result.put(KEY_REFERENCES, refs);
+			result.put(KEY_REFERENCES, unmodifiableCopy(refs));
 		}
-		return result;
+		return unmodifiableCopy(result);
 	}
 
 	/**
@@ -258,6 +259,7 @@ public class TypeSetType extends MetaType {
 		return Pcore.withTypeSetScope(this, () -> {
 			for(Map.Entry<String,AnyType> entry : types.entrySet())
 				entry.setValue(entry.getValue().resolve());
+			types = unmodifiableCopy(types);
 			return this;
 		});
 	}
@@ -326,8 +328,16 @@ public class TypeSetType extends MetaType {
 				String refName = ref.name;
 				URI refNa = ref.nameAuthority;
 
-				Map<String,List<VersionRange>> naRoots = rootMap.computeIfAbsent(refNa, k -> new HashMap<>());
-				List<VersionRange> ranges = naRoots.computeIfAbsent(refName, k -> new ArrayList<>());
+				Map<String,List<VersionRange>> naRoots = rootMap.get(refNa);
+				if(naRoots == null) {
+					naRoots = new HashMap<>();
+					rootMap.put(refNa, naRoots);
+				}
+				List<VersionRange> ranges = naRoots.get(refName);
+				if(ranges == null) {
+					ranges = new ArrayList<>();
+					naRoots.put(refName, ranges);
+				}
 				for(VersionRange range : ranges) {
 					if(range.isOverlap(ref.versionRange))
 						throw new TypeResolverException(format(
@@ -367,7 +377,8 @@ public class TypeSetType extends MetaType {
 
 		URI nameAuth = resolveNameAuthority(result);
 		Map<String,Object> types = (Map<String,Object>)result.get(KEY_TYPES);
-		if(types != null) {
+		if(types != null && !types.isEmpty()) {
+			types = new LinkedHashMap<>(types);
 			for(Map.Entry<String,Object> entry : types.entrySet()) {
 				Object value = entry.getValue();
 				if(value instanceof Map)
@@ -381,6 +392,7 @@ public class TypeSetType extends MetaType {
 						entry.getKey(),
 						((TypeEvaluatorImpl)Pcore.typeEvaluator()).bindByName(name + "::" + entry.getKey(), (AnyType)value, nameAuth));
 			}
+			result.put(KEY_TYPES, unmodifiableCopy(types));
 		}
 		return result;
 	}
@@ -417,7 +429,7 @@ public class TypeSetType extends MetaType {
 		URI nameAuth = resolveNameAuthority(result);
 		Object types = result.get(KEY_TYPES);
 		if(types instanceof Map<?,?>) {
-			Map<String,Object> typesMap = (Map<String,Object>)types;
+			@SuppressWarnings("unchecked") Map<String,Object> typesMap = (Map<String,Object>)types;
 			for(Map.Entry<String,Object> entry : typesMap.entrySet())
 				typesMap.put(entry.getKey(), evaluator.declareType(name + "::" + entry.getKey(), (Expression)entry.getValue(), nameAuth));
 		}

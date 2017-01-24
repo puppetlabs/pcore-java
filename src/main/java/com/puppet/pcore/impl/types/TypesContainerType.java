@@ -3,7 +3,7 @@ package com.puppet.pcore.impl.types;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.puppet.pcore.impl.Helpers.unmodifiableList;
+import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
 
 abstract class TypesContainerType extends AnyType {
 	public final List<AnyType> types;
@@ -43,12 +43,13 @@ abstract class TypesContainerType extends AnyType {
 			resolved = true;
 
 		resolved = false;
-		return copyWith(unmodifiableList(rsTypes.toArray(new AnyType[types.size()])), true);
+		return copyWith(unmodifiableCopy(rsTypes), true);
 	}
 
 	@Override
 	void accept(Visitor visitor, RecursionGuard guard) {
-		types.forEach(type -> type.accept(visitor, guard));
+		for(AnyType type : types)
+			type.accept(visitor, guard);
 		super.accept(visitor, guard);
 	}
 

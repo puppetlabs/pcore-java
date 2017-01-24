@@ -60,7 +60,8 @@ public class AnyTypeTest {
 	@DisplayName("can be used as a Hash key")
 	public void asHashKey() {
 		Map<AnyType, AnyType> typesByType = new HashMap<>();
-		TypeEvaluatorImpl.BASIC_TYPES.values().forEach(type -> typesByType.put(type, type));
+		for(AnyType type : TypeEvaluatorImpl.BASIC_TYPES.values())
+			typesByType.put(type, type);
 		assertTrue(all(TypeEvaluatorImpl.BASIC_TYPES.values(), type -> typesByType.get(type) == type));
 	}
 }
