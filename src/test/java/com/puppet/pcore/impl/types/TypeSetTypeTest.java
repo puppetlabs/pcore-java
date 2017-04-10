@@ -231,15 +231,15 @@ public class TypeSetTypeTest extends DeclaredTypeTestBase {
 				@Test
 				@DisplayName("contains an initialization map that has a version_range that is not a valid SemVer range")
 				public void refRangeInvalid() {
-					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => { Ref => { name => 'Cars', version_range => 'X' } }");
+					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => { Ref => { name => 'Cars', version_range => 'N' } }");
 					Throwable ex = assertThrows(IllegalArgumentException.class, () -> resolveTypeSet());
-					assertIncludes("Expected one of '<', '>' or digit at position 0 in range 'X'", ex.getMessage());
+					assertIncludes("'N' is not a valid version range", ex.getMessage());
 				}
 
 				@Test
 				@DisplayName("contains an initialization map that has an alias that is not a SimpleName")
 				public void refAliasInvalid() {
-					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => { 'cars' => { name => 'X', version_range => '1.x' } }");
+					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => { 'cars' => { name => 'N', version_range => '1.x' } }");
 					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("key of entry 'cars' expects a match for Pattern[/\\\\A[A-Z]\\\\w*\\\\z/], got 'cars'", ex.getMessage());
 				}

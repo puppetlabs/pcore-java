@@ -689,7 +689,7 @@ public class ObjectTypeTest extends DeclaredTypeTestBase {
 			@Test
 			@DisplayName("SemVer['>=1.2.3', '<4.0.0']")
 			public void pSemVer() {
-				Object result = resolveType("Pcore::SemVerType").newInstance(asList(VersionRange.fromString(">=1.2.3"), VersionRange.fromString("<4.0.0")));
+				Object result = resolveType("Pcore::SemVerType").newInstance(asList(VersionRange.create(">=1.2.3"), VersionRange.create("<4.0.0")));
 				assertEquals("SemVer['>=1.2.3', '<4.0.0']", result.toString());
 			}
 

@@ -76,7 +76,7 @@ public class TypeSetType extends MetaType {
 				throw new TypeResolverException(format("%s resolves to a %s", this, type));
 
 			this.typeSet = (TypeSetType)((TypeSetType)type).resolve();
-			if(!versionRange.isIncluded(typeSet.version))
+			if(!versionRange.includes(typeSet.version))
 				throw new TypeResolverException(format(
 						"%s resolves to an incompatible version. Expected %s, got %s", this, versionRange, typeSet.version));
 		}
@@ -296,7 +296,7 @@ public class TypeSetType extends MetaType {
 			pcoreVersion = Version.create((String)pcoreVersion);
 
 		this.pcoreVersion = (Version)pcoreVersion;
-		if(!PCORE_PARSABLE_VERSIONS.isIncluded(this.pcoreVersion))
+		if(!PCORE_PARSABLE_VERSIONS.includes(this.pcoreVersion))
 			throw new TypeResolverException(format("The pcore version for TypeSet '%s' is not understood by this runtime. Expected range %s, got %s",
 					name, PCORE_PARSABLE_VERSIONS, this.pcoreVersion));
 

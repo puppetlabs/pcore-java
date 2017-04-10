@@ -435,8 +435,8 @@ public class TypeFormatterTest {
 	public void semVerTypeWithRanges() {
 		assertEquals("SemVer['1.0.0 - 1.3.8', '1.4.0 - 2.0.0']",
 				semVerType(asList(
-						VersionRange.fromString("1.0.0 - 1.3.8"),
-						VersionRange.fromString("1.4.0 - 2.0.0"))).toString());
+						VersionRange.create("1.0.0 - 1.3.8"),
+						VersionRange.create("1.4.0 - 2.0.0"))).toString());
 	}
 
 	@Test
@@ -617,12 +617,12 @@ public class TypeFormatterTest {
 
 	@Test
 	public void versionRangeS() {
-		assertEquals("'>=1.2.3'", format(VersionRange.fromString(">=1.2.3")));
+		assertEquals("'>=1.2.3'", format(VersionRange.create(">=1.2.3")));
 	}
 
 	@Test
 	public void versionS() {
-		assertEquals("'1.2.3-alpha'", format(Version.fromString("1.2.3-alpha")));
+		assertEquals("'1.2.3-alpha'", format(Version.create("1.2.3-alpha")));
 	}
 
 	private String format(Object object) {

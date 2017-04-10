@@ -142,7 +142,7 @@ public class ReaderWriterTest {
 	@Test
 	@DisplayName("Version")
 	public void rwVersion() throws IOException {
-		Version version = Version.create(10,20,30,"beta2");
+		Version version = Version.create(10,20,30,"beta.2", "build.38");
 		assertEquals(version, writeAndRead(version));
 	}
 

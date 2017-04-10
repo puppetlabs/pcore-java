@@ -185,7 +185,7 @@ abstract class RuntimeTypes {
 	@Test
 	@DisplayName("Version")
 	void rwVersion() throws IOException {
-		Version version = Version.create(10,20,30,"beta2");
+		Version version = Version.create(10,20,30,"beta2", "build.3");
 		assertEquals(version, writeAndRead(version));
 	}
 
