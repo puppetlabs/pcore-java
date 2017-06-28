@@ -17,6 +17,7 @@ import org.junit.jupiter.api.Test;
 
 import java.util.List;
 
+import static com.puppet.pcore.impl.Helpers.asList;
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -49,6 +50,9 @@ public class VersionRangeTest {
 	public void greater() {
 		try {
 			VersionRange range = VersionRange.create(">1.2.0");
+			assertEquals(VersionRange.greater(Version.create("1.2.0")), range);
+			assertTrue(range.isExcludeBegin());
+
 			assertFalse(range.includes(Version.create(1, 3, 0, "alpha")));
 			assertFalse(range.includes(Version.create(1, 2, 9, "alpha")));
 			assertTrue(range.includes(Version.create(1, 2, 1)));
@@ -68,6 +72,9 @@ public class VersionRangeTest {
 	public void greaterEqual() {
 		try {
 			VersionRange range = VersionRange.create(">=1.2.0");
+			assertEquals(VersionRange.greaterOrEqual(Version.create("1.2.0")), range);
+			assertFalse(range.isExcludeBegin());
+
 			assertTrue(range.includes(Version.create(1, 2, 0)));
 			assertFalse(range.includes(Version.create(1, 3, 0, "alpha")));
 			assertFalse(range.includes(Version.create(1, 2, 9, "alpha")));
@@ -84,6 +91,20 @@ public class VersionRangeTest {
 	}
 
 	@Test
+	public void asRestrictiveAs() {
+		VersionRange range1 = VersionRange.create(">=1.2.0 <1.3.0--");
+		VersionRange range2 = VersionRange.create(">=1.2.1 <1.2.2--");
+		assertTrue(range2.isAsRestrictiveAs(range1));
+		assertFalse(range1.isAsRestrictiveAs(range2));
+	}
+
+	@Test
+	public void createVersionArgs() {
+		assertEquals(VersionRange.create(">=1.2.0 <1.3.0"), VersionRange.create(Version.create("1.2.0"), true, Version.create("1.3.0"), false));
+		assertEquals(VersionRange.create(">1.2.0 <=1.3.0"), VersionRange.create(Version.create("1.2.0"), false, Version.create("1.3.0"), true));
+	}
+
+	@Test
 	public void intersection() {
 		try {
 			VersionRange range1 = VersionRange.create(">1.2.0");
@@ -91,11 +112,35 @@ public class VersionRangeTest {
 			assertNull(range1.intersection(range2));
 
 			range1 = VersionRange.create(">1.2.0");
+			range2 = VersionRange.create("<1.1.0");
+			assertNull(range1.intersection(range2));
+
+			range1 = VersionRange.create(">1.2.0");
 			range2 = VersionRange.create("<=1.2.0");
 			assertNull(range1.intersection(range2));
 
+			range1 = VersionRange.create(">=1.2.0 <1.3.0");
+			range2 = VersionRange.create(">=1.3.0 <1.4.0");
+			assertNull(range1.intersection(range2));
+
+			range1 = VersionRange.create(">=1.2.0 <1.3.0");
+			range2 = VersionRange.create(">=1.2.0 <1.4.0");
+			assertNotNull(range1.intersection(range2));
+
 			range1 = VersionRange.create(">=1.2.0");
 			range2 = VersionRange.create("<=1.2.0");
+			assertNotNull(range1.intersection(range2));
+
+			range1 = VersionRange.create("<1.2.0");
+			range2 = VersionRange.create(">1.1.0");
+			assertNotNull(range1.intersection(range2));
+
+			range1 = VersionRange.create(">1.1.0");
+			range2 = VersionRange.create("<1.2.0");
+			assertNotNull(range1.intersection(range2));
+
+			range1 = VersionRange.create("<1.1.0");
+			range2 = VersionRange.create("<1.2.0");
 			assertNotNull(range1.intersection(range2));
 
 			range1 = VersionRange.create(">=1.2.0 <1.3.0--");
@@ -115,9 +160,61 @@ public class VersionRangeTest {
 	}
 
 	@Test
+	public void union() {
+		assertEquals(">1.2.0 <=1.4.0", VersionRange.create(">1.2.0 <=1.3.0 || >1.3.0 <=1.4.0").toNormalizedString());
+		assertEquals(">1.2.0 <=1.4.0", VersionRange.create(">1.3.0 <=1.4.0 || >1.2.0 <=1.3.0").toNormalizedString());
+		assertEquals(">1.2.0 <=1.4.0", VersionRange.create(">1.2.0 <=1.4.0 || >1.2.0 <=1.3.0").toNormalizedString());
+		assertEquals(">1.2.0 <=1.4.0", VersionRange.create(">1.2.0 <=1.4.0 || >1.3.0 <=1.4.0").toNormalizedString());
+		assertEquals(">1.2.0 <1.4.0", VersionRange.create(">1.2.0 <1.4.0 || >1.3.0 <1.4.0").toNormalizedString());
+		assertEquals(">=1.2.0 <=1.4.0", VersionRange.create(">=1.2.0 <=1.4.0 || >1.3.0 <=1.4.0").toNormalizedString());
+		assertEquals(">=1.2.0 <1.4.0", VersionRange.create(">=1.2.0 <1.4.0 || >1.3.0 <1.4.0").toNormalizedString());
+		assertEquals(">=1.2.0 <1.4.0", VersionRange.create(">=1.2.0 <1.4.0 || >=1.2.0 <1.3.0").toNormalizedString());
+		assertEquals(">=1.2.0 <1.4.0", VersionRange.create(">=1.2.0 <1.3.0 || >=1.3.0 <1.4.0").toNormalizedString());
+		assertEquals(">=1.2.0 <1.4.0", VersionRange.create(">=1.3.0 <1.4.0 || >=1.2.0 <1.3.0").toNormalizedString());
+		assertEquals(">=1.2.0 <1.4.0", VersionRange.create(">=1.3.1 <1.4.0 || >=1.2.0 <=1.3.0").toNormalizedString());
+		assertEquals(">=1.2.0 <1.4.0", VersionRange.create(">=1.2.0 <=1.3.0 || >=1.3.1 <1.4.0").toNormalizedString());
+	}
+
+	@Test
+	public void union2() {
+		VersionRange range = VersionRange.create(">1.2.0 <=1.3.0").merge(VersionRange.create(">1.3.0 <=1.4.0"));
+		assertEquals(">1.2.0 <=1.4.0", range.toNormalizedString());
+	}
+
+	@Test
+	public void isOverlap() {
+		assertTrue(VersionRange.create(">1.2.0 <=1.3.0").isOverlap(VersionRange.create(">=1.3.0 <=1.4.0")));
+		assertFalse(VersionRange.create(">1.2.0 <1.3.0").isOverlap(VersionRange.create(">=1.3.0 <=1.4.0")));
+		assertFalse(VersionRange.create(">1.2.0 <=1.3.0").isOverlap(VersionRange.create(">1.3.0 <=1.4.0")));
+		assertFalse(VersionRange.create("1.2.x || 1.4.x").isOverlap(VersionRange.create("1.3.x")));
+	}
+
+	@Test
+	public void and() {
+		assertEquals(VersionRange.EMPTY_RANGE, VersionRange.create(">1.2.0 <1.1.0"));
+	}
+
+	@Test
+	public void findBestMatch() {
+		VersionRange range = VersionRange.create(">1.2.0 <=1.3.0");
+		assertEquals("1.2.7", range.findBestMatch(asList(
+				Version.create("1.4.2"),
+				Version.create("1.2.8-alpha"),
+				Version.create("1.2.3"),
+				Version.create("1.2.7"),
+				Version.create("1.2.5")
+		)).toString());
+	}
+
+	@Test
 	public void less() {
 		try {
 			VersionRange range = VersionRange.create("<1.2.0");
+			assertEquals(VersionRange.less(Version.create("1.2.0")), range);
+			assertEquals(Version.create("1.2.0"), range.getMaxVersion());
+			assertEquals(Version.MIN, range.getMinVersion());
+			assertTrue(range.isExcludeEnd());
+
 			assertFalse(range.includes(Version.create(1, 2, 0, "alpha")));
 			assertFalse(range.includes(Version.create(1, 1, 9, "alpha")));
 			assertTrue(range.includes(Version.create(1, 1, 9)));
@@ -127,6 +224,7 @@ public class VersionRangeTest {
 			range = VersionRange.create("<1.2.0--");
 			assertFalse(range.includes(Version.create(1, 2, 0, "alpha")));
 			assertFalse(range.includes(Version.create(1, 1, 9, "alpha")));
+			assertFalse(range.includes(null));
 		} catch(IllegalArgumentException e) {
 			fail(e.getMessage());
 		}
@@ -136,6 +234,9 @@ public class VersionRangeTest {
 	public void lessEqual() {
 		try {
 			VersionRange range = VersionRange.create("<=1.2.0");
+			assertEquals(VersionRange.lessOrEqual(Version.create("1.2.0")), range);
+			assertFalse(range.isExcludeEnd());
+
 			assertFalse(range.includes(Version.create(1, 2, 0, "alpha")));
 			assertFalse(range.includes(Version.create(1, 1, 9, "alpha")));
 			assertTrue(range.includes(Version.create(1, 1, 9)));
@@ -236,6 +337,7 @@ public class VersionRangeTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeAboveVersion() {
 		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
@@ -310,6 +412,7 @@ public class VersionRangeTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeNotAboveVersion() {
 		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
@@ -399,6 +502,7 @@ public class VersionRangeTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeBelowVersion() {
 		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
@@ -470,6 +574,7 @@ public class VersionRangeTest {
 	}
 
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeNotBelowVersion() {
 		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +

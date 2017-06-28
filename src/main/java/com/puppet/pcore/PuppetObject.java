@@ -1,8 +1,8 @@
 package com.puppet.pcore;
 
-public interface PObject {
+public interface PuppetObject {
 	/**
 	 * @return the type that describes this instance
 	 */
-	Type _pType();
+	Type _pcoreType();
 }

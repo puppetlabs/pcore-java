@@ -1,9 +1,6 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.Pcore;
-import com.puppet.pcore.Type;
-import com.puppet.pcore.TypeEvaluator;
-import com.puppet.pcore.TypeResolverException;
+import com.puppet.pcore.*;
 import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
@@ -28,7 +25,7 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.unmodifiableMap;
 
-public class TypeSetType extends MetaType {
+public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 	public class Reference implements Annotatable {
 		public final Map<AnyType,Map<String,?>> annotations;
 		public final String name;
@@ -36,8 +33,8 @@ public class TypeSetType extends MetaType {
 		public final VersionRange versionRange;
 		private TypeSetType typeSet;
 
-		public Reference(Map<String,Object> i12nHash) {
-			Object nameAuthority = i12nHash.get(KEY_NAME_AUTHORITY);
+		public Reference(Map<String,Object> initHash) {
+			Object nameAuthority = initHash.get(KEY_NAME_AUTHORITY);
 			if(nameAuthority == null)
 				this.nameAuthority = TypeSetType.this.nameAuthority;
 			else {
@@ -45,10 +42,10 @@ public class TypeSetType extends MetaType {
 					nameAuthority = URI.create((String)nameAuthority);
 				this.nameAuthority = (URI)nameAuthority;
 			}
-			this.name = (String)i12nHash.get(KEY_NAME);
-			Object versionRange = i12nHash.get(KEY_VERSION_RANGE);
+			this.name = (String)initHash.get(KEY_NAME);
+			Object versionRange = initHash.get(KEY_VERSION_RANGE);
 			this.versionRange = versionRange instanceof String ? VersionRange.create((String)versionRange) : (VersionRange)versionRange;
-			@SuppressWarnings("unchecked") Map<AnyType,Map<String,?>> annotations = (Map<AnyType,Map<String,?>>)i12nHash.get(KEY_ANNOTATIONS);
+			@SuppressWarnings("unchecked") Map<AnyType,Map<String,?>> annotations = (Map<AnyType,Map<String,?>>)initHash.get(KEY_ANNOTATIONS);
 			this.annotations = annotations == null ? emptyMap() : unmodifiableCopy(annotations);
 		}
 
@@ -57,7 +54,7 @@ public class TypeSetType extends MetaType {
 			return annotations;
 		}
 
-		public Map<String,Object> i12nHash() {
+		public Map<String,Object> initHash() {
 			Map<String,Object> result = new LinkedHashMap<>();
 			Map<AnyType,Map<String,?>> annotations = getAnnotations();
 			if(!annotations.isEmpty())
@@ -88,24 +85,24 @@ public class TypeSetType extends MetaType {
 	}
 	private static final AnyType TYPE_STRING_OR_VERSION = variantType(StringType.NOT_EMPTY, semVerType());
 	private static final AnyType TYPE_STRING_OR_RANGE = variantType(StringType.NOT_EMPTY, semVerRangeType());
-	private static final AnyType TYPE_TYPE_REFERENCE_I12N = structType(
+	private static final AnyType TYPE_TYPE_REFERENCE_INIT = structType(
 			structElement(KEY_NAME, TYPE_QUALIFIED_REFERENCE),
 			structElement(KEY_VERSION_RANGE, TYPE_STRING_OR_RANGE),
 			structElement(optionalType(KEY_NAME_AUTHORITY), TYPE_URI),
 			structElement(optionalType(KEY_ANNOTATIONS), TYPE_ANNOTATIONS)
 	);
-	private static final AnyType TYPE_TYPESET_I12N = structType(
+	static final StructType TYPE_TYPESET_INIT = structType(
 			structElement(optionalType(KEY_PCORE_URI), TYPE_URI),
 			structElement(KEY_PCORE_VERSION, TYPE_STRING_OR_VERSION),
 			structElement(optionalType(KEY_NAME_AUTHORITY), TYPE_URI),
 			structElement(optionalType(KEY_NAME), TYPE_QUALIFIED_REFERENCE),
 			structElement(KEY_VERSION, TYPE_STRING_OR_VERSION),
 			structElement(optionalType(KEY_TYPES), hashType(TYPE_SIMPLE_TYPE_NAME, typeType(), integerType(1))),
-			structElement(optionalType(KEY_REFERENCES), hashType(TYPE_SIMPLE_TYPE_NAME, TYPE_TYPE_REFERENCE_I12N, integerType(1))),
+			structElement(optionalType(KEY_REFERENCES), hashType(TYPE_SIMPLE_TYPE_NAME, TYPE_TYPE_REFERENCE_INIT, integerType(1))),
 			structElement(optionalType(KEY_ANNOTATIONS), TYPE_ANNOTATIONS)
 	);
 
-	public static final TypeSetType DEFAULT = new TypeSetType(asMap(
+	static final TypeSetType DEFAULT = new TypeSetType(asMap(
 			KEY_NAME, "DefaultTypeSet",
 			KEY_NAME_AUTHORITY, RUNTIME_NAME_AUTHORITY.toString(),
 			KEY_PCORE_URI, PCORE_URI.toString(),
@@ -128,22 +125,22 @@ public class TypeSetType extends MetaType {
 	TypeSetType(ArgumentsAccessor args) throws IOException {
 		super((Expression)null);
 		args.remember(this);
-		setI12nHashExpression((Map<String,Object>)args.get(0));
+		setInitHashExpression((Map<String,Object>)args.get(0));
 	}
 
-	TypeSetType(String name, URI nameAuthority, Expression i12nHashExpression) {
-		super(i12nHashExpression);
+	TypeSetType(String name, URI nameAuthority, Expression initHashExpression) {
+		super(initHashExpression);
 		this.name = TYPE_QUALIFIED_REFERENCE.assertInstanceOf(name, true, () -> "TypeSet name");
 		this.nameAuthority = nameAuthority;
 	}
 
-	TypeSetType(Map<String,Object> i12nHash) {
+	TypeSetType(Map<String,Object> initHash) {
 		super((Expression)null);
-		initializeFromHash(i12nHash);
+		initializeFromHash(initHash);
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 
@@ -200,11 +197,11 @@ public class TypeSetType extends MetaType {
 	}
 
 	@Override
-	public Map<String,Object> i12nHash() {
+	public Map<String,Object> _pcoreInitHash() {
 		if(pcoreVersion == null)
-			throw new TypeResolverException("Attempt to retrieve i12nHash of unresolved TypeSet");
+			throw new TypeResolverException("Attempt to retrieve initHash of unresolved TypeSet");
 
-		Map<String,Object> result = super.i12nHash();
+		Map<String,Object> result = super._pcoreInitHash();
 		if(pcoreUri != null)
 			result.put(KEY_PCORE_URI, pcoreUri.toString());
 		result.put(KEY_PCORE_VERSION, pcoreVersion.toString());
@@ -218,7 +215,7 @@ public class TypeSetType extends MetaType {
 		if(!references.isEmpty()) {
 			LinkedHashMap<String,Map<String,Object>> refs = new LinkedHashMap<>();
 			for(Map.Entry<String,Reference> entry : references.entrySet())
-				refs.put(entry.getKey(), entry.getValue().i12nHash());
+				refs.put(entry.getKey(), entry.getValue().initHash());
 			result.put(KEY_REFERENCES, unmodifiableCopy(refs));
 		}
 		return unmodifiableCopy(result);
@@ -265,10 +262,34 @@ public class TypeSetType extends MetaType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(TypeSetType.class, "Pcore::TypeSetType", "Pcore::AnyType",
-				asMap("i12nHashExpression", TYPE_TYPESET_I12N),
-				TypeSetType::new,
-				(self) -> new Object[]{self.i12nHash()});
+		return ptype = pcore.createObjectType("Pcore::TypeSetType", "Pcore::AnyType",
+			asMap(
+					KEY_PCORE_URI, asMap(
+						KEY_TYPE, optionalType(TYPE_URI),
+						KEY_VALUE, null),
+					KEY_PCORE_VERSION, TYPE_STRING_OR_VERSION,
+					KEY_NAME_AUTHORITY, asMap(
+							KEY_TYPE, optionalType(TYPE_URI),
+							KEY_VALUE, null),
+					KEY_NAME, asMap(
+							KEY_TYPE, optionalType(TYPE_QUALIFIED_REFERENCE),
+							KEY_VALUE, null),
+					KEY_VERSION, TYPE_STRING_OR_VERSION,
+					KEY_TYPES, asMap(
+							KEY_TYPE, optionalType(hashType(TYPE_SIMPLE_TYPE_NAME, typeType(), integerType(1))),
+							KEY_VALUE, null),
+					KEY_REFERENCES, asMap(
+							KEY_TYPE, optionalType(hashType(TYPE_SIMPLE_TYPE_NAME, TYPE_TYPE_REFERENCE_INIT, integerType(1))),
+							KEY_VALUE, null),
+					KEY_ANNOTATIONS, asMap(
+							KEY_TYPE, optionalType(KEY_ANNOTATIONS),
+							KEY_VALUE, null)
+			));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, typeSetTypeDispatcher(),
+				(self) -> new Object[]{self._pcoreInitHash()});
 	}
 
 	@Override
@@ -282,16 +303,16 @@ public class TypeSetType extends MetaType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	void initializeFromHash(Map<String,Object> i12nHash) {
-		TYPE_TYPESET_I12N.assertInstanceOf(i12nHash, () -> "TypeSet initializer");
+	void initializeFromHash(Map<String,Object> initHash) {
+		TYPE_TYPESET_INIT.assertInstanceOf(initHash, () -> "TypeSet initializer");
 		if(name == null)
-			name = (String)i12nHash.get(KEY_NAME);
+			name = (String)initHash.get(KEY_NAME);
 		if(nameAuthority == null) {
-			String ns = (String)i12nHash.get(KEY_NAME_AUTHORITY);
+			String ns = (String)initHash.get(KEY_NAME_AUTHORITY);
 			nameAuthority = ns == null ? RUNTIME_NAME_AUTHORITY : URI.create(ns);
 		}
 
-		Object pcoreVersion = i12nHash.get(KEY_PCORE_VERSION);
+		Object pcoreVersion = initHash.get(KEY_PCORE_VERSION);
 		if(pcoreVersion instanceof String)
 			pcoreVersion = Version.create((String)pcoreVersion);
 
@@ -300,24 +321,24 @@ public class TypeSetType extends MetaType {
 			throw new TypeResolverException(format("The pcore version for TypeSet '%s' is not understood by this runtime. Expected range %s, got %s",
 					name, PCORE_PARSABLE_VERSIONS, this.pcoreVersion));
 
-		Object pcoreURI = i12nHash.get(KEY_PCORE_URI);
+		Object pcoreURI = initHash.get(KEY_PCORE_URI);
 		if(pcoreURI instanceof String)
 			pcoreURI = URI.create((String)pcoreURI);
 		this.pcoreUri = (URI)pcoreURI;
 
-		Object version = i12nHash.get(KEY_VERSION);
+		Object version = initHash.get(KEY_VERSION);
 		if(version instanceof String)
 			version = Version.create((String)version);
 		this.version = (Version)version;
 
-		Map<String,AnyType> types = (Map<String,AnyType>)i12nHash.get(KEY_TYPES);
+		Map<String,AnyType> types = (Map<String,AnyType>)initHash.get(KEY_TYPES);
 		if(types != null) {
 			this.types = new LinkedHashMap<>(types);
 			for(String typeName : this.types.keySet())
 				dcToCcMap.put(typeName.toLowerCase(Locale.ENGLISH), typeName);
 		}
 
-		Map<String,Map<String,Object>> refs = (Map<String,Map<String,Object>>)i12nHash.get(KEY_REFERENCES);
+		Map<String,Map<String,Object>> refs = (Map<String,Map<String,Object>>)initHash.get(KEY_REFERENCES);
 		if(refs != null) {
 			Map<String,Reference> refMap = new HashMap<>();
 			Map<URI,Map<String,List<VersionRange>>> rootMap = new HashMap<>();
@@ -328,16 +349,8 @@ public class TypeSetType extends MetaType {
 				String refName = ref.name;
 				URI refNa = ref.nameAuthority;
 
-				Map<String,List<VersionRange>> naRoots = rootMap.get(refNa);
-				if(naRoots == null) {
-					naRoots = new HashMap<>();
-					rootMap.put(refNa, naRoots);
-				}
-				List<VersionRange> ranges = naRoots.get(refName);
-				if(ranges == null) {
-					ranges = new ArrayList<>();
-					naRoots.put(refName, ranges);
-				}
+				Map<String,List<VersionRange>> naRoots = rootMap.computeIfAbsent(refNa, k -> new HashMap<>());
+				List<VersionRange> ranges = naRoots.computeIfAbsent(refName, k -> new ArrayList<>());
 				for(VersionRange range : ranges) {
 					if(range.isOverlap(ref.versionRange))
 						throw new TypeResolverException(format(
@@ -360,14 +373,24 @@ public class TypeSetType extends MetaType {
 			}
 			this.references = unmodifiableMap(refMap);
 		}
-		super.initializeFromHash(i12nHash);
+		super.initializeFromHash(initHash);
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return isAssignable(infer(o), guard);
+	}
+
+	@Override
+	boolean isUnsafeAssignable(AnyType type, RecursionGuard guard) {
+		return getClass().equals(type.getClass()) && equals(DEFAULT) || guardedEquals(type, guard);
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	Map<String,Object> resolveHash(Map<String,Object> i12nHash) {
+	Map<String,Object> resolveHash(Map<String,Object> initHash) {
 		Map<String,Object> result = new LinkedHashMap<>();
-		for(Map.Entry<String,Object> entry : i12nHash.entrySet()) {
+		for(Map.Entry<String,Object> entry : initHash.entrySet()) {
 			String key = entry.getKey();
 			Object value = entry.getValue();
 			if(!KEY_TYPES.equals(key) && value instanceof Map)
@@ -440,12 +463,12 @@ public class TypeSetType extends MetaType {
 		return dcToCcMap.get(name.toLowerCase(Locale.ENGLISH));
 	}
 
-	private URI resolveNameAuthority(Map<String,Object> i12nHash) {
+	private URI resolveNameAuthority(Map<String,Object> initHash) {
 		URI nameAuth = nameAuthority;
 		if(nameAuth != null)
 			return nameAuth;
 
-		Object ne = i12nHash.get(KEY_NAME_AUTHORITY);
+		Object ne = initHash.get(KEY_NAME_AUTHORITY);
 		nameAuth = ne instanceof String ? URI.create((String)ne) : (URI)ne;
 		if(nameAuth != null)
 			return nameAuth;
@@ -456,7 +479,7 @@ public class TypeSetType extends MetaType {
 
 		String n = name;
 		if(n == null)
-			n = (String)i12nHash.get(KEY_NAME);
+			n = (String)initHash.get(KEY_NAME);
 		throw new TypeResolverException(format("No 'name_authority' is declared in TypeSet '%s' and it cannot be inferred", n));
 	}
 }

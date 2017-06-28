@@ -10,12 +10,14 @@ import com.puppet.pcore.serialization.ArgumentsAccessor;
 
 import java.io.IOException;
 import java.util.List;
-import java.util.Objects;
+import java.util.Map;
 import java.util.function.Function;
 
 import static com.puppet.pcore.impl.Helpers.asMap;
-import static com.puppet.pcore.impl.Helpers.filter;
+import static com.puppet.pcore.impl.Helpers.select;
+import static com.puppet.pcore.impl.Options.get;
 import static com.puppet.pcore.impl.types.TypeFactory.anyType;
+import static com.puppet.pcore.impl.types.TypeFactory.typeAliasTypeDispatcher;
 import static com.puppet.pcore.impl.types.TypeFactory.variantType;
 import static java.lang.String.format;
 
@@ -45,7 +47,7 @@ public class TypeAliasType extends AnyType {
 		}
 	}
 
-	public static final TypeAliasType DEFAULT = new TypeAliasType("UnresolvedAlias", null, DefaultType.DEFAULT);
+	static final TypeAliasType DEFAULT = new TypeAliasType("UnresolvedAlias", null, DefaultType.DEFAULT);
 
 	private static ObjectType ptype;
 	public final String name;
@@ -53,11 +55,20 @@ public class TypeAliasType extends AnyType {
 	private AnyType resolvedType;
 	private boolean selfRecursion;
 
+	@SuppressWarnings("unchecked")
 	TypeAliasType(ArgumentsAccessor args) throws IOException {
 		args.remember(this);
-		this.name = (String)args.get(0);
 		this.typeExpression = null;
-		this.resolvedType = (AnyType)args.get(1);
+
+		Object first = args.get(0);
+		if(first instanceof String) {
+			this.name = (String)first;
+			this.resolvedType = (AnyType)args.get(1);
+		} else {
+			Map<String,Object> initHash = (Map<String,Object>)first;
+			this.name = get(initHash, "name", String.class);
+			this.resolvedType = get(initHash, "resolved_type", AnyType.class);
+		}
 	}
 
 	TypeAliasType(String name, Object typeExpression, AnyType resolvedType) {
@@ -68,16 +79,8 @@ public class TypeAliasType extends AnyType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
-	}
-
-	public boolean equals(Object o) {
-		if(super.equals(o)) {
-			TypeAliasType to = (TypeAliasType)o;
-			return name.equals(to.name) && Objects.equals(resolvedType, to.resolvedType);
-		}
-		return false;
 	}
 
 	@Override
@@ -142,11 +145,14 @@ public class TypeAliasType extends AnyType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(TypeAliasType.class, "Pcore::TypeAliasType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::TypeAliasType", "Pcore::AnyType",
 				asMap(
 						"name", StringType.NOT_EMPTY,
-						"resolved_type", anyType()),
-				TypeAliasType::new,
+						"resolved_type", anyType()));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, typeAliasTypeDispatcher(),
 				(self) -> new Object[]{self.name, self.resolvedType()});
 	}
 
@@ -169,6 +175,24 @@ public class TypeAliasType extends AnyType {
 	void checkSelfRecursion(AnyType originator) {
 		if(originator != this)
 			resolvedType().checkSelfRecursion(originator);
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		if(!(o instanceof TypeAliasType))
+			return false;
+
+		TypeAliasType to = (TypeAliasType)o;
+		if(!name.equals(to.name))
+			return false;
+
+		if(isRecursive()) {
+			RecursionGuard g = guard == null ? new RecursionGuard() : guard;
+			return g.withThat(
+					o,
+					thatState -> g.withThis(this, state -> state == RecursionGuard.SELF_RECURSION_IN_BOTH || equals(resolvedType, to.resolvedType, g)));
+		}
+		return equals(resolvedType, to.resolvedType, guard);
 	}
 
 	@Override
@@ -226,7 +250,7 @@ public class TypeAliasType extends AnyType {
 		if(resolvedType instanceof VariantType) {
 			// Drop variants that are not real types
 			List<AnyType> resolvedTypes = ((VariantType)resolvedType).types;
-			List<AnyType> realTypes = filter(resolvedTypes, type -> {
+			List<AnyType> realTypes = select(resolvedTypes, type -> {
 				if(type == this)
 					return false;
 				AssertOtherTypeAcceptor realTypeAsserter = new AssertOtherTypeAcceptor();

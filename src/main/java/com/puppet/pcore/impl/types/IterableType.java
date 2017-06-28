@@ -9,7 +9,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class IterableType extends TypeContainerType {
-	public static final IterableType DEFAULT = new IterableType(AnyType.DEFAULT);
+	static final IterableType DEFAULT = new IterableType(AnyType.DEFAULT);
 
 	private static ObjectType ptype;
 
@@ -22,7 +22,7 @@ public class IterableType extends TypeContainerType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 
@@ -47,6 +47,11 @@ public class IterableType extends TypeContainerType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o instanceof Iterable<?> && isAssignable(inferSet(o), guard);
+	}
+
+	@Override
 	protected boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		if(type.isAssignable(AnyType.DEFAULT, guard))
 			// Don't request the iterable_type. Since this Iterable accepts Any element, it is enough that o is iterable.
@@ -57,12 +62,15 @@ public class IterableType extends TypeContainerType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(IterableType.class, "Pcore::IterableType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::IterableType", "Pcore::AnyType",
 				asMap(
 						"element_type", asMap(
 								KEY_TYPE, typeType(),
-								KEY_VALUE, anyType())),
-				(args) -> iterableType((AnyType)args.get(0)),
+								KEY_VALUE, anyType())));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, iterableTypeDispatcher(),
 				(self) -> new Object[]{self.type});
 	}
 }

@@ -72,30 +72,25 @@ public abstract class Polymorphic<T> {
 	}
 
 	@SuppressWarnings("unchecked")
-	protected T dispatch(Object receiver) throws InvocationTargetException {
-		Method m = getDispatchMap().findMethod(receiver);
+	protected T dispatch(Object ...args) {
+		Method m = getDispatchMap().findMethod(args[0]);
 		try {
-			return (T)m.invoke(this, receiver);
+			return (T)m.invoke(this, args);
 		} catch(IllegalAccessException e) {
 			throw new RuntimeException(e);
+		} catch(InvocationTargetException e) {
+			Throwable te = e.getCause();
+			if(!(te instanceof RuntimeException))
+				te = new RuntimeException(te);
+			throw (RuntimeException)te;
 		}
 	}
 
-	@SuppressWarnings("unchecked")
-	protected T dispatch(Object receiver, Object arg) throws InvocationTargetException {
-		Method m = getDispatchMap().findMethod(receiver);
+	@SuppressWarnings({"unchecked", "UnusedReturnValue"})
+	protected T dispatchWOCatch(Object ...args) throws InvocationTargetException {
+		Method m = getDispatchMap().findMethod(args[0]);
 		try {
-			return (T)m.invoke(this, receiver, arg);
-		} catch(IllegalAccessException e) {
-			throw new RuntimeException(e);
-		}
-	}
-
-	@SuppressWarnings("unchecked")
-	protected T dispatch(Object receiver, Object arg1, Object arg2) throws InvocationTargetException {
-		Method m = getDispatchMap().findMethod(receiver);
-		try {
-			return (T)m.invoke(this, receiver, arg1, arg2);
+			return (T)m.invoke(this, args);
 		} catch(IllegalAccessException e) {
 			throw new RuntimeException(e);
 		}

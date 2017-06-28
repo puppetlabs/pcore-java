@@ -12,14 +12,6 @@ abstract class TimeDataType<T extends TimeDataType<T,E>, E extends Comparable<E>
 		this.max = max;
 	}
 
-	public boolean equals(Object o) {
-		if(getClass().isInstance(o)) {
-			@SuppressWarnings("unchecked") TimeDataType<T,E> ft = (T)o;
-			return min.equals(ft.min) && max.equals(ft.max);
-		}
-		return false;
-	}
-
 	public int hashCode() {
 		return (super.hashCode() * 31 + min.hashCode()) * 31 + max.hashCode();
 	}
@@ -36,6 +28,15 @@ abstract class TimeDataType<T extends TimeDataType<T,E>, E extends Comparable<E>
 		return isOverlap(o)
 				? newInstance(min.compareTo(ft.min) <= 0 ? min : ft.min, max.compareTo(ft.max) >= 0 ? max : ft.max)
 				: null;
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		if(getClass().isInstance(o)) {
+			@SuppressWarnings("unchecked") TimeDataType<T,E> ft = (T)o;
+			return min.equals(ft.min) && max.equals(ft.max);
+		}
+		return false;
 	}
 
 	@Override

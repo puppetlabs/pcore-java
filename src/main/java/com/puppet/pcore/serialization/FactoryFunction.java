@@ -1,6 +1,6 @@
 package com.puppet.pcore.serialization;
 
-import java.io.IOException;
+import java.util.List;
 
 /**
  * Represents the constructor for a type.
@@ -8,5 +8,5 @@ import java.io.IOException;
  */
 @FunctionalInterface
 public interface FactoryFunction<T> {
-	T createInstance(ArgumentsAccessor attrs) throws IOException;
+	T createInstance(List<?> args);
 }

@@ -3,7 +3,6 @@ package com.puppet.pcore.impl;
 import com.puppet.pcore.TypeAssertionException;
 import com.puppet.pcore.impl.types.*;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static com.puppet.pcore.impl.Helpers.*;
@@ -84,7 +83,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 
 		List<PathElement> canonicalPath() {
 			if(canonicalPath == null)
-				canonicalPath = filter(path, p -> p.pathType != PathType.VARIANT);
+				canonicalPath = select(path, p -> p.pathType != PathType.VARIANT);
 			return canonicalPath;
 		}
 
@@ -105,7 +104,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		}
 
 		String message(String variant, String position) {
-			return variant + position + ' ' + text();
+			return variant.length() == 0 && position.length() == 0 ? text() : variant + position + ' ' + text();
 		}
 
 		String pathString() {
@@ -218,7 +217,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	private static abstract class ExpectedActualMismatch extends Mismatch {
-		AnyType actual;
+		final AnyType actual;
 		AnyType expected;
 
 		ExpectedActualMismatch(List<PathElement> path, AnyType expected, AnyType actual) {
@@ -465,7 +464,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	private static final DispatchMap dispatchMap = initPolymorphicDispatch(TypeMismatchDescriber.class, "_describe", 2);
-	public static TypeMismatchDescriber SINGLETON = new TypeMismatchDescriber();
+	public static final TypeMismatchDescriber SINGLETON = new TypeMismatchDescriber();
 
 	private TypeMismatchDescriber() {
 	}
@@ -473,13 +472,12 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	/**
 	 * Describe a confirmed mismatch
 	 *
-	 * @param name     name of mismatch
 	 * @param expected expected type
 	 * @param actual   actual type
 	 * @return the description
 	 */
-	public String describeMismatch(String name, AnyType expected, AnyType actual) {
-		return errorString(describe(expected, actual, singletonList(new PathElement(PathType.SUBJECT, name))));
+	public String describeMismatch(AnyType expected, AnyType actual) {
+		return errorString(describe(expected, actual, emptyList()));
 	}
 
 	/**
@@ -686,7 +684,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 
 	private List<? extends Mismatch> describeStructSignature(StructType paramsStruct, Map<String,Object> paramHash, boolean missingOk) {
 		Map<String,StructElement> paramTypeHash = paramsStruct.hashedMembers();
-		List<Mismatch> result = map(filter(paramHash.keySet(), p -> !paramTypeHash.containsKey(p)), p -> new InvalidParameter(null, p));
+		List<Mismatch> result = map(select(paramHash.keySet(), p -> !paramTypeHash.containsKey(p)), p -> new InvalidParameter(null, p));
 		for(StructElement member : paramsStruct.elements) {
 			Object value = paramHash.get(member.name);
 			if(paramHash.containsKey(member.name))
@@ -774,14 +772,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	private List<? extends Mismatch> doDescribe(AnyType expected, AnyType actual, List<PathElement> path) {
-		try {
-			return dispatch(expected, actual, path);
-		} catch(InvocationTargetException e) {
-			Throwable te = e.getCause();
-			if(!(te instanceof RuntimeException))
-				te = new RuntimeException(te);
-			throw (RuntimeException)te;
-		}
+		return dispatch(expected, actual, path);
 	}
 
 	private String errorString(List<? extends Mismatch> errors) {
@@ -801,7 +792,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 			List<Mismatch> descriptions) {
 		for(Class<? extends Mismatch> mc : asList(mismatchClass, MissingRequiredBlock.class, UnexpectedBlock.class,
 				TypeMismatch.class)) {
-			List<Mismatch> mismatches = filter(descriptions, mc::isInstance);
+			List<Mismatch> mismatches = select(descriptions, mc::isInstance);
 			if(mismatches.size() == descriptions.size()) {
 				// If all have the same canonical path, then we can compact this into one
 				Mismatch generic = reduce(mismatches, null, (prev, curr) ->

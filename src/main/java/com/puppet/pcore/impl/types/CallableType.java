@@ -3,8 +3,6 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
-import java.util.Objects;
-
 import static com.puppet.pcore.impl.Assertions.assertNotNull;
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
@@ -12,38 +10,25 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class CallableType extends AnyType {
-	public static final CallableType DEFAULT = new CallableType(TupleType.DEFAULT, null, AnyType.DEFAULT);
-	public static final CallableType ALL = new CallableType(TupleType.EXPLICIT_EMPTY, null, AnyType.DEFAULT);
+	static final CallableType DEFAULT = new CallableType(TupleType.DEFAULT, null, AnyType.DEFAULT);
+	static final CallableType ALL = new CallableType(TupleType.EXPLICIT_EMPTY, null, AnyType.DEFAULT);
 
 	private static ObjectType ptype;
+
 	public final CallableType blockType;
 	public final TupleType parametersType;
 	public final AnyType returnType;
 	private boolean resolved;
 
 	CallableType(TupleType parametersType, CallableType blockType, AnyType returnType) {
-		this(assertNotNull(parametersType, () -> "Callable parameters type"),
-				blockType, assertNotNull(returnType, () -> "Callable return type"), false);
-	}
-
-	private CallableType(TupleType parametersType, CallableType blockType, AnyType returnType, boolean resolved) {
-		this.parametersType = parametersType;
+		this.parametersType = assertNotNull(parametersType, () -> "Callable parameters type");
 		this.blockType = blockType;
-		this.returnType = returnType;
+		this.returnType = assertNotNull(returnType, () -> "Callable return type");
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
-	}
-
-	public boolean equals(Object o) {
-		if(o instanceof CallableType) {
-			CallableType ct = (CallableType)o;
-			return parametersType.equals(ct.parametersType) && Objects.equals(blockType, ct.blockType) && Objects.equals
-					(returnType, ct.returnType);
-		}
-		return false;
 	}
 
 	@Override
@@ -72,11 +57,20 @@ public class CallableType extends AnyType {
 			resolved = true;
 			return this;
 		}
-		return new CallableType(rsParametersType, rsBlockType, rsReturnType, true);
+		return new CallableType(rsParametersType, rsBlockType, rsReturnType);
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		if(o instanceof CallableType) {
+			CallableType ct = (CallableType)o;
+			return equals(parametersType, ct.parametersType, guard) && equals(blockType, ct.blockType, guard) && equals(returnType, ct.returnType, guard);
+		}
+		return false;
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(CallableType.class, "Pcore::CallableType", "Pcore::AnyType", asMap(
+		return ptype = pcore.createObjectType("Pcore::CallableType", "Pcore::AnyType", asMap(
 				"param_types", asMap(
 						KEY_TYPE, typeType(tupleType()),
 						KEY_VALUE, tupleType()),
@@ -85,10 +79,18 @@ public class CallableType extends AnyType {
 						KEY_VALUE, null),
 				"return_type", asMap(
 						KEY_TYPE, optionalType(typeType()),
-						KEY_VALUE, anyType())),
-				(attrs) -> callableType((TupleType)attrs.get(0), (CallableType)attrs.get(1), (AnyType)attrs.get(2)),
+						KEY_VALUE, anyType())));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, callableTypeDispatcher(),
 				(self) -> new Object[]{self.parametersType, self.blockType, self.returnType}
 		);
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return isAssignable(infer(o), guard);
 	}
 
 	@Override

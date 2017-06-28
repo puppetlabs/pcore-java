@@ -17,6 +17,8 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Stack;
 
+import static com.puppet.pcore.impl.Options.get;
+
 public class JsonPacker extends Polymorphic<Void> implements ExtensionAwarePacker {
 
 	private static final DispatchMap dispatchMap = initPolymorphicDispatch(JsonPacker.class, "_write");
@@ -25,13 +27,11 @@ public class JsonPacker extends Polymorphic<Void> implements ExtensionAwarePacke
 	private final Map<Class<?>,Extension<?>> extensionMap = new HashMap<>();
 	private final JsonGenerator generator;
 	private final Stack<Integer> nested = new Stack<>();
-	private final boolean verbose;
 
 	public JsonPacker(OutputStream out, Map<String,Object> options) throws IOException {
 		generator = factory.createGenerator(new BufferedOutputStream((out)));
 		generator.writeStartArray();
-		this.verbose = booleanOpt("verbose", false, options);
-		if(verbose)
+		if(get(options, "verbose", false))
 			generator.useDefaultPrettyPrinter();
 	}
 
@@ -48,26 +48,26 @@ public class JsonPacker extends Polymorphic<Void> implements ExtensionAwarePacke
 
 	@Override
 	public void write(String val) throws IOException {
-		// Bypass dispatch
+		// Bypass constructor
 		_write(val);
 	}
 
 	@Override
 	public void write(long val) throws IOException {
-		// Bypass dispatch
+		// Bypass constructor
 		_write(val);
 	}
 
 	@Override
 	public void write(int val) throws IOException {
-		// Bypass dispatch
+		// Bypass constructor
 		_write(val);
 	}
 
 	@Override
 	public void write(Object val) throws IOException {
 		try {
-			dispatch(val);
+			dispatchWOCatch(val);
 		} catch(InvocationTargetException e) {
 			Throwable te = e.getCause();
 			if(te instanceof IOException)
@@ -159,14 +159,5 @@ public class JsonPacker extends Polymorphic<Void> implements ExtensionAwarePacke
 		generator.writeEndArray();
 		nested.pop();
 		afterElement();
-	}
-
-	private static boolean booleanOpt(String opt, boolean dflt, Map<String,Object> options) {
-		Object val = options.get(opt);
-		if(val instanceof Boolean)
-			return (Boolean)val;
-		if(val instanceof String)
-			return Boolean.valueOf((String)val);
-		return dflt;
 	}
 }

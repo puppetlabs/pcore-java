@@ -5,6 +5,8 @@ import com.puppet.pcore.impl.types.ObjectType;
 import com.puppet.pcore.serialization.Deserializer;
 
 import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
 
 import static com.puppet.pcore.impl.Constants.EMPTY_ARRAY;
 
@@ -20,9 +22,8 @@ class DeserializerArgumentsAccessor extends AbstractArgumentsAccessor {
 		super(type, numberOfArguments);
 		this.deserializer = (DeserializerImpl)deserializer;
 
-		int max = parameterInfo.attributes.size();
-		this.arguments = max > 0 ? new Object[max] : EMPTY_ARRAY;
-		this.initialized = max == 0;
+		this.arguments = numberOfArguments > 0 ? new Object[numberOfArguments] : EMPTY_ARRAY;
+		this.initialized = numberOfArguments == 0;
 		this.remembered = State.Unknown;
 	}
 
@@ -38,6 +39,11 @@ class DeserializerArgumentsAccessor extends AbstractArgumentsAccessor {
 		if(!initialized)
 			initialize();
 		return arguments;
+	}
+
+	@Override
+	public List<Object> getArgumentList() throws IOException {
+		return Arrays.asList(getAll());
 	}
 
 	@Override

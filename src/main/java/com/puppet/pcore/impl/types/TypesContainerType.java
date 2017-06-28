@@ -14,10 +14,6 @@ abstract class TypesContainerType extends AnyType {
 		this.resolved = resolved;
 	}
 
-	public boolean equals(Object o) {
-		return super.equals(o) && types.equals(((TypesContainerType)o).types);
-	}
-
 	@Override
 	public abstract AnyType generalize();
 
@@ -54,4 +50,9 @@ abstract class TypesContainerType extends AnyType {
 	}
 
 	abstract TypesContainerType copyWith(List<AnyType> types, boolean resolved);
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return super.guardedEquals(o, guard) && equals(types, ((TypesContainerType)o).types, guard);
+	}
 }

@@ -1,11 +1,9 @@
 package com.puppet.pcore.impl;
 
-import com.puppet.pcore.impl.types.FloatType;
 import com.puppet.pcore.impl.types.IntegerType;
 import com.puppet.pcore.impl.types.StringType;
 import org.junit.jupiter.api.Test;
 
-import static com.puppet.pcore.impl.types.TypeFactory.floatType;
 import static com.puppet.pcore.impl.types.TypeFactory.integerType;
 import static com.puppet.pcore.impl.types.TypeFactory.stringType;
 import static org.junit.jupiter.api.Assertions.assertEquals;

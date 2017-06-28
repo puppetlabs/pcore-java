@@ -1,7 +1,6 @@
 package com.puppet.pcore.impl.serialization;
 
 import com.puppet.pcore.*;
-import com.puppet.pcore.impl.DynamicObjectImpl;
 import com.puppet.pcore.impl.serialization.extension.*;
 import com.puppet.pcore.impl.types.ObjectType;
 import com.puppet.pcore.impl.types.TypeReferenceType;
@@ -17,7 +16,6 @@ import java.time.Instant;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -60,31 +58,12 @@ public class SerializerImpl implements Serializer {
 	@SuppressWarnings("unchecked")
 	private <T> void writeObject(T value) throws IOException {
 		Function<T,Object[]> attributeProvider;
-		Type type = value instanceof PObject ? ((PObject)value)._pType() : Pcore.infer(value);
-		if(value instanceof DynamicObjectImpl) {
-			attributeProvider = t -> ((DynamicObjectImpl)value).getAttributes();
-		} else {
-			Class<T> implClass = (Class<T>)value.getClass();
-			if(!(type instanceof ObjectType))
-				throw new SerializationException(format("No Puppet Type found for %s", implClass.getName()));
+		Type type = value instanceof PuppetObject ? ((PuppetObject)value)._pcoreType() : Pcore.infer(value);
+		if(!(type instanceof ObjectType))
+			throw new SerializationException(format("No Puppet Type found for %s", value.getClass().getName()));
 
-			attributeProvider = Pcore.implementationRegistry().attributeProviderFor(implClass);
-			if(attributeProvider == null)
-				throw new SerializationException(format("No Object Writer found for %s", implClass.getName()));
-		}
-
-		Object[] args = attributeProvider.apply(value);
-		ObjectType.ParameterInfo pi = ((ObjectType)type).parameterInfo();
-
-		// Limit the write to not include trailing defaults
+		Object[] args = ((ObjectType)type).attributeValuesFor(value);
 		int top = args.length;
-		while(--top >= 0) {
-			ObjectType.Attribute attr = pi.attributes.get(top);
-			if(!(attr.hasValue() && Objects.equals(attr.value(), args[top])))
-				break;
-		}
-		++top;
-
 		if(type.name().startsWith("Pcore::")) {
 			objectsWritten.put(value, objectsWritten.size());
 			startPcoreObject(type.name(), top);
@@ -93,8 +72,8 @@ public class SerializerImpl implements Serializer {
 			write(type);
 			objectsWritten.put(value, objectsWritten.size());
 		}
-		for(int idx = 0; idx < top; ++idx)
-			write(args[idx]);
+		for(Object arg : args)
+			write(arg);
 	}
 
 	private void writeTabulatedFirstTime(Object value) throws IOException {

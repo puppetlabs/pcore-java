@@ -3,13 +3,15 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
+import java.util.Iterator;
+
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class IteratorType extends TypeContainerType {
-	public static final IteratorType DEFAULT = new IteratorType(AnyType.DEFAULT);
+	static final IteratorType DEFAULT = new IteratorType(AnyType.DEFAULT);
 
 	private static ObjectType ptype;
 
@@ -22,7 +24,7 @@ public class IteratorType extends TypeContainerType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 
@@ -47,17 +49,25 @@ public class IteratorType extends TypeContainerType {
 	}
 
 	@Override
-	protected boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o instanceof Iterator<?> && isAssignable(inferSet(o), guard);
+	}
+
+	@Override
+	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		return (t instanceof IteratorType) && type.isAssignable(((IteratorType)t).type, guard);
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(IteratorType.class, "Pcore::IteratorType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::IteratorType", "Pcore::AnyType",
 				asMap(
 						"element_type", asMap(
 								KEY_TYPE, typeType(),
-								KEY_VALUE, anyType())),
-				(args) -> iteratorType((AnyType)args.get(0)),
+								KEY_VALUE, anyType())));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, iteratorTypeDispatcher(),
 				(self) -> new Object[]{self.type});
 	}
 }

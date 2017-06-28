@@ -3,7 +3,6 @@ package com.puppet.pcore.impl.serialization;
 import com.puppet.pcore.Binary;
 import com.puppet.pcore.Comment;
 import com.puppet.pcore.Symbol;
-import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.serialization.extension.ArrayStart;
 import com.puppet.pcore.impl.serialization.extension.MapStart;
 import com.puppet.pcore.impl.serialization.extension.PcoreObjectStart;

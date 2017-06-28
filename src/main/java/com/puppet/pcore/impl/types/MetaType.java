@@ -17,15 +17,15 @@ import static java.util.Collections.emptyMap;
 
 abstract class MetaType extends AnyType implements Annotatable {
 	private Map<AnyType,Map<String,?>> annotations = emptyMap();
-	private Object i12nHashExpression;
+	private Object initHashExpression;
 	private boolean selfRecursion;
 
-	MetaType(Expression i12nHashExpression) {
-		this.i12nHashExpression = i12nHashExpression;
+	MetaType(Expression initHashExpression) {
+		this.initHashExpression = initHashExpression;
 	}
 
-	MetaType(Map<String,Object> unresolvedI12nHash) {
-		this.i12nHashExpression = unresolvedI12nHash;
+	MetaType(Map<String,Object> unresolvedInitHash) {
+		this.initHashExpression = unresolvedInitHash;
 	}
 
 	@Override
@@ -34,7 +34,7 @@ abstract class MetaType extends AnyType implements Annotatable {
 	}
 
 	public boolean isResolved() {
-		return i12nHashExpression == null;
+		return initHashExpression == null;
 	}
 
 	public boolean isSelfRecursion() {
@@ -44,20 +44,20 @@ abstract class MetaType extends AnyType implements Annotatable {
 	@Override
 	@SuppressWarnings("unchecked")
 	public AnyType resolve() {
-		if(i12nHashExpression != null) {
+		if(initHashExpression != null) {
 			selfRecursion = true;
 
-			Map<String,Object> i12nHash;
-			if(i12nHashExpression instanceof HashExpression) {
-				HashExpression i12e = (HashExpression)i12nHashExpression;
-				i12nHashExpression = null;
-				i12nHash = resolveLiteralHash(i12e);
+			Map<String,Object> initHash;
+			if(initHashExpression instanceof HashExpression) {
+				HashExpression i12e = (HashExpression)initHashExpression;
+				initHashExpression = null;
+				initHash = resolveLiteralHash(i12e);
 			} else {
-				i12nHash = (Map<String,Object>)i12nHashExpression;
-				i12nHashExpression = null;
-				i12nHash = resolveHash(i12nHash);
+				initHash = (Map<String,Object>)initHashExpression;
+				initHashExpression = null;
+				initHash = resolveHash(initHash);
 			}
-			initializeFromHash(i12nHash);
+			initializeFromHash(initHash);
 
 			RecursionGuard guard = new RecursionGuard();
 			accept(NoopAcceptor.singleton, guard);
@@ -73,13 +73,13 @@ abstract class MetaType extends AnyType implements Annotatable {
 		super.accept(visitor, guard);
 	}
 
-	void initializeFromHash(Map<String,Object> i12nHash) {
-		annotations = getArgument(KEY_ANNOTATIONS, i12nHash, emptyMap());
+	void initializeFromHash(Map<String,Object> initHash) {
+		annotations = getArgument(KEY_ANNOTATIONS, initHash, emptyMap());
 	}
 
 	@SuppressWarnings("unchecked")
-	Map<String,Object> resolveHash(Map<String,Object> i12nHash) {
-		return (Map<String,Object>)resolveTypeRefs(i12nHash);
+	Map<String,Object> resolveHash(Map<String,Object> initHash) {
+		return (Map<String,Object>)resolveTypeRefs(initHash);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -112,7 +112,7 @@ abstract class MetaType extends AnyType implements Annotatable {
 		return value instanceof AnyType ? ((AnyType)value).resolve() : value;
 	}
 
-	public Map<String,Object> i12nHash() {
+	public Map<String,Object> _pcoreInitHash() {
 		Map<String,Object> result = new LinkedHashMap<>();
 		Map<AnyType,Map<String,?>> annotations = getAnnotations();
 		if(!annotations.isEmpty())
@@ -120,7 +120,7 @@ abstract class MetaType extends AnyType implements Annotatable {
 		return result;
 	}
 
-	void setI12nHashExpression(Map<String,Object> unresolvedI12nHash) {
-		this.i12nHashExpression = unresolvedI12nHash;
+	void setInitHashExpression(Map<String,Object> unresolvedInitHash) {
+		this.initHashExpression = unresolvedInitHash;
 	}
 }

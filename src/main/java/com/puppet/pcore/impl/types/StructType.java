@@ -15,7 +15,7 @@ import static java.util.Collections.unmodifiableMap;
 
 public class StructType extends AnyType {
 
-	public static final StructType DEFAULT = new StructType(Collections.emptyList());
+	static final StructType DEFAULT = new StructType(Collections.emptyList());
 	static final AnyType KEY_TYPE = variantType(StringType.NOT_EMPTY, optionalType(StringType.NOT_EMPTY));
 
 	private static ObjectType ptype;
@@ -29,12 +29,8 @@ public class StructType extends AnyType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
-	}
-
-	public boolean equals(Object o) {
-		return o instanceof StructType && elements.equals(((StructType)o).elements);
 	}
 
 	@Override
@@ -56,12 +52,13 @@ public class StructType extends AnyType {
 		return hashedMembers;
 	}
 
-	@SuppressWarnings("unchecked")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		StructElement.registerPcoreType(pcore);
-		return ptype = pcore.createObjectType(StructType.class, "Pcore::StructType", "Pcore::AnyType",
-				asMap("elements", arrayType(typeReferenceType("Pcore::StructElement"))),
-				(args) -> structType((List<StructElement>)args.get(0)),
+		return ptype = pcore.createObjectType("Pcore::StructType", "Pcore::AnyType",
+				asMap("elements", arrayType(typeReferenceType("Pcore::StructElement"))));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, structTypeDispatcher(),
 				(self) -> new Object[]{self.elements});
 	}
 
@@ -79,6 +76,33 @@ public class StructType extends AnyType {
 		return iterableType(tupleType(asList(
 				variantType(map(elements, member -> member.key)),
 				variantType(map(elements, member -> member.value))), HashType.KEY_PAIR_TUPLE_SIZE));
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return o instanceof StructType && equals(elements, ((StructType)o).elements, guard);
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		if(o instanceof Map<?,?>) {
+			Map<?,?> mo = (Map<?,?>)o;
+			int matched = 0;
+			for(StructElement element : elements) {
+				String key = element.name;
+				Object v = mo.get(key);
+				if(v == null && !mo.containsKey(key)) {
+					if(!element.key.isAssignable(undefType(), guard))
+						return false;
+				} else {
+					++matched;
+					if(!element.value.isInstance(v, guard))
+						return false;
+				}
+			}
+			return matched == mo.size();
+		}
+		return false;
 	}
 
 	@Override

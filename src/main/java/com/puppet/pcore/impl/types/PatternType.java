@@ -14,7 +14,7 @@ import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Collections.singletonMap;
 
 public class PatternType extends ScalarType {
-	public static final PatternType DEFAULT = new PatternType(Collections.emptyList());
+	static final PatternType DEFAULT = new PatternType(Collections.emptyList());
 
 	private static ObjectType ptype;
 	public final List<RegexpType> regexps;
@@ -24,12 +24,8 @@ public class PatternType extends ScalarType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
-	}
-
-	public boolean equals(Object o) {
-		return o instanceof PatternType && Objects.equals(regexps, ((PatternType)o).regexps);
 	}
 
 	@Override
@@ -41,12 +37,14 @@ public class PatternType extends ScalarType {
 		return regexps.hashCode();
 	}
 
-	@SuppressWarnings("unchecked")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(PatternType.class, "Pcore::PatternType", "Pcore::ScalarType",
+		return ptype = pcore.createObjectType("Pcore::PatternType", "Pcore::ScalarType",
 				singletonMap(
-						"patterns", arrayType(variantType(typeType(regexpType()), regexpType()))),
-				(args) -> patternType((List<RegexpType>)args.get(0)),
+						"patterns", arrayType(variantType(typeType(regexpType()), regexpType()))));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, patternTypeDispatcher(),
 				(self) -> new Object[]{self.regexps});
 	}
 
@@ -55,6 +53,20 @@ public class PatternType extends ScalarType {
 		for(RegexpType regexp : regexps)
 			regexp.accept(visitor, guard);
 		super.accept(visitor, guard);
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return o instanceof PatternType && Objects.equals(regexps, ((PatternType)o).regexps);
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		if(o instanceof String) {
+			String so = (String)o;
+			return regexps.isEmpty() || any(regexps, regexp -> regexp.matches(so));
+		}
+		return false;
 	}
 
 	@Override

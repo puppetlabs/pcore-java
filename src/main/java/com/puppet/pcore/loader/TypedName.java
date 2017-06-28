@@ -1,7 +1,6 @@
 package com.puppet.pcore.loader;
 
 import java.net.URI;
-import java.util.Locale;
 
 import static com.puppet.pcore.impl.Constants.RUNTIME_NAME_AUTHORITY;
 import static com.puppet.pcore.impl.Helpers.splitName;
@@ -10,7 +9,7 @@ import static com.puppet.pcore.impl.Helpers.splitName;
  * A typed name consists of a type, a case insensitive name, and a name authority. This class is optimized
  * to use as a key in a hash lookup.
  */
-public class TypedName {
+public class TypedName implements Comparable<TypedName> {
 	/**
 	 * The name (case preserved)
 	 */
@@ -27,6 +26,7 @@ public class TypedName {
 	public final String type;
 
 	private final String compoundName;
+	private final String canonicalName;
 	private final int hash;
 	private final String[] nameParts;
 
@@ -45,9 +45,15 @@ public class TypedName {
 			name = name.substring(2);
 		}
 		this.name = name;
-		this.nameParts = parts;
-		this.compoundName = (name + '/' + type + '/' + nameAuthority).toLowerCase(Locale.ENGLISH);
-		this.hash = compoundName.hashCode();
+		nameParts = parts;
+		compoundName = nameAuthority.toString() + '/' + type + '/' + name;
+		canonicalName = compoundName.toLowerCase();
+		hash = canonicalName.hashCode();
+	}
+
+	@Override
+	public int compareTo(TypedName o) {
+		return canonicalName.compareTo(o.canonicalName);
 	}
 
 	/**
@@ -56,7 +62,7 @@ public class TypedName {
 	 * @return {@code true} if the objects are equal
 	 */
 	public boolean equals(Object o) {
-		return o instanceof TypedName && compoundName.equals(((TypedName)o).compoundName);
+		return o instanceof TypedName && canonicalName.equals(((TypedName)o).canonicalName);
 	}
 
 	/**
@@ -80,6 +86,6 @@ public class TypedName {
 	 * @return a string with {@code "<name authority>/<type>/<name>"}
 	 */
 	public String toString() {
-		return nameAuthority.toString() + '/' + type + '/' + name;
+		return compoundName;
 	}
 }

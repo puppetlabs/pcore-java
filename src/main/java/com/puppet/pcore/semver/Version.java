@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  */
 public class Version implements Comparable<Version>, Serializable {
 	public static final Version MAX = new Version(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, null, null);
-	public static final List<Comparable<?>> MIN_PRE_RELEASE = Collections.EMPTY_LIST;
+	public static final List<Comparable<?>> MIN_PRE_RELEASE = Collections.emptyList();
 	public static final Version MIN = new Version(0, 0, 0, MIN_PRE_RELEASE, null);
 
 	private static final String PART = "[0-9A-Za-z-]+";
@@ -115,7 +115,7 @@ public class Version implements Comparable<Version>, Serializable {
 		final int end = parts.length();
 		for(;;) {
 			String part = parts.substring(start, dotIdx);
-			result.add(isNumber(part) ? Integer.parseUnsignedInt(part) : part);
+			result.add(isNumber(part) ? Integer.parseInt(part) : part);
 			start = dotIdx + 1;
 			if(start >= end)
 				return result;
@@ -133,9 +133,7 @@ public class Version implements Comparable<Version>, Serializable {
 		return new Version(major, minor, patch + 1, null, null);
 	}
 
-	private final void joinParts(List<?> parts, StringBuilder bld) {
-		if(parts == null)
-			return;
+	private static void joinParts(List<?> parts, StringBuilder bld) {
 		int top = parts.size();
 		if(top > 0) {
 			bld.append(parts.get(0));
@@ -169,19 +167,17 @@ public class Version implements Comparable<Version>, Serializable {
 	 * @throws IllegalArgumentException if the version string is not a valid SemVer version.
 	 */
 	public static Version create(String version) throws IllegalArgumentException {
-		if(version == null || version.length() == 0)
-			return null;
-
-		Matcher m = VERSION_PATTERN.matcher(version);
-		if(m.matches())
-			return fromMatch(m);
+		if(version != null) {
+			Matcher m = VERSION_PATTERN.matcher(version);
+			if(m.matches())
+				return fromMatch(m);
+		}
 		throw new IllegalArgumentException("The string '" + version + "' does not represent a valid semantic version");
 	}
 
 	/**
 	 * Creates a new instance from the given <code>version</code> string. This method will return <code>null</code> on
-	 * <code>null</code> or
-	 * invalid input.
+	 * <code>null</code> or invalid input.
 	 *
 	 * @param version The version in string form
 	 * @return The created version.

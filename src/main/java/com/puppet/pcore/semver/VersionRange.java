@@ -14,11 +14,12 @@ import com.puppet.pcore.impl.MergableRange;
 
 import java.io.Serializable;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.puppet.pcore.impl.Helpers.asList;
 
 /**
  * <p>
@@ -46,7 +47,7 @@ import java.util.regex.Pattern;
  * <ul>
  * <li>The version must be at least as high as the range.</li>
  * <li>The version must be less than the next minor revision above the range, or major revision
- * if minor isnt' given.</li>
+ * if minor isn't given.</li>
  * </ul>
  * For example, the following are equivalent:
  * <table border="1">
@@ -127,7 +128,7 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 	private static final SimpleRange LOWEST_UB = new LtRange(Version.MIN);
 
 	public static final VersionRange ALL_INCLUSIVE = new VersionRange("*", Collections.singletonList(LOWEST_LB));
-	public static final VersionRange EMPTY_RANGE = new VersionRange("<0.0.0", rangeList(LOWEST_UB));
+	public static final VersionRange EMPTY_RANGE = new VersionRange("<0.0.0", asList(LOWEST_UB));
 
 	private static final long serialVersionUID = 1L;
 
@@ -154,12 +155,13 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 				result.add(x);
 				ranges = unmerged;
 			}
-			result.add(ranges.get(0));
+			if(!ranges.isEmpty())
+				result.add(ranges.get(0));
       Collections.reverse(result);
 			ranges = result;
 		}
 		if(ranges.isEmpty())
-			ranges = rangeList(LOWEST_UB);
+			ranges = asList(LOWEST_UB);
 		this.ranges = ranges;
 		this.originalString = originalString;
 	}
@@ -178,17 +180,6 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 		return true;
 	}
 
-	private static List<AbstractRange> rangeList(AbstractRange... ranges) {
-		switch(ranges.length) {
-		case 0:
-			return Collections.emptyList();
-		case 1:
-			return Collections.singletonList(ranges[0]);
-		default:
-			return Arrays.asList(ranges);
-		}
-	}
-
 	/**
 	 * Creates a new VersionRange according to detailed specification.
 	 *
@@ -201,7 +192,7 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 	public static VersionRange create(
 			Version lower, boolean lowerBoundInclusive, Version upper, boolean
 			upperBoundInclusive) {
-		return new VersionRange(null, rangeList(
+		return new VersionRange(null, asList(
 				(lowerBoundInclusive ? new GtEqRange(lower) : new GtRange(lower)).intersection(
 						upperBoundInclusive ? new LtEqRange(upper) : new LtRange(upper))));
 
@@ -214,7 +205,7 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 	 * @return The created range
 	 */
 	public static VersionRange exact(Version version) {
-		return version == null ? null : new VersionRange(null, rangeList(new EqRange(version)));
+		return version == null ? null : new VersionRange(null, asList(new EqRange(version)));
 	}
 
 	private static Integer xDigit(String str) {
@@ -237,8 +228,13 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 
 		public abstract boolean isBelow(Version v);
 
-		boolean isOverlap(AbstractRange o) {
-			return includes(o.min()) || o.includes(min());
+		boolean isOverlap(AbstractRange vr) {
+			int cmp = min().compareTo(vr.max());
+			if(cmp < 0 || cmp == 0 && !(isExcludeMin() || vr.isExcludeMax())) {
+				cmp = vr.min().compareTo(max());
+				return cmp < 0 || cmp == 0 && !(vr.isExcludeMin() || isExcludeMax());
+			}
+			return false;
 		}
 
 		/**
@@ -347,6 +343,8 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 						excl_min ? new GtRange(min) : new GtEqRange(min),
 						excl_max ? new LtRange(max) : new LtEqRange(max));
 			}
+			if(isExcludeMin() && other.isExcludeMin() && min().compareTo(other.min()) == 0)
+				return from_to(this, other);
 			if(isExcludeMax() && !other.isExcludeMin() && max().compareTo(other.min()) == 0)
 				return from_to(this, other);
 			if(other.isExcludeMax() && !isExcludeMin() && other.max().compareTo(min()) == 0)
@@ -377,12 +375,6 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 		abstract Version max();
 
 		abstract boolean testPrerelease(Version version);
-
-		public String toString() {
-			StringBuilder bld = new StringBuilder();
-			toString(bld);
-			return bld.toString();
-		}
 
 		abstract public void toString(StringBuilder bld);
 	}
@@ -984,7 +976,7 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 	 * @return The created range
 	 */
 	public static VersionRange greater(Version version) {
-		return version == null ? null : new VersionRange(null, rangeList(new GtRange(version)));
+		return version == null ? null : new VersionRange(null, asList(new GtRange(version)));
 	}
 
 	/**
@@ -994,7 +986,7 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 	 * @return The created range
 	 */
 	public static VersionRange greaterOrEqual(Version version) {
-		return version == null ? null : new VersionRange(null, rangeList(new GtEqRange(version)));
+		return version == null ? null : new VersionRange(null, asList(new GtEqRange(version)));
 	}
 
 	/**
@@ -1004,7 +996,7 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 	 * @return The created range
 	 */
 	public static VersionRange less(Version version) {
-		return version == null ? null : new VersionRange(null, rangeList(new LtRange(version)));
+		return version == null ? null : new VersionRange(null, asList(new LtRange(version)));
 	}
 
 	/**
@@ -1014,7 +1006,7 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 	 * @return The created range
 	 */
 	public static VersionRange lessOrEqual(Version version) {
-		return version == null ? null : new VersionRange(null, rangeList(new LtEqRange(version)));
+		return version == null ? null : new VersionRange(null, asList(new LtEqRange(version)));
 	}
 
 	@Override
@@ -1089,13 +1081,13 @@ public class VersionRange implements MergableRange<VersionRange>, Serializable {
 	 */
 	public boolean isAsRestrictiveAs(VersionRange vr) {
 		// No range in ranges intersect so in order to be more restrictive, each
-		// range must have an intersecting range in vr and that intersection must
-		// be more restrictive than the vr range.
+		// range must have an intersecting range in vr and the range causing the
+		// intersection must be more restrictive than the vr range.
 		for(AbstractRange range : ranges) {
 			boolean foundMatch = false;
 			for(AbstractRange o_range : vr.ranges) {
 				AbstractRange is = range.intersection(o_range);
-				if(is != null && is.isAsRestrictiveAs(o_range))
+				if(is != null && range.isAsRestrictiveAs(o_range))
 					foundMatch = true;
 			}
 			if(!foundMatch)

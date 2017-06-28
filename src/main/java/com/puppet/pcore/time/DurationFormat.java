@@ -271,12 +271,7 @@ public class DurationFormat {
 		private final Map<String,DurationFormat> formats = new HashMap<>();
 
 		DurationFormat parseFormat(String format) {
-			DurationFormat durationFormat = formats.get(format);
-			if(durationFormat == null) {
-				durationFormat = internalParse(format);
-				formats.put(format, durationFormat);
-			}
-			return durationFormat;
+			return formats.computeIfAbsent(format, this::internalParse);
 		}
 
 		private void appendLiteral(List<Segment> bld, char c) {
@@ -418,6 +413,22 @@ public class DurationFormat {
 		for(DurationFormat format : DEFAULTS) {
 			try {
 				return format.parse(timeSpan);
+			} catch(IllegalArgumentException ignored) {
+			}
+		}
+		throw new IllegalArgumentException(String.format(
+				"Unable to parse '%s' using any of the default formats",
+				timeSpan));
+	}
+
+	public static String defaultFormat(Duration timeSpan) {
+		return DEFAULTS.get(0).format(timeSpan);
+	}
+
+	public static Duration parse(String timeSpan, List<String> formats) {
+		for(String format : formats) {
+			try {
+				return parse(timeSpan, format);
 			} catch(IllegalArgumentException ignored) {
 			}
 		}

@@ -9,11 +9,10 @@ import java.util.*;
 import static com.puppet.pcore.impl.Helpers.*;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 public class VariantType extends TypesContainerType {
-	public static final VariantType DEFAULT = new VariantType(Collections.emptyList());
-	public static final AnyType DATA = new VariantType(asList(scalarDataType(), undefType(), ArrayType.DATA, HashType
-			.DATA));
+	static final VariantType DEFAULT = new VariantType(Collections.emptyList());
 
 	private static ObjectType ptype;
 
@@ -30,7 +29,7 @@ public class VariantType extends TypesContainerType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 
@@ -41,11 +40,13 @@ public class VariantType extends TypesContainerType {
 				: variantType(distinct(map(types, AnyType::generalize)));
 	}
 
-	@SuppressWarnings("unchecked")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(VariantType.class, "Pcore::VariantType", "Pcore::AnyType",
-				asMap("types", arrayType(typeType())),
-				(args) -> new VariantType((List<AnyType>)args.get(0)),
+		return ptype = pcore.createObjectType("Pcore::VariantType", "Pcore::AnyType",
+				asMap("types", arrayType(typeType())));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, variantTypeDispatcher(),
 				(self) -> new Object[]{self.types});
 	}
 
@@ -55,19 +56,33 @@ public class VariantType extends TypesContainerType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		for(AnyType type : types)
+			if(type.isInstance(o, guard))
+				return true;
+		return false;
+	}
+
+	@Override
 	int isReallyInstance(Object o, RecursionGuard guard) {
-		return reduce(map(types, t -> t.isReallyInstance(o, guard)), -1, (memo, r) -> r > memo ? r : memo);
+		int state = -1;
+		for(AnyType type : types) {
+			int r = type.isReallyInstance(o, guard);
+			if(r == 1)
+				return 1;
+			if(r > state)
+				state = r;
+		}
+		return state;
 	}
 
 	@Override
 	boolean isUnsafeAssignable(AnyType type, RecursionGuard guard) {
 		if(type instanceof VariantType) {
-			//  A variant is assignable if all of its options are assignable to one of this type's options
-			return this == type || all(((VariantType)type).types, other -> other instanceof DataType
-					? isAssignable(DATA, guard)
-					: (other instanceof VariantType
+			//  A variant is assignable if any of its options are assignable to one of this type's options
+			return this == type || all(((VariantType)type).types, other -> other instanceof VariantType
 							? isAssignable(other, guard)
-							: any(types, variant -> variant.isAssignable(other, guard))));
+							: any(types, variant -> variant.isAssignable(other, guard)));
 		}
 		return any(types, variant -> variant.isAssignable(type, guard));
 	}
@@ -80,13 +95,13 @@ public class VariantType extends TypesContainerType {
 	private static List<AnyType> mergeEnums(List<AnyType> enums) {
 		return enums.size() < 2
 				? enums
-				: asList(enumType(distinct(flatten(map(enums, eos -> eos instanceof StringType ? ((StringType)eos).value : ((EnumType)eos).enums)))));
+				: singletonList(enumType(distinct(flatten(map(enums, eos -> eos instanceof StringType ? ((StringType)eos).value : ((EnumType)eos).enums)))));
 	}
 
 	private static List<PatternType> mergePatterns(List<PatternType> patterns) {
 		return patterns.size() < 2
 				? patterns
-				: asList(patternType(distinct(flatten(map(patterns, pattern -> pattern.regexps)))));
+				: singletonList(patternType(distinct(flatten(map(patterns, pattern -> pattern.regexps)))));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -99,10 +114,10 @@ public class VariantType extends TypesContainerType {
 		return flatten(asList(
 				mergeEnums(enumsAndStrings),
 				mergePatterns(remove(PatternType.class, pm)),
-				Helpers.mergeRanges(remove(IntegerType.class, pm)),
-				Helpers.mergeRanges(remove(FloatType.class, pm)),
-				Helpers.mergeRanges(remove(TimeSpanType.class, pm)),
-				Helpers.mergeRanges(remove(TimestampType.class, pm)),
+				mergeRanges(remove(IntegerType.class, pm)),
+				mergeRanges(remove(FloatType.class, pm)),
+				mergeRanges(remove(TimeSpanType.class, pm)),
+				mergeRanges(remove(TimestampType.class, pm)),
 				pm.values()
 		));
 	}

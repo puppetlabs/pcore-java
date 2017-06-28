@@ -1,5 +1,7 @@
 package com.puppet.pcore;
 
+import com.puppet.pcore.serialization.FactoryDispatcher;
+
 /**
  * A Pcore type.
  */
@@ -16,6 +18,15 @@ public interface Type {
 	 * @return the generalization of this type
 	 */
 	Type generalize();
+
+	/**
+	 * Returns the constructor parameter combinations that can be used when creating
+	 * instances of this type.
+	 *
+	 * @return list of tuples where each tuple describes the parameter signature of a constructor
+	 * @throws PcoreException if creating instances of this type is an unsupported operatoin
+	 */
+	<T> FactoryDispatcher<T> factoryDispatcher();
 
 	/**
 	 * Checks if the given type is assignable to this type

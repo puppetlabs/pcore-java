@@ -8,11 +8,10 @@ import java.util.Objects;
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
 import static com.puppet.pcore.impl.Helpers.asMap;
-import static com.puppet.pcore.impl.types.TypeFactory.optionalType;
-import static com.puppet.pcore.impl.types.TypeFactory.resourceType;
+import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class ResourceType extends CatalogEntryType {
-	public static final ResourceType DEFAULT = new ResourceType(null, null);
+	static final ResourceType DEFAULT = new ResourceType(null, null);
 
 	private static ObjectType ptype;
 	public final String title;
@@ -26,16 +25,8 @@ public class ResourceType extends CatalogEntryType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
-	}
-
-	public boolean equals(Object o) {
-		if(o instanceof ResourceType) {
-			ResourceType rt = (ResourceType)o;
-			return Objects.equals(downcasedName, rt.downcasedName) && Objects.equals(title, rt.title);
-		}
-		return false;
 	}
 
 	@Override
@@ -48,16 +39,28 @@ public class ResourceType extends CatalogEntryType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(ResourceType.class, "Pcore::ResourceType", "Pcore::CatalogEntryType",
+		return ptype = pcore.createObjectType("Pcore::ResourceType", "Pcore::CatalogEntryType",
 				asMap(
 						"type_name", asMap(
 								KEY_TYPE, optionalType(StringType.NOT_EMPTY),
 								KEY_VALUE, null),
 						"title", asMap(
 								KEY_TYPE, optionalType(StringType.NOT_EMPTY),
-								KEY_VALUE, null)),
-				(args) -> resourceType((String)args.get(0), (String)args.get(1)),
+								KEY_VALUE, null)));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, resourceTypeDispatcher(),
 				(self) -> new Object[]{self.typeName, self.title});
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		if(o instanceof ResourceType) {
+			ResourceType rt = (ResourceType)o;
+			return Objects.equals(downcasedName, rt.downcasedName) && Objects.equals(title, rt.title);
+		}
+		return false;
 	}
 
 	@Override

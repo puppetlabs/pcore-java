@@ -3,8 +3,10 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
+import static com.puppet.pcore.impl.types.TypeFactory.unitTypeDispatcher;
+
 public class UnitType extends AnyType {
-	public static final UnitType DEFAULT = new UnitType();
+	static final UnitType DEFAULT = new UnitType();
 
 	private static ObjectType ptype;
 
@@ -12,7 +14,7 @@ public class UnitType extends AnyType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 
@@ -26,7 +28,21 @@ public class UnitType extends AnyType {
 		return DEFAULT;
 	}
 
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return true;
+	}
+
+	@Override
+	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
+		return true;
+	}
+
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(UnitType.class, "Pcore::UnitType", "Pcore::AnyType", (args) -> DEFAULT);
+		return ptype = pcore.createObjectType("Pcore::UnitType", "Pcore::AnyType");
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, unitTypeDispatcher());
 	}
 }

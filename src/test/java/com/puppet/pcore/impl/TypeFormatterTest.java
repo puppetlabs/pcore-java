@@ -4,8 +4,6 @@ import com.puppet.pcore.Binary;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.impl.types.AnyType;
-import com.puppet.pcore.impl.types.ArrayType;
-import com.puppet.pcore.impl.types.HashType;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.Test;
@@ -39,8 +37,8 @@ public class TypeFormatterTest {
 	}
 
 	@Test
-	public void arrayTypeEmpty() {
-		assertEquals("Array[0, 0]", ArrayType.EMPTY.toString());
+	public void arrayTypeEmptyS() {
+		assertEquals("Array[0, 0]", arrayTypeEmpty().toString());
 	}
 
 	@Test
@@ -226,8 +224,8 @@ public class TypeFormatterTest {
 	}
 
 	@Test
-	public void hashTypeEmpty() {
-		assertEquals("Hash[0, 0]", HashType.EMPTY.toString());
+	public void hashTypeEmptyS() {
+		assertEquals("Hash[0, 0]", hashTypeEmpty().toString());
 	}
 
 	@Test
@@ -326,20 +324,20 @@ public class TypeFormatterTest {
 	@Test
 	public void objectTypeWithName() {
 		TypeEvaluator typeEvaluator = Pcore.typeEvaluator();
-		Map<String,Object> i12nHash = new HashMap<>();
-		i12nHash.put(Constants.KEY_NAME, "TestObj");
-		assertEquals("TestObj", objectType(i12nHash).resolve().toString());
+		Map<String,Object> initHash = new HashMap<>();
+		initHash.put(Constants.KEY_NAME, "TestObj");
+		assertEquals("TestObj", objectType(initHash).resolve().toString());
 	}
 
 	@Test
 	public void objectTypeWithStuff() {
-		Map<String,Object> i12nHash = new LinkedHashMap<>();
+		Map<String,Object> initHash = new LinkedHashMap<>();
 		Map<String,Object> attrHash = new LinkedHashMap<>();
 		Map<String,Object> funcHash = new LinkedHashMap<>();
-		i12nHash.put(Constants.KEY_NAME, "TestObj");
-		i12nHash.put(Constants.KEY_ATTRIBUTES, attrHash);
-		i12nHash.put(Constants.KEY_FUNCTIONS, funcHash);
-		i12nHash.put(Constants.KEY_EQUALITY, asList("a", "n"));
+		initHash.put(Constants.KEY_NAME, "TestObj");
+		initHash.put(Constants.KEY_ATTRIBUTES, attrHash);
+		initHash.put(Constants.KEY_FUNCTIONS, funcHash);
+		initHash.put(Constants.KEY_EQUALITY, asList("a", "n"));
 
 		attrHash.put("a", integerType());
 		attrHash.put("n", integerType());
@@ -358,7 +356,7 @@ public class TypeFormatterTest {
 						"attributes => {'a' => Integer, 'n' => Integer, 'b' => {type => Integer, kind => constant, value => 32}}, " +
 						"functions => {'f' => Callable}, " +
 						"equality => ['a', 'n']}]",
-				objectType(i12nHash).resolve().toExpandedString());
+				objectType(initHash).resolve().toExpandedString());
 	}
 
 	@Test
@@ -393,12 +391,12 @@ public class TypeFormatterTest {
 
 	@Test
 	public void resourceTypeWithName() {
-		assertEquals("Foo::FeeBar::Fim", resourceType("foo::feeBar::fim").toString());
+		assertEquals("Foo::Feebar::Fim", resourceType("foo::feebar::fim").toString());
 	}
 
 	@Test
 	public void resourceTypeWithNameAndTitle() {
-		assertEquals("Foo::FeeBar::Fim['entitled']", resourceType("foo::feeBar::fim", "entitled").toString());
+		assertEquals("Foo::Feebar::Fim['entitled']", resourceType("foo::feebar::fim", "entitled").toString());
 	}
 
 	@Test
@@ -546,7 +544,7 @@ public class TypeFormatterTest {
 
 	@Test
 	public void typeReferenceWithType() {
-		assertEquals("TypeReference[\"The::Test['hello']\"]", typeReferenceType("The::Test['hello']").toString());
+		assertEquals("TypeReference['The::Test[\\'hello\\']']", typeReferenceType("The::Test['hello']").toString());
 	}
 
 	@Test

@@ -2,7 +2,7 @@ package com.puppet.pcore.impl;
 
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.types.RuntimeType;
-import com.puppet.pcore.serialization.FactoryFunction;
+import com.puppet.pcore.serialization.FactoryDispatcher;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 
 public class ImplementationRegistryImpl implements ImplementationRegistry {
 
-	private final Map<String,Function<?,?>> attributeProviderPerImpl = new HashMap<>();
-	private final Map<String,FactoryFunction<?>> creatorPerImpl = new HashMap<>();
+	private final Map<String,Function<?,?>> attributeProviderPerType = new HashMap<>();
+	private final Map<String,FactoryDispatcher<?>> creatorPerType = new HashMap<>();
 	private final List<PatternSubstitution> implNameSubstitutions = new ArrayList<>();
 	private final Map<String,String> implNamesPerType = new HashMap<>();
 	private final List<PatternSubstitution> typeNameSubstitutions = new ArrayList<>();
@@ -22,47 +22,25 @@ public class ImplementationRegistryImpl implements ImplementationRegistry {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> Function<T,Object[]> attributeProviderFor(Class<T> implClass) {
-		return (Function<T,Object[]>)attributeProviderPerImpl.get(implClass.getName());
-	}
-
-	@Override
-	public Class<?> classFor(Type type, ClassLoader loader) {
-		return classFor(type.name(), loader);
-	}
-
-	@Override
-	public Class<?> classFor(String typeName, ClassLoader loader) {
-		String className = findMapping(typeName, implNamesPerType, typeNameSubstitutions);
-		if(className != null)
-			try {
-				return loader.loadClass(className);
-			} catch(ClassNotFoundException ignored) {
-			}
-		return null;
+	public <T> Function<T,Object[]> attributeProviderFor(Type type) {
+		return (Function<T,Object[]>)attributeProviderPerType.get(type.name());
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public <T> FactoryFunction<T> creatorFor(Class<T> implClass) {
-		return (FactoryFunction<T>)creatorPerImpl.get(implClass.getName());
+	public <T> FactoryDispatcherImpl<T> creatorFor(Type type) {
+		return (FactoryDispatcherImpl<T>)creatorPerType.get(type.name());
 	}
 
 	@Override
-	public <T> void registerImplementation(
-			Type type, Class<T> implClass, FactoryFunction<T> creator, Function<T,
-			Object[]> attributeProvider) {
-		registerImplementation(type.name(), implClass.getName(), creator, attributeProvider);
+	public <T> void registerImplementation(Type type, FactoryDispatcher<T> creator, Function<T, Object[]> attributeProvider) {
+		registerImplementation(type.name(), creator, attributeProvider);
 	}
 
 	@Override
-	public <T> void registerImplementation(
-			String typeName, String implName, FactoryFunction<T> creator, Function<T,
-			Object[]> attributeProvider) {
-		typeNamesPerImpl.put(implName, typeName);
-		implNamesPerType.put(typeName, implName);
-		creatorPerImpl.put(implName, creator);
-		attributeProviderPerImpl.put(implName, attributeProvider);
+	public <T> void registerImplementation(String typeName, FactoryDispatcher<T> creator, Function<T, Object[]> attributeProvider) {
+		creatorPerType.put(typeName, creator);
+		attributeProviderPerType.put(typeName, attributeProvider);
 	}
 
 	@Override
@@ -79,18 +57,6 @@ public class ImplementationRegistryImpl implements ImplementationRegistry {
 	}
 
 	@Override
-	public <T> void registerTypeMapping(
-			Type runtimeType, Type puppetType, FactoryFunction<T> creator, Function<T,
-			Object[]> attributeSupplier) {
-		if(!(runtimeType instanceof RuntimeType))
-			throw new IllegalArgumentException("First argument to registerTypeMapping must be a Runtime type");
-		RuntimeType rt = (RuntimeType)runtimeType;
-		if(rt.pattern != null)
-			throw new IllegalArgumentException("Cannot map a Runtime with pattern to a Puppet type");
-		registerImplementation(puppetType.name(), rt.name, creator, attributeSupplier);
-	}
-
-	@Override
 	public void registerTypeMapping(Type runtimeType, PatternSubstitution substitution) {
 		if(!(runtimeType instanceof RuntimeType))
 			throw new IllegalArgumentException("First argument to registerTypeMapping must be a Runtime type");
@@ -98,17 +64,6 @@ public class ImplementationRegistryImpl implements ImplementationRegistry {
 		if(rt.pattern == null)
 			throw new IllegalArgumentException("Cannot map a Runtime without pattern to a Type pattern");
 		registerPatternMapping(substitution, new PatternSubstitution(rt.pattern.pattern(), rt.name));
-	}
-
-	@Override
-	public Type typeFor(Class<?> implClass) {
-		return typeFor(implClass.getName());
-	}
-
-	@Override
-	public Type typeFor(String name) {
-		String typeString = findMapping(name, typeNamesPerImpl, implNameSubstitutions);
-		return typeString == null ? null : Pcore.typeEvaluator().resolveType(typeString);
 	}
 
 	@SuppressWarnings("SynchronizationOnLocalVariableOrMethodParameter")

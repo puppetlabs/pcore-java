@@ -21,6 +21,11 @@ public class DefaultExpressionFactory implements ExpressionFactory {
 	}
 
 	@Override
+	public Expression named_access(Expression lhs, Expression rhs, String expression, int offset, int length) {
+		return new NamedAccessExpression(lhs, rhs, expression, offset, length);
+	}
+
+	@Override
 	public Expression assignment(Expression lhs, Expression rhs, String expression, int offset, int length) {
 		return new AssignmentExpression(lhs, rhs, expression, offset, length);
 	}
@@ -34,6 +39,11 @@ public class DefaultExpressionFactory implements ExpressionFactory {
 		if(value instanceof Integer)
 			return literalInteger(((Integer)value).longValue(), expression, offset, length);
 		return new ConstantExpression(value, expression, offset, length);
+	}
+
+	@Override
+	public Expression heredoc(Object value, String syntax, String expression, int offset, int length) {
+		return new HeredocExpression(value, syntax, expression, offset, length);
 	}
 
 	@Override
@@ -61,6 +71,16 @@ public class DefaultExpressionFactory implements ExpressionFactory {
 	@Override
 	public Expression typeName(String name, String expression, int offset, int length) {
 		return new TypeNameExpression(name, expression, offset, length);
+	}
+
+	@Override
+	public Expression typeDeclaration(String typeName, String expression, int offset, int length) {
+		return new TypeDeclarationExpression(typeName, expression, offset, length);
+	}
+
+	@Override
+	public Expression variable(String typeName, String expression, int offset, int length) {
+		return new VariableExpression(typeName, expression, offset, length);
 	}
 
 	private Expression literalFloat(Double number, String expression, int offset, int length) {

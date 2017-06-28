@@ -10,14 +10,17 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <jackson.version>2.8.4</jackson.version>
+        <jackson.version>2.9.0</jackson.version>
+        <slf4j.version>1.8.0-alpha2</slf4j.version>
+        <junit.platform.version>1.0.0-RC2</junit.platform.version>
+        <junit.jupiter.version>5.0.0-RC2</junit.jupiter.version>
     </properties>
 
     <dependencies>
         <dependency>
             <groupId>org.msgpack</groupId>
             <artifactId>msgpack-core</artifactId>
-            <version>0.8.11</version>
+            <version>0.8.13</version>
         </dependency>
         <dependency>
             <groupId>com.fasterxml.jackson.core</groupId>
@@ -25,9 +28,21 @@
             <version>${jackson.version}</version>
         </dependency>
         <dependency>
-            <groupId>org.clojure</groupId>
-            <artifactId>clojure</artifactId>
-            <version>1.8.0</version>
+            <groupId>org.slf4j</groupId>
+            <artifactId>slf4j-api</artifactId>
+            <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-api</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.junit.jupiter</groupId>
+            <artifactId>junit-jupiter-params</artifactId>
+            <version>${junit.jupiter.version}</version>
+            <scope>test</scope>
         </dependency>
     </dependencies>
 
@@ -63,226 +78,26 @@
                     </execution>
                 </executions>
             </plugin>
+            <plugin>
+                <artifactId>maven-surefire-plugin</artifactId>
+                <version>2.19.1</version>
+                <configuration>
+                    <reuseForks>true</reuseForks>
+                    <argLine>-Xmx1024m</argLine>
+                </configuration>
+                <dependencies>
+                    <dependency>
+                        <groupId>org.junit.platform</groupId>
+                        <artifactId>junit-platform-surefire-provider</artifactId>
+                        <version>${junit.platform.version}</version>
+                    </dependency>
+                    <dependency>
+                        <groupId>org.junit.jupiter</groupId>
+                        <artifactId>junit-jupiter-engine</artifactId>
+                        <version>${junit.jupiter.version}</version>
+                    </dependency>
+                </dependencies>
+            </plugin>
         </plugins>
     </build>
-
-    <profiles>
-        <profile>
-            <id>jdk8</id>
-
-            <activation>
-                <activeByDefault>true</activeByDefault>
-            </activation>
-
-            <properties>
-                <junit.platform.version>1.0.0-M3</junit.platform.version>
-                <junit.jupiter.version>5.0.0-M3</junit.jupiter.version>
-            </properties>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.junit.jupiter</groupId>
-                    <artifactId>junit-jupiter-api</artifactId>
-                    <version>${junit.jupiter.version}</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.19.1</version>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.junit.platform</groupId>
-                                <artifactId>junit-platform-surefire-provider</artifactId>
-                                <version>${junit.platform.version}</version>
-                            </dependency>
-                            <dependency>
-                                <groupId>org.junit.jupiter</groupId>
-                                <artifactId>junit-jupiter-engine</artifactId>
-                                <version>${junit.jupiter.version}</version>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-
-        <profile>
-            <id>jdk7</id>
-
-            <dependencies>
-                <dependency>
-                    <groupId>org.threeten</groupId>
-                    <artifactId>threetenbp</artifactId>
-                    <version>1.3.3</version>
-                </dependency>
-                <dependency>
-                    <groupId>junit</groupId>
-                    <artifactId>junit</artifactId>
-                    <version>4.12</version>
-                    <scope>test</scope>
-                </dependency>
-                <dependency>
-                    <groupId>com.nitorcreations</groupId>
-                    <artifactId>junit-runners</artifactId>
-                    <version>1.3</version>
-                    <scope>test</scope>
-                </dependency>
-            </dependencies>
-
-            <build>
-                <plugins>
-                    <plugin>
-                        <artifactId>maven-antrun-plugin</artifactId>
-                        <version>1.8</version>
-                        <executions>
-                            <execution>
-                                <phase>generate-sources</phase>
-                                <configuration>
-                                    <target>
-                                        <!-- Mangle source to fit backported packages -->
-                                        <property name="build.compiler" value="extJavac"/>
-                                        <copy todir="target/filtered-sources/main/java">
-                                            <fileset dir="${project.build.sourceDirectory}"/>
-                                        </copy>
-                                        <copy todir="target/filtered-sources/main/java">
-                                            <fileset dir="src/main/java7"/>
-                                        </copy>
-                                        <replace token= "java.time." value="org.threeten.bp." dir="target/filtered-sources/main/java" includes="**/*.java"/>
-                                        <replace token= "java.util.Base64" value="com.puppet.pcore.java7.util.Base64" dir="target/filtered-sources/main/java" includes="**/*.java"/>
-                                        <replace token= "java.util.function." value="com.puppet.pcore.java7.util.function." dir="target/filtered-sources/main/java" includes="**/*.java"/>
-                                        <mkdir dir="${project.build.outputDirectory}"/>
-
-                                        <!-- compile using normal java 8 compiler so that it can be processed by the retrolamda plugin -->
-                                        <javac includeantruntime="false" srcdir="target/filtered-sources/main/java" destdir="${project.build.outputDirectory}" classpathref="maven.compile.classpath" source="1.8" target="1.8">
-                                            <compilerarg value="-Xlint"/>
-                                        </javac>
-
-                                        <!-- Mangle test source to fit backported packages -->
-                                        <copy todir="target/filtered-sources/test/java">
-                                            <fileset dir="${project.build.testSourceDirectory}"/>
-                                        </copy>
-                                        <copy todir="target/filtered-sources/test/java">
-                                            <fileset dir="src/test/java7"/>
-                                        </copy>
-                                        <replace token= "java.time." value="org.threeten.bp." dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        <replace token= "java.util.function." value="com.puppet.pcore.java7.util.function." dir="target/filtered-sources/test/java" includes="**/*.java"/>
-
-                                        <!-- Mangle test source using org.junit.jupiter style nested classes to compile properly using com.nitorcreations.junit.runners.NestedRunner -->
-                                        <replace token= "import static org.junit.jupiter.api.Assertions.*;" value="import static com.puppet.pcore.Assert.*;&#10;import static org.junit.Assert.*;" dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        <replace token= "import static org.junit.jupiter.api.Assertions.assertThrows;" value="import static com.puppet.pcore.Assert.assertThrows;" dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        <replace token= "org.junit.jupiter.api." value="org.junit." dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        <replace token= "Assertions" value="Assert" dir="target/filtered-sources/test/java" includes="**/*.java"/>
-
-                                        <replaceregexp match='(?sm)^(import [^\n]*$)(.*)^(.DisplayName[^\n]*)$(.*Nested.*^\})' replace="\1&#10;import org.junit.runner.RunWith;&#10;import com.nitorcreations.junit.runners.NestedRunner;&#10;\2@RunWith(NestedRunner.class)\4">
-                                            <fileset dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        </replaceregexp>
-                                        <replaceregexp match='(?sm)^(\s*@Test\n(?:\s*@DisplayName[^\n]*\n)?\s*)void' replace="\1public void" flags="g">
-                                            <fileset dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        </replaceregexp>
-                                        <replaceregexp match='^(\s*)class(\s+)' replace="\1public class\2" byline="true">
-                                            <fileset dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        </replaceregexp>
-                                        <replaceregexp match='^(\s*)(.*[@\.]DisplayName.*)$' replace="\1// \2" byline="true">
-                                            <fileset dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        </replaceregexp>
-                                        <replaceregexp match='^(\s*)(.*[@\.]Nested;?)$' replace="\1// \2" byline="true">
-                                            <fileset dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        </replaceregexp>
-                                        <replaceregexp match='BeforeAll' replace="BeforeClass" byline="true">
-                                            <fileset dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        </replaceregexp>
-                                        <replaceregexp match='BeforeEach' replace="Before" byline="true">
-                                            <fileset dir="target/filtered-sources/test/java" includes="**/*.java"/>
-                                        </replaceregexp>
-                                        <mkdir dir="${project.build.testOutputDirectory}"/>
-
-                                        <!-- compile using normal java 8 compiler so that it can be processed by the retrolamda plugin -->
-                                        <javac includeantruntime="false" srcdir="target/filtered-sources/test/java" destdir="${project.build.testOutputDirectory}" classpathref="maven.test.classpath" source="1.8" target="1.8"/>
-                                    </target>
-                                </configuration>
-                                <goals>
-                                    <goal>run</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <!-- Disable maven compiler plugin -->
-                        <artifactId>maven-compiler-plugin</artifactId>
-                        <version>3.6.1</version>
-                        <executions>
-                            <execution>
-                                <id>default-compile</id>
-                                <goals>
-                                    <goal>compile</goal>
-                                </goals>
-                                <configuration>
-                                    <skipMain>true</skipMain>
-                                </configuration>
-                            </execution>
-                            <execution>
-                                <id>default-testCompile</id>
-                                <goals>
-                                    <goal>testCompile</goal>
-                                </goals>
-                                <configuration>
-                                    <skip>true</skip>
-                                </configuration>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <groupId>net.orfjackal.retrolambda</groupId>
-                        <artifactId>retrolambda-maven-plugin</artifactId>
-                        <version>2.5.0</version>
-                        <executions>
-                            <execution>
-                                <goals>
-                                    <goal>process-main</goal>
-                                    <goal>process-test</goal>
-                                </goals>
-                            </execution>
-                        </executions>
-                    </plugin>
-
-                    <plugin>
-                        <artifactId>maven-surefire-plugin</artifactId>
-                        <version>2.19.1</version>
-                        <executions>
-                            <execution>
-                                <id>default-test</id>
-                                <goals>
-                                    <goal>test</goal>
-                                </goals>
-                                <configuration>
-                                    <skip>false</skip>
-                                    <jvm>${user.home}/tools/jdk1.7.0_45/bin/java</jvm>
-                                </configuration>
-                            </execution>
-                        </executions>
-                        <dependencies>
-                            <dependency>
-                                <groupId>org.apache.maven.surefire</groupId>
-                                <artifactId>surefire-junit47</artifactId>
-                                <version>2.19.1</version>
-                            </dependency>
-                        </dependencies>
-                    </plugin>
-                    <plugin>
-                        <artifactId>maven-jar-plugin</artifactId>
-                        <version>3.0.2</version>
-                        <configuration>
-                            <classifier>jdk7</classifier>
-                        </configuration>
-                    </plugin>
-                </plugins>
-            </build>
-        </profile>
-    </profiles>
 </project>

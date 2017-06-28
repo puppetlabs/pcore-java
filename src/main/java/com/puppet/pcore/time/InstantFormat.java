@@ -7,6 +7,8 @@ import java.time.temporal.TemporalAccessor;
 import java.time.temporal.WeekFields;
 import java.util.*;
 
+import static com.puppet.pcore.impl.Helpers.join;
+import static com.puppet.pcore.impl.Helpers.map;
 import static java.time.temporal.ChronoField.YEAR;
 import static java.time.temporal.TemporalQueries.*;
 import static java.util.Arrays.asList;
@@ -71,14 +73,18 @@ public class InstantFormat {
 		ucShortWeekDay.put(7L, "SUN");
 
 		DEFAULTS_WO_TZ = Collections.unmodifiableList(asList(
-				SINGLETON.createDateTimeFormatter("%FT%T.L"),
+				SINGLETON.createDateTimeFormatter("%FT%T.%N"),
 				SINGLETON.createDateTimeFormatter("%FT%T"),
+				SINGLETON.createDateTimeFormatter("%F %T.%N"),
+				SINGLETON.createDateTimeFormatter("%F %T"),
 				SINGLETON.createDateTimeFormatter("%F"))
 		);
 
 		List<DateTimeFormatter> allDefaults = new ArrayList<>(asList(
-				SINGLETON.createDateTimeFormatter("%FT%T.%L %Z"),
+				SINGLETON.createDateTimeFormatter("%FT%T.%N %Z"),
 				SINGLETON.createDateTimeFormatter("%FT%T %Z"),
+				SINGLETON.createDateTimeFormatter("%F %T.%N %Z"),
+				SINGLETON.createDateTimeFormatter("%F %T %Z"),
 				SINGLETON.createDateTimeFormatter("%F %Z")));
 		allDefaults.addAll(DEFAULTS_WO_TZ);
 
@@ -86,6 +92,10 @@ public class InstantFormat {
 	}
 
 	private final Map<String,DateTimeFormatter> formatterCache = new HashMap<>();
+
+	public static String defaultFormat(Instant instant) {
+		return SINGLETON.format(instant, DEFAULTS.get(0), ZoneOffset.UTC);
+	}
 
 	public String format(Instant instant, String pattern, ZoneId zoneId) {
 		return format(instant, new InstantFormat().createDateTimeFormatter(pattern), zoneId);
@@ -100,7 +110,7 @@ public class InstantFormat {
 		for(DateTimeFormatter format : DEFAULTS) {
 			try {
 				return parse(timestamp, format);
-			} catch(DateTimeParseException ignored) {
+			} catch(IllegalArgumentException ignored) {
 			}
 		}
 		throw new IllegalArgumentException(String.format(
@@ -108,31 +118,75 @@ public class InstantFormat {
 				timestamp));
 	}
 
-	public Instant parse(String instant, DateTimeFormatter formatter) {
-		TemporalAccessor ta = formatter.parse(instant);
-		LocalTime time = ta.query(localTime());
-		LocalDate date = ta.query(localDate());
-		ZoneId zone = ta.query(zoneId());
+	public Instant parse(String timestamp, List<String> formats) {
+		return parse(timestamp, formats, null);
+	}
 
-		LocalDateTime ldt;
-		if(time == null) {
-			if(date == null)
-				throw new DateTimeParseException("Unable to extract time and/or date", instant, 0);
-			ldt = date.atStartOfDay();
-		} else {
-			ldt = date == null ? time.atDate(LocalDate.now()) : LocalDateTime.of(date, time);
+	public Instant parse(String timestamp, List<String> formats, String timezone) {
+		ZoneId zone = timezone == null ? null : ZoneId.of(timezone);
+		for(String format : formats) {
+			try {
+				return parse(timestamp, new InstantFormat().createDateTimeFormatter(format), zone);
+			} catch(IllegalArgumentException ignored) {
+			}
 		}
-		return ldt.toInstant(zone == null ? ZoneOffset.UTC : ZoneOffset.of(zone.getId()));
+		throw new IllegalArgumentException(String.format(
+				"Unable to parse '%s' using any of the formats %s", timestamp, join(", ", formats)));
+	}
+
+	public Instant parse(String timestamp, List<DateTimeFormatter> formats, ZoneId zone) {
+		for(DateTimeFormatter format : formats) {
+			try {
+				return parse(timestamp, format, zone);
+			} catch(IllegalArgumentException ignored) {
+			}
+		}
+		throw new IllegalArgumentException(String.format(
+				"Unable to parse '%s' using any of the formats %s", timestamp, join(", ", map(formats, DateTimeFormatter::toString))));
+	}
+
+	public Instant parse(String instant, DateTimeFormatter formatter) {
+		return parse(instant, formatter, null);
+	}
+
+	public Instant parse(String instant, DateTimeFormatter formatter, ZoneId zone) {
+		try {
+			TemporalAccessor ta = formatter.parse(instant);
+			LocalTime time = ta.query(localTime());
+			LocalDate date = ta.query(localDate());
+			ZoneId parsedZone = ta.query(zoneId());
+			if(zone == null)
+				zone = parsedZone;
+			else if(parsedZone != null)
+				throw new IllegalArgumentException(
+						"Using a Timezone designator in format specification is mutually exclusive to providing an explicit timezone argument");
+
+			LocalDateTime ldt;
+			if(time == null) {
+				if(date == null)
+					throw new IllegalArgumentException(
+							String.format("Unable to extract time and/or date from string '%s'", instant));
+				ldt = date.atStartOfDay();
+			} else {
+				ldt = date == null ? time.atDate(LocalDate.now()) : LocalDateTime.of(date, time);
+			}
+			return ldt.toInstant(zone == null ? ZoneOffset.UTC : ZoneOffset.of(zone.getId()));
+		} catch(DateTimeParseException e) {
+			throw new IllegalArgumentException(e.getMessage());
+		}
 	}
 
 	public Instant parse(String instant, String pattern) {
-		return parse(instant, new InstantFormat().createDateTimeFormatter(pattern));
+		return parse(instant, pattern, null);
 	}
 
-	private IllegalArgumentException badFormatSpecifier(String format, int start, int position) {
-		return new IllegalArgumentException(String.format("Bad format specifier '%s' in '%s' at position %d", format
-				.substring(start, position -
-						start), format, position));
+	public Instant parse(String instant, String pattern, String timezone) {
+		return parse(instant, new InstantFormat().createDateTimeFormatter(pattern), timezone == null ? null : ZoneId.of(timezone));
+	}
+
+	private IllegalArgumentException badFormatSpecifier(String format, int start, int end) {
+		return new IllegalArgumentException(String.format("Bad format specifier '%s' in '%s' at position %d",
+				format.substring(start, end), format, start));
 	}
 
 	/**
@@ -154,12 +208,12 @@ public class InstantFormat {
 		boolean escaped = false;
 		int top = formatString.length();
 
-		for(int idx = 0; idx < top; idx++) {
-			char c = formatString.charAt(idx);
+		for(int idx = 0; idx < top;) {
+			char c = formatString.charAt(idx++);
 
 			if(!escaped) {
 				if(c == '%') {
-					start = idx;
+					start = idx - 1;
 					escaped = true;
 				} else
 					builder.appendLiteral(c);
@@ -171,53 +225,64 @@ public class InstantFormat {
 			int zColons = 0;
 			int width = -1;
 
-			if(idx + 1 < top) {
-				// Check flags
-				switch(c) {
-				case '_':
-					padding = Padding.Blank;
-					c = formatString.charAt(++idx);
-					break;
-				case '-':
-					padding = Padding.None;
-					c = formatString.charAt(++idx);
-					break;
-				case '0':
-					padding = Padding.Zero;
-					c = formatString.charAt(++idx);
-					break;
-				case '^':
-					upcase = true;
-					c = formatString.charAt(++idx);
-					break;
-				case ':':
-					zColons = 1;
-					while(zColons < 3 && ++idx < top) {
-						c = formatString.charAt(idx);
-						if(c != ':')
-							break;
-						++zColons;
-					}
-					break;
-				}
-			}
-
-			if(idx + 1 < top) {
-				// Check width
-				if(c >= '1' && c <= '9') {
-					width = c - '0';
-					while(++idx < top) {
-						c = formatString.charAt(idx);
-						if(c < '0' || c > '9')
-							break;
-						width *= 10;
-						width += c - '0';
-					}
-				}
-			}
-
-			if(idx == top)
+			// Check flags
+			switch(c) {
+			case '_':
+				padding = Padding.Blank;
+				c = 0;
 				break;
+			case '-':
+				padding = Padding.None;
+				c = 0;
+				break;
+			case '0':
+				padding = Padding.Zero;
+				c = 0;
+				break;
+			case '^':
+				upcase = true;
+				c = 0;
+				break;
+			case ':':
+				zColons = 1;
+				c = 0;
+				while(idx < top) {
+					c = formatString.charAt(idx++);
+					if(c != ':')
+						break;
+					++zColons;
+					c = 0;
+				}
+				if(zColons > 2)
+					throw badFormatSpecifier(formatString, start, idx - 1);
+				break;
+			}
+
+			if(c == 0) {
+				if(idx >= top)
+					throw badFormatSpecifier(formatString, start, idx);
+				c = formatString.charAt(idx++);
+			}
+
+			// Check width
+			if(c >= '1' && c <= '9') {
+				width = c - '0';
+				c = 0;
+				while(idx < top) {
+					c = formatString.charAt(idx++);
+					if(c < '0' || c > '9')
+						break;
+					width *= 10;
+					width += c - '0';
+					c = 0;
+				}
+
+				if(c == 0)
+					throw badFormatSpecifier(formatString, start, idx);
+			}
+
+			if(zColons > 0 && c != 'z')
+				throw badFormatSpecifier(formatString, start, idx);
 
 			switch(c) {
 			// Date (Year, Month, Day):
@@ -296,12 +361,10 @@ public class InstantFormat {
 				builder.appendValue(ChronoField.SECOND_OF_MINUTE, 2);
 				break;
 			case 'L': // Millisecond of the second (000..999)
-				pad(padding, width, 3, 3, '0', builder);
-				builder.appendValue(ChronoField.MILLI_OF_SECOND, 3);
+				builder.appendFraction(ChronoField.MICRO_OF_SECOND, 1, 3, false);
 				break;
-			case 'N': // Nano of the second (000..999)
-				pad(padding, 1, width < 0 ? 9 : width, 3, '0', builder);
-				builder.appendValue(ChronoField.NANO_OF_SECOND);
+			case 'N': // Nano of the second (0000000..999999999)
+				builder.appendFraction(ChronoField.NANO_OF_SECOND, 1, 9, false);
 				break;
 
 			// Time zone:
@@ -315,14 +378,9 @@ public class InstantFormat {
 					pad(padding, width, 6, 6, ' ', builder);
 					builder.appendOffset("+HH:MM", "+00:00");
 					break;
-				case 2:
-					pad(padding, width, 9, 9, ' ', builder);
-					builder.appendOffset("+HH:MM:SS", "+00:00:00");
-					break;
 				default:
 					pad(padding, width, 9, 9, ' ', builder);
-					builder.appendOffset("+HH:mm:ss", "+00:00:00");
-					break;
+					builder.appendOffset("+HH:MM:SS", "+00:00:00");
 				}
 				break;
 			case 'Z':
@@ -432,6 +490,9 @@ public class InstantFormat {
 			}
 			escaped = false;
 		}
+		if(escaped)
+			throw badFormatSpecifier(formatString, start, formatString.length());
+
 		formatter = builder.toFormatter();
 		formatterCache.put(formatString, formatter);
 		return formatter;

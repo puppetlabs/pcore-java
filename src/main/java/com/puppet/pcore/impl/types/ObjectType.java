@@ -3,11 +3,11 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.DynamicObjectImpl;
-import com.puppet.pcore.impl.GivenArgumentsAccessor;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.parser.Expression;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
-import com.puppet.pcore.serialization.FactoryFunction;
+import com.puppet.pcore.serialization.FactoryDispatcher;
+import com.puppet.pcore.serialization.SerializationException;
 
 import java.io.IOException;
 import java.util.*;
@@ -15,39 +15,15 @@ import java.util.Map.Entry;
 import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Constants.*;
-import static com.puppet.pcore.impl.Helpers.getArgument;
-import static com.puppet.pcore.impl.Helpers.map;
-import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
+import static com.puppet.pcore.impl.ConstructorImpl.constructor;
+import static com.puppet.pcore.impl.FactoryDispatcherImpl.dispatcher;
+import static com.puppet.pcore.impl.Helpers.*;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
-import static java.lang.Thread.currentThread;
 import static java.util.Arrays.asList;
 import static java.util.Collections.*;
 
-public class ObjectType extends MetaType {
-	public static class ParameterInfo {
-		public final Map<String,Integer> attributeIndex;
-		public final List<Attribute> attributes;
-		public final int[] equalityAttributeIndexes;
-		public final int requiredCount;
-
-		ParameterInfo(List<Attribute> attributes, int requiredCount, List<String> equality) {
-			Map<String,Integer> attributeIndex = new HashMap<>();
-			int idx = attributes.size();
-			while(--idx >= 0)
-				attributeIndex.put(attributes.get(idx).name, idx);
-
-			this.attributes = Collections.unmodifiableList(attributes);
-			this.attributeIndex = Collections.unmodifiableMap(attributeIndex);
-			this.requiredCount = requiredCount;
-
-			int top = equality.size();
-			int[] ei = new int[top];
-			for(idx = 0; idx < top; ++idx)
-				ei[idx] = attributeIndex.get(equality.get(idx));
-			this.equalityAttributeIndexes = ei;
-		}
-	}
+public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	public abstract class AnnotatedMember extends ModelObject implements Annotatable {
 		public final String name;
@@ -57,20 +33,12 @@ public class ObjectType extends MetaType {
 
 		private final Map<AnyType,Map<String,?>> annotations;
 
-		AnnotatedMember(String name, Map<String,Object> i12nHash) {
+		AnnotatedMember(String name, Map<String,Object> initHash) {
 			this.name = name;
-			this.type = (AnyType)i12nHash.get(KEY_TYPE);
-			this.override = getArgument(KEY_OVERRIDE, i12nHash, false);
-			this._final = getArgument(KEY_FINAL, i12nHash, false);
-			this.annotations = getArgument(KEY_ANNOTATIONS, i12nHash, emptyMap());
-		}
-
-		public boolean equals(Object o) {
-			if(getClass().equals(o.getClass())) {
-				AnnotatedMember om = (AnnotatedMember)o;
-				return override == om.override && _final == om._final && name.equals(om.name) && type.equals(om.type);
-			}
-			return false;
+			this.type = (AnyType)initHash.get(KEY_TYPE);
+			this.override = getArgument(KEY_OVERRIDE, initHash, false);
+			this._final = getArgument(KEY_FINAL, initHash, false);
+			this.annotations = getArgument(KEY_ANNOTATIONS, initHash, emptyMap());
 		}
 
 		@Override
@@ -82,7 +50,7 @@ public class ObjectType extends MetaType {
 			return name.hashCode() * 31 + type.hashCode();
 		}
 
-		public Map<String,Object> i12nHash() {
+		public Map<String,Object> initHash() {
 			Map<String,Object> result = new LinkedHashMap<>();
 			Map<AnyType,Map<String,?>> annotations = getAnnotations();
 			if(!annotations.isEmpty())
@@ -134,6 +102,15 @@ public class ObjectType extends MetaType {
 			}
 		}
 
+		@Override
+		boolean guardedEquals(Object o, RecursionGuard guard) {
+			if(getClass().equals(o.getClass())) {
+				AnnotatedMember om = (AnnotatedMember)o;
+				return override == om.override && _final == om._final && name.equals(om.name) && type.guardedEquals(om.type, guard);
+			}
+			return false;
+		}
+
 		abstract String featureType();
 	}
 
@@ -142,23 +119,23 @@ public class ObjectType extends MetaType {
 
 		private final Object value;
 
-		Attribute(String name, Map<String,Object> i12nHash) {
-			super(name, i12nHash);
-			kind = i12nHash.containsKey(KEY_KIND)
-					? AttributeKind.valueOf((String)i12nHash.get(KEY_KIND))
+		Attribute(String name, Map<String,Object> initHash) {
+			super(name, initHash);
+			kind = initHash.containsKey(KEY_KIND)
+					? AttributeKind.valueOf((String)initHash.get(KEY_KIND))
 					: AttributeKind.normal;
-			if(kind == AttributeKind.constant && Boolean.FALSE.equals(i12nHash.get(KEY_FINAL)))
+			if(kind == AttributeKind.constant && Boolean.FALSE.equals(initHash.get(KEY_FINAL)))
 				throw new TypeResolverException(format("%s of kind 'constant' cannot be combined with final => false", label
 						()));
 
-			if(i12nHash.containsKey(KEY_VALUE)) {
+			if(initHash.containsKey(KEY_VALUE)) {
 				switch(kind) {
 				case derived:
 				case given_or_derived:
 					throw new TypeResolverException(format("%s of kind '%s' cannot be combined with an attribute value",
 							label(), kind.name()));
 				default:
-					Object v = i12nHash.get(KEY_VALUE);
+					Object v = initHash.get(KEY_VALUE);
 					if(!Default.SINGLETON.equals(v))
 						type.assertInstanceOf(v, () -> String.format("%s %s", label(), KEY_VALUE));
 					this.value = v;
@@ -175,8 +152,8 @@ public class ObjectType extends MetaType {
 		}
 
 		@Override
-		public Map<String,Object> i12nHash() {
-			Map<String,Object> result = super.i12nHash();
+		public Map<String,Object> initHash() {
+			Map<String,Object> result = super.initHash();
 			if(kind != AttributeKind.normal) {
 				result.put(KEY_KIND, kind.name());
 				if(kind == AttributeKind.constant)
@@ -185,6 +162,11 @@ public class ObjectType extends MetaType {
 			if(value != UNDEF)
 				result.put(KEY_VALUE, value);
 			return unmodifiableCopy(result);
+		}
+
+		@Override
+		boolean guardedEquals(Object o, RecursionGuard guard) {
+			return super.guardedEquals(o, guard) && kind == ((Attribute)o).kind && Objects.equals(value, ((Attribute)o).value);
 		}
 
 		@Override
@@ -205,8 +187,8 @@ public class ObjectType extends MetaType {
 	}
 
 	public class Function extends AnnotatedMember {
-		Function(String name, Map<String,Object> i12nHash) {
-			super(name, i12nHash);
+		Function(String name, Map<String,Object> initHash) {
+			super(name, initHash);
 		}
 
 		@Override
@@ -215,8 +197,8 @@ public class ObjectType extends MetaType {
 		}
 
 		@Override
-		public Map<String,Object> i12nHash() {
-			Map<String,Object> result = super.i12nHash();
+		public Map<String,Object> initHash() {
+			Map<String,Object> result = super.initHash();
 			return unmodifiableCopy(result);
 		}
 	}
@@ -225,7 +207,8 @@ public class ObjectType extends MetaType {
 
 	private enum MemberType {attribute, function, all}
 
-	public static final ObjectType DEFAULT = new ObjectType();
+	static final ObjectType DEFAULT = new ObjectType();
+
 	private static final AnyType TYPE_ATTRIBUTE_KIND = enumType(map(asList(AttributeKind.values()).subList(0, AttributeKind.values().length - 1), AttributeKind::name));
 	private static final AnyType TYPE_MEMBER_NAME = patternType(regexpType(Pattern.compile("\\A[a-z_]\\w*\\z")));
 	private static final AnyType TYPE_ATTRIBUTE = variantType(typeType(), structType(
@@ -249,7 +232,7 @@ public class ObjectType extends MetaType {
 	private static final AnyType TYPE_FUNCTIONS = hashType(TYPE_MEMBER_NAME, notUndefType());
 	private static final AnyType TYPE_EQUALITY = variantType(TYPE_MEMBER_NAME, TYPE_MEMBER_NAMES);
 	private static final AnyType TYPE_CHECKS = anyType(); // TBD
-	private static final AnyType TYPE_OBJECT_I12N = structType(
+	static final StructType TYPE_OBJECT_INIT = structType(
 			structElement(optionalType(KEY_NAME), TYPE_QUALIFIED_REFERENCE),
 			structElement(optionalType(KEY_PARENT), typeType()),
 			structElement(optionalType(KEY_ATTRIBUTES), TYPE_ATTRIBUTES),
@@ -268,7 +251,7 @@ public class ObjectType extends MetaType {
 	private List<String> equality;
 	private boolean equalityIncludeType = true;
 	private Map<String,Function> functions = emptyMap();
-	private StructType i12nType;
+	private StructType initType;
 	private String name;
 	private ParameterInfo parameterInfo;
 	private AnyType parent;
@@ -282,32 +265,52 @@ public class ObjectType extends MetaType {
 	ObjectType(ArgumentsAccessor args) throws IOException {
 		super((Expression)null);
 		args.remember(this);
-		Map<String,Object> i12nHash = (Map<String,Object>)args.get(0);
-		this.name = (String)TYPE_QUALIFIED_REFERENCE.assertInstanceOf(i12nHash.get(KEY_NAME), true, () -> "Object name");
-		setI12nHashExpression(i12nHash);
+		Map<String,Object> initHash = (Map<String,Object>)args.get(0);
+		this.name = (String)TYPE_QUALIFIED_REFERENCE.assertInstanceOf(initHash.get(KEY_NAME), true, () -> "Object name");
+		setInitHashExpression(initHash);
 	}
 
-	ObjectType(String name, Expression i12nHashExpression) {
-		super(i12nHashExpression);
+	ObjectType(String name, Expression initHashExpression) {
+		super(initHashExpression);
 		this.name = TYPE_QUALIFIED_REFERENCE.assertInstanceOf(name, true, () -> "Object name");
 	}
 
-	ObjectType(String name, Map<String,Object> unresolvedI12nHash) {
-		super(unresolvedI12nHash);
-		this.name = TYPE_QUALIFIED_REFERENCE.assertInstanceOf(name, true, () -> "Object name");
-	}
-
-	ObjectType(Map<String,Object> i12nHash) {
-		super(i12nHash);
+	public ObjectType(Map<String,Object> initHash) {
+		super(initHash);
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 
 	public Map<String,Attribute> attributes(boolean includeParent) {
 		return members(includeParent, MemberType.attribute);
+	}
+
+	public Object[] attributeValuesFor(Object value) {
+		Object[] args;
+		if(value instanceof DynamicObjectImpl)
+			args = ((DynamicObjectImpl)value).getAttributes();
+		else {
+			Class<?> implClass = value.getClass();
+			java.util.function.Function<Object,Object[]> attributeProvider = Pcore.implementationRegistry().attributeProviderFor(this);
+			if(attributeProvider == null)
+				throw new SerializationException(format("No attribute provider found for %s", implClass.getName()));
+
+			args = attributeProvider.apply(value);
+		}
+
+		// Limit the array to not include trailing defaults
+		int top = args.length;
+		ParameterInfo pi = parameterInfo();
+		while(--top >= 0) {
+			Attribute attr = pi.attributes.get(top);
+			if(!(attr.hasValue() && Objects.equals(attr.value(), args[top])))
+				break;
+		}
+		++top;
+		return top == args.length ? args : Arrays.copyOf(args, top);
 	}
 
 	public List<String> declaredEquality() {
@@ -318,19 +321,6 @@ public class ObjectType extends MetaType {
 		List<String> all = new ArrayList<>();
 		collectEqualityAttributes(all);
 		return all;
-	}
-
-	public boolean equals(Object o) {
-		if(getClass().equals(o.getClass())) {
-			ObjectType to = (ObjectType)o;
-			return Objects.equals(name, to.name)
-					&& Objects.equals(parent, to.parent)
-					&& attributes.equals(to.attributes)
-					&& functions.equals(to.functions)
-					&& Objects.equals(equality, to.equality)
-					&& Objects.equals(checks, to.checks);
-		}
-		return false;
 	}
 
 	public Map<String,Function> functions(boolean includeParent) {
@@ -375,6 +365,20 @@ public class ObjectType extends MetaType {
 		return member;
 	}
 
+	@Override
+	@SuppressWarnings("unchecked")
+	public FactoryDispatcher<?> factoryDispatcher() {
+		ImplementationRegistry ir = Pcore.implementationRegistry();
+		FactoryDispatcher fd = ir.creatorFor(this);
+		if(fd == null) {
+			FactoryDispatcher<DynamicObjectImpl> dynFd = dispatcher(
+					constructor(args -> new DynamicObjectImpl(this, args.toArray()), parameterInfo().parametersType()));
+			ir.registerImplementation(this, dynFd, DynamicObjectImpl::getAttributes);
+			fd = dynFd;
+		}
+		return fd;
+	}
+
 	public int hashCode() {
 		if(name != null)
 			return name.hashCode();
@@ -382,12 +386,12 @@ public class ObjectType extends MetaType {
 	}
 
 	@Override
-	public Map<String,Object> i12nHash() {
-		return i12nHash(true);
+	public Map<String,Object> _pcoreInitHash() {
+		return initHash(true);
 	}
 
-	public Map<String,Object> i12nHash(boolean includeName) {
-		Map<String,Object> result = super.i12nHash();
+	public Map<String,Object> initHash(boolean includeName) {
+		Map<String,Object> result = super._pcoreInitHash();
 		if(includeName && name != null)
 			result.put(KEY_NAME, name);
 		if(parent != null)
@@ -405,10 +409,10 @@ public class ObjectType extends MetaType {
 		return unmodifiableCopy(result);
 	}
 
-	public synchronized StructType i12nType() {
-		if(i12nType == null)
-			i12nType = createI12nType();
-		return i12nType;
+	public synchronized StructType initType() {
+		if(initType == null)
+			initType = createInitType();
+		return initType;
 	}
 
 	public boolean isEqualityIncludeType() {
@@ -421,24 +425,20 @@ public class ObjectType extends MetaType {
 
 	@Override
 	public String name() {
-		return name;
+		return name == null ? "Object" : name;
 	}
 
-	public Object newInstance(ArgumentsAccessor aa) throws IOException {
-		ImplementationRegistry ir = Pcore.implementationRegistry();
-		Class<?> implClass = ir.classFor(this, currentThread().getContextClassLoader());
-		FactoryFunction<?> creator = implClass == null ? null : ir.creatorFor(implClass);
-		return creator == null ? new DynamicObjectImpl(aa) : aa.remember(creator.createInstance(aa));
-	}
-
+	@Override
 	public Object newInstance(Object... args) {
-		try {
-			return newInstance(new GivenArgumentsAccessor(args, this));
-		} catch(IOException e) {
-			throw new PCoreException(e);
-		}
+		return factoryDispatcher().createInstance(this, args);
 	}
 
+	@Override
+	public Object newInstance(ArgumentsAccessor aa) throws IOException {
+		return aa.remember(factoryDispatcher().createInstance(this, aa));
+	}
+
+	@Override
 	public synchronized ParameterInfo parameterInfo() {
 		if(parameterInfo == null)
 			parameterInfo = createParameterInfo();
@@ -446,10 +446,39 @@ public class ObjectType extends MetaType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(ObjectType.class, "Pcore::ObjectType", "Pcore::AnyType",
-				singletonMap("i12nHash", TYPE_OBJECT_I12N),
-				ObjectType::new,
-				(self) -> new Object[]{self.i12nHash()});
+		return ptype = pcore.createObjectType("Pcore::ObjectType", "Pcore::AnyType",
+				asMap(
+						KEY_NAME, TYPE_QUALIFIED_REFERENCE,
+						KEY_PARENT, asMap(
+								KEY_TYPE, optionalType(typeType()),
+								KEY_VALUE, null),
+						KEY_ATTRIBUTES, asMap(
+								KEY_TYPE, optionalType(TYPE_ATTRIBUTES),
+								KEY_VALUE, null),
+						KEY_FUNCTIONS, asMap(
+								KEY_TYPE, optionalType(TYPE_FUNCTIONS),
+								KEY_VALUE, null),
+						KEY_EQUALITY, asMap(
+								KEY_TYPE, optionalType(TYPE_EQUALITY),
+								KEY_VALUE, null),
+						KEY_SERIALIZATION, asMap(
+								KEY_TYPE, optionalType(TYPE_MEMBER_NAMES),
+								KEY_VALUE, null),
+						KEY_EQUALITY_INCLUDE_TYPE, asMap(
+								KEY_TYPE, optionalType(booleanType()),
+								KEY_VALUE, null),
+						KEY_CHECKS, asMap(
+								KEY_TYPE, optionalType(TYPE_CHECKS),
+								KEY_VALUE, null),
+						KEY_ANNOTATIONS, asMap(
+								KEY_TYPE, optionalType(TYPE_ANNOTATIONS),
+								KEY_VALUE, null)
+				));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, objectTypeDispatcher(),
+				(self) -> new Object[]{self._pcoreInitHash()});
 	}
 
 	@Override
@@ -461,13 +490,27 @@ public class ObjectType extends MetaType {
 		}
 	}
 
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		if(getClass().equals(o.getClass())) {
+			ObjectType to = (ObjectType)o;
+			return Objects.equals(name, to.name)
+					&& equals(parent, to.parent, guard)
+					&& equals(attributes, to.attributes, guard)
+					&& equals(functions, to.functions, guard)
+					&& Objects.equals(equality, to.equality)
+					&& Objects.equals(checks, to.checks);
+		}
+		return false;
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
-	void initializeFromHash(Map<String,Object> i12nHash) {
-		TYPE_OBJECT_I12N.assertInstanceOf(i12nHash, () -> "Object initializer");
+	void initializeFromHash(Map<String,Object> initHash) {
+		TYPE_OBJECT_INIT.assertInstanceOf(initHash, () -> "Object initializer");
 		if(name == null)
-			name = (String)i12nHash.get(KEY_NAME);
-		parent = (AnyType)i12nHash.get(KEY_PARENT);
+			name = (String)initHash.get(KEY_NAME);
+		parent = (AnyType)initHash.get(KEY_PARENT);
 
 		Map<String,AnnotatedMember> pm = emptyMap();
 		ObjectType pot = null;
@@ -483,7 +526,7 @@ public class ObjectType extends MetaType {
 		ObjectType parentObjectType = pot;
 		Map<String,AnnotatedMember> parentMembers = pm;
 
-		Map<String,Object> attrSpecs = (Map<String,Object>)i12nHash.get(KEY_ATTRIBUTES);
+		Map<String,Object> attrSpecs = (Map<String,Object>)initHash.get(KEY_ATTRIBUTES);
 		if(!(attrSpecs == null || attrSpecs.isEmpty())) {
 			Map<String,Attribute> attrs = new LinkedHashMap<>();
 			for(Entry<String,Object> p : attrSpecs.entrySet()) {
@@ -500,7 +543,7 @@ public class ObjectType extends MetaType {
 			attributes = unmodifiableMap(attrs);
 		}
 
-		Map<String,Object> funcSpecs = (Map<String,Object>)i12nHash.get(KEY_FUNCTIONS);
+		Map<String,Object> funcSpecs = (Map<String,Object>)initHash.get(KEY_FUNCTIONS);
 		if(!(funcSpecs == null || funcSpecs.isEmpty())) {
 			Map<String,Function> funcs = new LinkedHashMap<>();
 			for(Entry<String,Object> p : funcSpecs.entrySet()) {
@@ -519,8 +562,8 @@ public class ObjectType extends MetaType {
 			functions = unmodifiableMap(funcs);
 		}
 
-		equalityIncludeType = getArgument(KEY_EQUALITY_INCLUDE_TYPE, i12nHash, true);
-		Object equality = i12nHash.get(KEY_EQUALITY);
+		equalityIncludeType = getArgument(KEY_EQUALITY_INCLUDE_TYPE, initHash, true);
+		Object equality = initHash.get(KEY_EQUALITY);
 		if(equality == null)
 			this.equality = null;
 		else {
@@ -564,7 +607,7 @@ public class ObjectType extends MetaType {
 				}
 			}
 		}
-		serialization = (List<String>)i12nHash.get(KEY_SERIALIZATION);
+		serialization = (List<String>)initHash.get(KEY_SERIALIZATION);
 		if(serialization != null) {
 			Map<String,Attribute> attrs = attributes(true);
 			Attribute optFound = null;
@@ -584,8 +627,8 @@ public class ObjectType extends MetaType {
 									label(), attr.label(), optFound.label()));
 			}
 		}
-		checks = i12nHash.get(KEY_CHECKS);
-		super.initializeFromHash(i12nHash);
+		checks = initHash.get(KEY_CHECKS);
+		super.initializeFromHash(initHash);
 	}
 
 	private void collectEqualityAttributes(List<String> all) {
@@ -623,7 +666,7 @@ public class ObjectType extends MetaType {
 	private Map<String,Object> compressedMembersMap(Map<String,? extends AnnotatedMember> members) {
 		Map<String,Object> result = new LinkedHashMap<>();
 		for(Entry<String,? extends AnnotatedMember> entry : members.entrySet()) {
-			Map<String,Object> fh = entry.getValue().i12nHash();
+			Map<String,Object> fh = entry.getValue().initHash();
 			if(fh.size() == 1) {
 				Object type = fh.get(KEY_TYPE);
 				if(type != null) {
@@ -636,7 +679,7 @@ public class ObjectType extends MetaType {
 		return result;
 	}
 
-	private StructType createI12nType() {
+	private StructType createInitType() {
 		List<StructElement> elements = new ArrayList<>();
 		for(Attribute attr : attributes(true).values()) {
 			switch(attr.kind) {
@@ -696,6 +739,24 @@ public class ObjectType extends MetaType {
 				return type;
 			type = (ObjectType)p;
 		}
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o instanceof PuppetObject && isAssignable((AnyType)((PuppetObject)o)._pcoreType(), guard);
+
+	}
+
+	@Override
+	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
+		if(t instanceof ObjectType) {
+			ObjectType ot = (ObjectType)t;
+			if(DEFAULT.equals(this) || equals(ot))
+				return true;
+			AnyType parent = ot.parent;
+			return parent != null && isUnsafeAssignable(parent, guard);
+		}
+		return false;
 	}
 
 	@SuppressWarnings("unchecked")

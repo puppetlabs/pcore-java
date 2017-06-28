@@ -9,7 +9,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class OptionalType extends TypeContainerType {
-	public static final OptionalType DEFAULT = new OptionalType(AnyType.DEFAULT);
+	static final OptionalType DEFAULT = new OptionalType(AnyType.DEFAULT);
 
 	private static ObjectType ptype;
 
@@ -22,7 +22,7 @@ public class OptionalType extends TypeContainerType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 
@@ -37,18 +37,26 @@ public class OptionalType extends TypeContainerType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(OptionalType.class, "Pcore::OptionalType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::OptionalType", "Pcore::AnyType",
 				asMap(
 						"type", asMap(
 								KEY_TYPE, typeType(),
-								KEY_VALUE, anyType())),
-				(args) -> optionalType((AnyType)args.get(0)),
+								KEY_VALUE, anyType())));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, optionalTypeDispatcher(),
 				(self) -> new Object[]{self.type});
 	}
 
 	@Override
 	AnyType copyWith(AnyType type, boolean resolved) {
 		return new OptionalType(type, resolved);
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o == null || type.isInstance(o, guard);
 	}
 
 	@Override

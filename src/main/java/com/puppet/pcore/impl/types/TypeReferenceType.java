@@ -5,9 +5,10 @@ import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
 import static com.puppet.pcore.impl.Helpers.asMap;
+import static com.puppet.pcore.impl.types.TypeFactory.typeReferenceTypeDispatcher;
 
 public class TypeReferenceType extends AnyType {
-	public static final TypeReferenceType DEFAULT = new TypeReferenceType("UnresolvedReference");
+	static final TypeReferenceType DEFAULT = new TypeReferenceType("UnresolvedReference");
 
 	private static ObjectType ptype;
 	public final String typeString;
@@ -17,12 +18,8 @@ public class TypeReferenceType extends AnyType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
-	}
-
-	public boolean equals(Object o) {
-		return o instanceof TypeReferenceType && typeString.equals(((TypeReferenceType)o).typeString);
 	}
 
 	@Override
@@ -40,11 +37,24 @@ public class TypeReferenceType extends AnyType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(TypeReferenceType.class, "Pcore::TypeReferenceType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::TypeReferenceType", "Pcore::AnyType",
 				asMap(
-						"typeString", StringType.NOT_EMPTY),
-				(args) -> new TypeReferenceType((String)args.get(0)),
+						"typeString", StringType.NOT_EMPTY));
+	}
+
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, typeReferenceTypeDispatcher(),
 				(self) -> new Object[]{self.typeString});
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return o instanceof TypeReferenceType && typeString.equals(((TypeReferenceType)o).typeString);
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return false;
 	}
 
 	@Override
