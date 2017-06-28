@@ -133,7 +133,7 @@ public class Version implements Comparable<Version>, Serializable {
 		return new Version(major, minor, patch + 1, null, null);
 	}
 
-	private final void joinParts(List<?> parts, StringBuilder bld) {
+	private static void joinParts(List<?> parts, StringBuilder bld) {
 		if(parts == null)
 			return;
 		int top = parts.size();

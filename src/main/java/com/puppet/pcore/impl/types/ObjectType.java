@@ -57,12 +57,12 @@ public class ObjectType extends MetaType {
 
 		private final Map<AnyType,Map<String,?>> annotations;
 
-		AnnotatedMember(String name, Map<String,Object> i12nHash) {
+		AnnotatedMember(String name, Map<String,Object> initHash) {
 			this.name = name;
-			this.type = (AnyType)i12nHash.get(KEY_TYPE);
-			this.override = getArgument(KEY_OVERRIDE, i12nHash, false);
-			this._final = getArgument(KEY_FINAL, i12nHash, false);
-			this.annotations = getArgument(KEY_ANNOTATIONS, i12nHash, emptyMap());
+			this.type = (AnyType)initHash.get(KEY_TYPE);
+			this.override = getArgument(KEY_OVERRIDE, initHash, false);
+			this._final = getArgument(KEY_FINAL, initHash, false);
+			this.annotations = getArgument(KEY_ANNOTATIONS, initHash, emptyMap());
 		}
 
 		public boolean equals(Object o) {
@@ -82,7 +82,7 @@ public class ObjectType extends MetaType {
 			return name.hashCode() * 31 + type.hashCode();
 		}
 
-		public Map<String,Object> i12nHash() {
+		public Map<String,Object> initHash() {
 			Map<String,Object> result = new LinkedHashMap<>();
 			Map<AnyType,Map<String,?>> annotations = getAnnotations();
 			if(!annotations.isEmpty())
@@ -142,23 +142,23 @@ public class ObjectType extends MetaType {
 
 		private final Object value;
 
-		Attribute(String name, Map<String,Object> i12nHash) {
-			super(name, i12nHash);
-			kind = i12nHash.containsKey(KEY_KIND)
-					? AttributeKind.valueOf((String)i12nHash.get(KEY_KIND))
+		Attribute(String name, Map<String,Object> initHash) {
+			super(name, initHash);
+			kind = initHash.containsKey(KEY_KIND)
+					? AttributeKind.valueOf((String)initHash.get(KEY_KIND))
 					: AttributeKind.normal;
-			if(kind == AttributeKind.constant && Boolean.FALSE.equals(i12nHash.get(KEY_FINAL)))
+			if(kind == AttributeKind.constant && Boolean.FALSE.equals(initHash.get(KEY_FINAL)))
 				throw new TypeResolverException(format("%s of kind 'constant' cannot be combined with final => false", label
 						()));
 
-			if(i12nHash.containsKey(KEY_VALUE)) {
+			if(initHash.containsKey(KEY_VALUE)) {
 				switch(kind) {
 				case derived:
 				case given_or_derived:
 					throw new TypeResolverException(format("%s of kind '%s' cannot be combined with an attribute value",
 							label(), kind.name()));
 				default:
-					Object v = i12nHash.get(KEY_VALUE);
+					Object v = initHash.get(KEY_VALUE);
 					if(!Default.SINGLETON.equals(v))
 						type.assertInstanceOf(v, () -> String.format("%s %s", label(), KEY_VALUE));
 					this.value = v;
@@ -175,8 +175,8 @@ public class ObjectType extends MetaType {
 		}
 
 		@Override
-		public Map<String,Object> i12nHash() {
-			Map<String,Object> result = super.i12nHash();
+		public Map<String,Object> initHash() {
+			Map<String,Object> result = super.initHash();
 			if(kind != AttributeKind.normal) {
 				result.put(KEY_KIND, kind.name());
 				if(kind == AttributeKind.constant)
@@ -205,8 +205,8 @@ public class ObjectType extends MetaType {
 	}
 
 	public class Function extends AnnotatedMember {
-		Function(String name, Map<String,Object> i12nHash) {
-			super(name, i12nHash);
+		Function(String name, Map<String,Object> initHash) {
+			super(name, initHash);
 		}
 
 		@Override
@@ -215,8 +215,8 @@ public class ObjectType extends MetaType {
 		}
 
 		@Override
-		public Map<String,Object> i12nHash() {
-			Map<String,Object> result = super.i12nHash();
+		public Map<String,Object> initHash() {
+			Map<String,Object> result = super.initHash();
 			return unmodifiableCopy(result);
 		}
 	}
@@ -249,7 +249,7 @@ public class ObjectType extends MetaType {
 	private static final AnyType TYPE_FUNCTIONS = hashType(TYPE_MEMBER_NAME, notUndefType());
 	private static final AnyType TYPE_EQUALITY = variantType(TYPE_MEMBER_NAME, TYPE_MEMBER_NAMES);
 	private static final AnyType TYPE_CHECKS = anyType(); // TBD
-	private static final AnyType TYPE_OBJECT_I12N = structType(
+	private static final AnyType TYPE_OBJECT_INIT = structType(
 			structElement(optionalType(KEY_NAME), TYPE_QUALIFIED_REFERENCE),
 			structElement(optionalType(KEY_PARENT), typeType()),
 			structElement(optionalType(KEY_ATTRIBUTES), TYPE_ATTRIBUTES),
@@ -268,7 +268,7 @@ public class ObjectType extends MetaType {
 	private List<String> equality;
 	private boolean equalityIncludeType = true;
 	private Map<String,Function> functions = emptyMap();
-	private StructType i12nType;
+	private StructType initType;
 	private String name;
 	private ParameterInfo parameterInfo;
 	private AnyType parent;
@@ -282,23 +282,23 @@ public class ObjectType extends MetaType {
 	ObjectType(ArgumentsAccessor args) throws IOException {
 		super((Expression)null);
 		args.remember(this);
-		Map<String,Object> i12nHash = (Map<String,Object>)args.get(0);
-		this.name = (String)TYPE_QUALIFIED_REFERENCE.assertInstanceOf(i12nHash.get(KEY_NAME), true, () -> "Object name");
-		setI12nHashExpression(i12nHash);
+		Map<String,Object> initHash = (Map<String,Object>)args.get(0);
+		this.name = (String)TYPE_QUALIFIED_REFERENCE.assertInstanceOf(initHash.get(KEY_NAME), true, () -> "Object name");
+		setInitHashExpression(initHash);
 	}
 
-	ObjectType(String name, Expression i12nHashExpression) {
-		super(i12nHashExpression);
+	ObjectType(String name, Expression initHashExpression) {
+		super(initHashExpression);
 		this.name = TYPE_QUALIFIED_REFERENCE.assertInstanceOf(name, true, () -> "Object name");
 	}
 
-	ObjectType(String name, Map<String,Object> unresolvedI12nHash) {
-		super(unresolvedI12nHash);
+	ObjectType(String name, Map<String,Object> unresolvedInitHash) {
+		super(unresolvedInitHash);
 		this.name = TYPE_QUALIFIED_REFERENCE.assertInstanceOf(name, true, () -> "Object name");
 	}
 
-	ObjectType(Map<String,Object> i12nHash) {
-		super(i12nHash);
+	ObjectType(Map<String,Object> initHash) {
+		super(initHash);
 	}
 
 	@Override
@@ -382,12 +382,12 @@ public class ObjectType extends MetaType {
 	}
 
 	@Override
-	public Map<String,Object> i12nHash() {
-		return i12nHash(true);
+	public Map<String,Object> initHash() {
+		return initHash(true);
 	}
 
-	public Map<String,Object> i12nHash(boolean includeName) {
-		Map<String,Object> result = super.i12nHash();
+	public Map<String,Object> initHash(boolean includeName) {
+		Map<String,Object> result = super.initHash();
 		if(includeName && name != null)
 			result.put(KEY_NAME, name);
 		if(parent != null)
@@ -405,10 +405,10 @@ public class ObjectType extends MetaType {
 		return unmodifiableCopy(result);
 	}
 
-	public synchronized StructType i12nType() {
-		if(i12nType == null)
-			i12nType = createI12nType();
-		return i12nType;
+	public synchronized StructType initType() {
+		if(initType == null)
+			initType = createInitType();
+		return initType;
 	}
 
 	public boolean isEqualityIncludeType() {
@@ -447,9 +447,9 @@ public class ObjectType extends MetaType {
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType(ObjectType.class, "Pcore::ObjectType", "Pcore::AnyType",
-				singletonMap("i12nHash", TYPE_OBJECT_I12N),
+				singletonMap("initHash", TYPE_OBJECT_INIT),
 				ObjectType::new,
-				(self) -> new Object[]{self.i12nHash()});
+				(self) -> new Object[]{self.initHash()});
 	}
 
 	@Override
@@ -463,11 +463,11 @@ public class ObjectType extends MetaType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	void initializeFromHash(Map<String,Object> i12nHash) {
-		TYPE_OBJECT_I12N.assertInstanceOf(i12nHash, () -> "Object initializer");
+	void initializeFromHash(Map<String,Object> initHash) {
+		TYPE_OBJECT_INIT.assertInstanceOf(initHash, () -> "Object initializer");
 		if(name == null)
-			name = (String)i12nHash.get(KEY_NAME);
-		parent = (AnyType)i12nHash.get(KEY_PARENT);
+			name = (String)initHash.get(KEY_NAME);
+		parent = (AnyType)initHash.get(KEY_PARENT);
 
 		Map<String,AnnotatedMember> pm = emptyMap();
 		ObjectType pot = null;
@@ -483,7 +483,7 @@ public class ObjectType extends MetaType {
 		ObjectType parentObjectType = pot;
 		Map<String,AnnotatedMember> parentMembers = pm;
 
-		Map<String,Object> attrSpecs = (Map<String,Object>)i12nHash.get(KEY_ATTRIBUTES);
+		Map<String,Object> attrSpecs = (Map<String,Object>)initHash.get(KEY_ATTRIBUTES);
 		if(!(attrSpecs == null || attrSpecs.isEmpty())) {
 			Map<String,Attribute> attrs = new LinkedHashMap<>();
 			for(Entry<String,Object> p : attrSpecs.entrySet()) {
@@ -500,7 +500,7 @@ public class ObjectType extends MetaType {
 			attributes = unmodifiableMap(attrs);
 		}
 
-		Map<String,Object> funcSpecs = (Map<String,Object>)i12nHash.get(KEY_FUNCTIONS);
+		Map<String,Object> funcSpecs = (Map<String,Object>)initHash.get(KEY_FUNCTIONS);
 		if(!(funcSpecs == null || funcSpecs.isEmpty())) {
 			Map<String,Function> funcs = new LinkedHashMap<>();
 			for(Entry<String,Object> p : funcSpecs.entrySet()) {
@@ -519,8 +519,8 @@ public class ObjectType extends MetaType {
 			functions = unmodifiableMap(funcs);
 		}
 
-		equalityIncludeType = getArgument(KEY_EQUALITY_INCLUDE_TYPE, i12nHash, true);
-		Object equality = i12nHash.get(KEY_EQUALITY);
+		equalityIncludeType = getArgument(KEY_EQUALITY_INCLUDE_TYPE, initHash, true);
+		Object equality = initHash.get(KEY_EQUALITY);
 		if(equality == null)
 			this.equality = null;
 		else {
@@ -564,7 +564,7 @@ public class ObjectType extends MetaType {
 				}
 			}
 		}
-		serialization = (List<String>)i12nHash.get(KEY_SERIALIZATION);
+		serialization = (List<String>)initHash.get(KEY_SERIALIZATION);
 		if(serialization != null) {
 			Map<String,Attribute> attrs = attributes(true);
 			Attribute optFound = null;
@@ -584,8 +584,8 @@ public class ObjectType extends MetaType {
 									label(), attr.label(), optFound.label()));
 			}
 		}
-		checks = i12nHash.get(KEY_CHECKS);
-		super.initializeFromHash(i12nHash);
+		checks = initHash.get(KEY_CHECKS);
+		super.initializeFromHash(initHash);
 	}
 
 	private void collectEqualityAttributes(List<String> all) {
@@ -623,7 +623,7 @@ public class ObjectType extends MetaType {
 	private Map<String,Object> compressedMembersMap(Map<String,? extends AnnotatedMember> members) {
 		Map<String,Object> result = new LinkedHashMap<>();
 		for(Entry<String,? extends AnnotatedMember> entry : members.entrySet()) {
-			Map<String,Object> fh = entry.getValue().i12nHash();
+			Map<String,Object> fh = entry.getValue().initHash();
 			if(fh.size() == 1) {
 				Object type = fh.get(KEY_TYPE);
 				if(type != null) {
@@ -636,7 +636,7 @@ public class ObjectType extends MetaType {
 		return result;
 	}
 
-	private StructType createI12nType() {
+	private StructType createInitType() {
 		List<StructElement> elements = new ArrayList<>();
 		for(Attribute attr : attributes(true).values()) {
 			switch(attr.kind) {

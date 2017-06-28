@@ -218,8 +218,8 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		String dcName = te.downcasedName();
 		if("object".equals(dcName) || "typeset".equals(dcName)) {
 			assertParameterCount(1, 1, ae.elements.size(), te.name);
-			HashExpression i12nExpr = assertOneParam(HashExpression.class, ae.elements.get(0), 0, te.name);
-			return "object".equals(dcName) ? objectType(null, i12nExpr) : typeSetType(null, loader().getNameAuthority(), i12nExpr);
+			HashExpression initExpr = assertOneParam(HashExpression.class, ae.elements.get(0), 0, te.name);
+			return "object".equals(dcName) ? objectType(null, initExpr) : typeSetType(null, loader().getNameAuthority(), initExpr);
 		}
 
 		Object[] args = map(ae.elements, this::resolve).toArray();

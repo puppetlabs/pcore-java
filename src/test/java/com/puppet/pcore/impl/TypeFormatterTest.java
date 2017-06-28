@@ -326,20 +326,20 @@ public class TypeFormatterTest {
 	@Test
 	public void objectTypeWithName() {
 		TypeEvaluator typeEvaluator = Pcore.typeEvaluator();
-		Map<String,Object> i12nHash = new HashMap<>();
-		i12nHash.put(Constants.KEY_NAME, "TestObj");
-		assertEquals("TestObj", objectType(i12nHash).resolve().toString());
+		Map<String,Object> initHash = new HashMap<>();
+		initHash.put(Constants.KEY_NAME, "TestObj");
+		assertEquals("TestObj", objectType(initHash).resolve().toString());
 	}
 
 	@Test
 	public void objectTypeWithStuff() {
-		Map<String,Object> i12nHash = new LinkedHashMap<>();
+		Map<String,Object> initHash = new LinkedHashMap<>();
 		Map<String,Object> attrHash = new LinkedHashMap<>();
 		Map<String,Object> funcHash = new LinkedHashMap<>();
-		i12nHash.put(Constants.KEY_NAME, "TestObj");
-		i12nHash.put(Constants.KEY_ATTRIBUTES, attrHash);
-		i12nHash.put(Constants.KEY_FUNCTIONS, funcHash);
-		i12nHash.put(Constants.KEY_EQUALITY, asList("a", "n"));
+		initHash.put(Constants.KEY_NAME, "TestObj");
+		initHash.put(Constants.KEY_ATTRIBUTES, attrHash);
+		initHash.put(Constants.KEY_FUNCTIONS, funcHash);
+		initHash.put(Constants.KEY_EQUALITY, asList("a", "n"));
 
 		attrHash.put("a", integerType());
 		attrHash.put("n", integerType());
@@ -358,7 +358,7 @@ public class TypeFormatterTest {
 						"attributes => {'a' => Integer, 'n' => Integer, 'b' => {type => Integer, kind => constant, value => 32}}, " +
 						"functions => {'f' => Callable}, " +
 						"equality => ['a', 'n']}]",
-				objectType(i12nHash).resolve().toExpandedString());
+				objectType(initHash).resolve().toExpandedString());
 	}
 
 	@Test

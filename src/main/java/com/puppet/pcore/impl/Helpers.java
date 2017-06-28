@@ -6,6 +6,9 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
+import static java.util.Collections.unmodifiableList;
+import static java.util.Collections.unmodifiableMap;
+
 public class Helpers {
 	private static final Pattern CLASS_NAME = Pattern.compile("^[A-Z]\\w*(?:::[A-Z]\\w*)*$");
 	private static final Pattern COLON_SPLIT = Pattern.compile("::");
@@ -42,7 +45,7 @@ public class Helpers {
 
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> asList(T... values) {
-		return values.length == 0 ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(values));
+		return values.length == 0 ? Collections.emptyList() : unmodifiableList(Arrays.asList(values));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -52,12 +55,12 @@ public class Helpers {
 
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> unmodifiableCopy(Collection<T> collection) {
-		return collection.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<>(collection));
+		return collection.isEmpty() ? Collections.emptyList() : unmodifiableList(new ArrayList<>(collection));
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K, V> unmodifiableCopy(Map<K, V> map) {
-		return map.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(new LinkedHashMap<>(map));
+		return map.isEmpty() ? Collections.emptyMap() : unmodifiableMap(new LinkedHashMap<>(map));
 	}
 
 	public static String capitalizeSegment(String segment) {
@@ -304,7 +307,7 @@ public class Helpers {
 				result.addAll(flatten((Collection)elem));
 			else
 				result.add((T)elem);
-		return unmodifiableCopy(result);
+		return unmodifiableList(result);
 	}
 
 	public static <T> List<T> distinct(Collection<? extends T> collection) {
@@ -334,6 +337,6 @@ public class Helpers {
 			}
 			groupList.add(elem);
 		}
-		return unmodifiableCopy(result);
+		return unmodifiableMap(result);
 	}
 }

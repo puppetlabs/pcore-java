@@ -27,7 +27,7 @@ public class TypeSetTypeTest extends DeclaredTypeTestBase {
 
 	@Nested
 	@DisplayName("when validating the initialization hash")
-	public class ValidatingI12n {
+	public class ValidatingInit {
 		@Nested
 		@DisplayName("accepts")
 		public class Accepts {
@@ -172,7 +172,7 @@ public class TypeSetTypeTest extends DeclaredTypeTestBase {
 
 				@Test
 				@DisplayName("contains something other than reference initialization maps")
-				public void isNotRefI12n() {
+				public void isNotRefInit() {
 					declareTypeSet("version => '1.0.0', pcore_version => '1.0.0', references => {Ref => 2}");
 					Throwable ex = assertThrows(TypeAssertionException.class, () -> resolveTypeSet());
 					assertIncludes("entry 'Ref' expects a Struct value, got Integer", ex.getMessage());

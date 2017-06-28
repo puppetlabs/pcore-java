@@ -46,7 +46,7 @@ import java.util.regex.Pattern;
  * <ul>
  * <li>The version must be at least as high as the range.</li>
  * <li>The version must be less than the next minor revision above the range, or major revision
- * if minor isnt' given.</li>
+ * if minor isn't given.</li>
  * </ul>
  * For example, the following are equivalent:
  * <table border="1">

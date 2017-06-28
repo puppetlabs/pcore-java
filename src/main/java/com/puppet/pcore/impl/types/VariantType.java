@@ -9,6 +9,7 @@ import java.util.*;
 import static com.puppet.pcore.impl.Helpers.*;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
+import static java.util.Collections.singletonList;
 
 public class VariantType extends TypesContainerType {
 	public static final VariantType DEFAULT = new VariantType(Collections.emptyList());
@@ -80,13 +81,13 @@ public class VariantType extends TypesContainerType {
 	private static List<AnyType> mergeEnums(List<AnyType> enums) {
 		return enums.size() < 2
 				? enums
-				: asList(enumType(distinct(flatten(map(enums, eos -> eos instanceof StringType ? ((StringType)eos).value : ((EnumType)eos).enums)))));
+				: singletonList(enumType(distinct(flatten(map(enums, eos -> eos instanceof StringType ? ((StringType)eos).value : ((EnumType)eos).enums)))));
 	}
 
 	private static List<PatternType> mergePatterns(List<PatternType> patterns) {
 		return patterns.size() < 2
 				? patterns
-				: asList(patternType(distinct(flatten(map(patterns, pattern -> pattern.regexps)))));
+				: singletonList(patternType(distinct(flatten(map(patterns, pattern -> pattern.regexps)))));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -99,10 +100,10 @@ public class VariantType extends TypesContainerType {
 		return flatten(asList(
 				mergeEnums(enumsAndStrings),
 				mergePatterns(remove(PatternType.class, pm)),
-				Helpers.mergeRanges(remove(IntegerType.class, pm)),
-				Helpers.mergeRanges(remove(FloatType.class, pm)),
-				Helpers.mergeRanges(remove(TimeSpanType.class, pm)),
-				Helpers.mergeRanges(remove(TimestampType.class, pm)),
+				mergeRanges(remove(IntegerType.class, pm)),
+				mergeRanges(remove(FloatType.class, pm)),
+				mergeRanges(remove(TimeSpanType.class, pm)),
+				mergeRanges(remove(TimestampType.class, pm)),
 				pm.values()
 		));
 	}

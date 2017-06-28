@@ -82,20 +82,20 @@ public class PcoreImpl {
 			attributesHash, Map<String,Object> functionsHash, List<String> equality, List<String> serialization,
 			FactoryFunction<T> creator, Function<T,
 			Object[]> attributeSupplier) {
-		Map<String,Object> i12nHash = new HashMap<>();
-		i12nHash.put(KEY_NAME, typeName);
+		Map<String,Object> initHash = new HashMap<>();
+		initHash.put(KEY_NAME, typeName);
 		if(parentName != null)
-			i12nHash.put(KEY_PARENT, typeReferenceType(parentName));
+			initHash.put(KEY_PARENT, typeReferenceType(parentName));
 		if(!attributesHash.isEmpty())
-			i12nHash.put(KEY_ATTRIBUTES, attributesHash);
+			initHash.put(KEY_ATTRIBUTES, attributesHash);
 		if(!functionsHash.isEmpty())
-			i12nHash.put(KEY_FUNCTIONS, functionsHash);
+			initHash.put(KEY_FUNCTIONS, functionsHash);
 		if(!equality.isEmpty())
-			i12nHash.put(KEY_EQUALITY, equality);
+			initHash.put(KEY_EQUALITY, equality);
 		if(!serialization.isEmpty())
-			i12nHash.put(KEY_SERIALIZATION, serialization);
+			initHash.put(KEY_SERIALIZATION, serialization);
 		implementationRegistry.registerImplementation(typeName, implClass.getName(), creator, attributeSupplier);
-		ObjectType type = objectType(i12nHash);
+		ObjectType type = objectType(initHash);
 		loader().bind(new TypedName("type", typeName), type);
 		return type;
 	}

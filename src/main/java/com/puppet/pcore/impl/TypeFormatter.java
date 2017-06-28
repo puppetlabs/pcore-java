@@ -241,7 +241,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 
 	void _format(ObjectType t) {
 		if(expanded)
-			appendObjectHash(t.i12nHash(typeSet == null || !typeSet.definesType(t)));
+			appendObjectHash(t.initHash(typeSet == null || !typeSet.definesType(t)));
 		else {
 			if(typeSet != null)
 				out.append(typeSet.nameFor(t));
@@ -392,7 +392,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 
 	@SuppressWarnings("unchecked")
 	void _format(TypeSetType t) {
-		appendArray("TypeSet", () -> appendHash(t.i12nHash(), (k) -> out.append(symbolicKey(k)), (e) -> {
+		appendArray("TypeSet", () -> appendHash(t.initHash(), (k) -> out.append(symbolicKey(k)), (e) -> {
 			switch(e.getKey()) {
 			case KEY_TYPES:
 				TypeSetType saveTS = typeSet;

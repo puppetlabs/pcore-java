@@ -158,6 +158,10 @@ public class TypeFactory {
 		return TypeCalculator.SINGLETON.inferSet(value);
 	}
 
+	public static InitType initType(AnyType type) {
+		return AnyType.DEFAULT.equals(type) ? InitType.DEFAULT : new InitType(type);
+	}
+
 	public static IntegerType integerType() {
 		return IntegerType.DEFAULT;
 	}
@@ -210,12 +214,12 @@ public class TypeFactory {
 		return ObjectType.DEFAULT;
 	}
 
-	public static ObjectType objectType(Map<String,Object> i12nHash) {
-		return new ObjectType(i12nHash);
+	public static ObjectType objectType(Map<String,Object> initHash) {
+		return new ObjectType(initHash);
 	}
 
-	public static ObjectType objectType(String name, Expression i12nExpression) {
-		return new ObjectType(name, i12nExpression);
+	public static ObjectType objectType(String name, Expression initExpression) {
+		return new ObjectType(name, initExpression);
 	}
 
 	public static OptionalType optionalType() {
@@ -429,12 +433,12 @@ public class TypeFactory {
 		return TypeSetType.DEFAULT;
 	}
 
-	public static TypeSetType typeSetType(Map<String,Object> i12nHash) {
-		return new TypeSetType(i12nHash);
+	public static TypeSetType typeSetType(Map<String,Object> initHash) {
+		return new TypeSetType(initHash);
 	}
 
-	public static TypeSetType typeSetType(String name, URI nameAuthority, Expression i12nExpression) {
-		return new TypeSetType(name, nameAuthority, i12nExpression);
+	public static TypeSetType typeSetType(String name, URI nameAuthority, Expression initExpression) {
+		return new TypeSetType(name, nameAuthority, initExpression);
 	}
 
 	public static TypeType typeType() {
