@@ -5,6 +5,14 @@ public class Assert {
 		void execute() throws Throwable;
 	}
 
+	public static void assertTrue(boolean condition, String message) {
+		org.junit.Assert.assertTrue(message, condition);
+	}
+
+	public static void assertFalse(boolean condition, String message) {
+		org.junit.Assert.assertFalse(message, condition);
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <T extends Throwable> T assertThrows(Class<? extends Throwable> expectedType, Executable executable) {
 		try {

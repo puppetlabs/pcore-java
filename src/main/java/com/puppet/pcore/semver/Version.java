@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
  */
 public class Version implements Comparable<Version>, Serializable {
 	public static final Version MAX = new Version(Integer.MAX_VALUE, Integer.MAX_VALUE, Integer.MAX_VALUE, null, null);
-	public static final List<Comparable<?>> MIN_PRE_RELEASE = Collections.EMPTY_LIST;
+	public static final List<Comparable<?>> MIN_PRE_RELEASE = Collections.emptyList();
 	public static final Version MIN = new Version(0, 0, 0, MIN_PRE_RELEASE, null);
 
 	private static final String PART = "[0-9A-Za-z-]+";
@@ -115,7 +115,7 @@ public class Version implements Comparable<Version>, Serializable {
 		final int end = parts.length();
 		for(;;) {
 			String part = parts.substring(start, dotIdx);
-			result.add(isNumber(part) ? Integer.parseUnsignedInt(part) : part);
+			result.add(isNumber(part) ? Integer.parseInt(part) : part);
 			start = dotIdx + 1;
 			if(start >= end)
 				return result;
