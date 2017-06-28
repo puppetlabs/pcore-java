@@ -1,8 +1,8 @@
 package com.puppet.pcore.serialization;
 
-import com.puppet.pcore.PCoreException;
+import com.puppet.pcore.PcoreException;
 
-public class SerializationException extends PCoreException {
+public class SerializationException extends PcoreException {
 	private static final long serialVersionUID = -1;
 
 	public SerializationException(String message) {

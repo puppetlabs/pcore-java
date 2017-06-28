@@ -435,7 +435,7 @@ public class ObjectType extends MetaType {
 		try {
 			return newInstance(new GivenArgumentsAccessor(args, this));
 		} catch(IOException e) {
-			throw new PCoreException(e);
+			throw new PcoreException(e);
 		}
 	}
 

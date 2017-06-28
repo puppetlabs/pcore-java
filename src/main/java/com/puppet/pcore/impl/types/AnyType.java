@@ -6,9 +6,11 @@ import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.TypeFormatter;
 import com.puppet.pcore.impl.TypeMismatchDescriber;
 
+import java.util.List;
 import java.util.function.Supplier;
 
 import static com.puppet.pcore.impl.types.TypeFactory.*;
+import static java.lang.String.format;
 
 public class AnyType extends ModelObject implements Type, PObject {
 	private static class UnresolvedTypeFinder implements Visitor {
@@ -67,6 +69,11 @@ public class AnyType extends ModelObject implements Type, PObject {
 	@Override
 	public AnyType generalize() {
 		return DEFAULT;
+	}
+
+	@Override
+	public List<TupleType> constructorSignatures() {
+		throw new PcoreException(format("Creation of new instance of type '%s' is not supported", name()));
 	}
 
 	@Override

@@ -47,9 +47,9 @@ public class PcoreImpl {
 			for(ObjectType metaType : metaTypes)
 				metaType.resolve();
 		} catch(NoSuchMethodException | IllegalAccessException e) {
-			throw new PCoreException(e);
+			throw new PcoreException(e);
 		} catch(InvocationTargetException e) {
-			throw new PCoreException(e.getTargetException());
+			throw new PcoreException(e.getTargetException());
 		}
 	}
 
