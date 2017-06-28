@@ -42,11 +42,10 @@ public class DeserializerImpl implements Deserializer {
 
 		if(val instanceof MapStart) {
 			int top = ((MapStart)val).size * 2;
-			Object[] keyValuePairs = new Object[top];
-			Map<Object,Object> result = remember(Helpers.asWrappingMap(keyValuePairs));
-			for(int idx = 0; idx < top;) {
-				keyValuePairs[idx++] = read();
-				keyValuePairs[idx++] = read();
+			Map<Object,Object> result = remember(new TreeMap<>());
+			for(int idx = 0; idx < top; idx += 2) {
+				Object key = read();
+				result.put(key, read());
 			}
 			return result;
 		}

@@ -1,7 +1,5 @@
 package com.puppet.pcore.impl;
 
-import clojure.lang.*;
-
 import java.util.*;
 import java.util.function.BiFunction;
 import java.util.function.Function;
@@ -14,60 +12,52 @@ public class Helpers {
 
 	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K,V> asMap(Object... keyValuePairs) {
-		return keyValuePairs.length == 0 ? PersistentArrayMap.EMPTY : new PersistentArrayMap(Arrays.copyOf(keyValuePairs, keyValuePairs.length));
+		int len = keyValuePairs.length;
+		if(len == 0)
+			return Collections.emptyMap();
+
+		if((len % 2) != 0)
+			throw new IllegalArgumentException("asMap called with uneven number of arguments");
+
+		Map<K, V> map = new LinkedHashMap<>();
+		for(int idx = 0; idx < len; idx += 2)
+			map.put((K)keyValuePairs[idx], (V)keyValuePairs[idx + 1]);
+		return map;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K,V> asMap(List<?> keyValuePairs) {
-		return asWrappingMap(keyValuePairs.toArray(new Object[keyValuePairs.size()]));
+		int len = keyValuePairs.size();
+		if(len == 0)
+			return Collections.emptyMap();
+
+		if((len % 2) != 0)
+			throw new IllegalArgumentException("asMap called with uneven number of arguments");
+
+		Map<K, V> map = new LinkedHashMap<>();
+		for(int idx = 0; idx < len; idx += 2)
+			map.put((K)keyValuePairs.get(idx), (V)keyValuePairs.get(idx + 1));
+		return map;
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> asList(T... values) {
-		return values.length == 0 ? PersistentVector.EMPTY : PersistentVector.create((Object[])values);
-	}
-
-	@SuppressWarnings("unchecked")
-	public static <K, V> Map<K,V> asWrappingMap(Object[] keyValuePairs) {
-		return keyValuePairs.length == 0 ? PersistentArrayMap.EMPTY : new PersistentArrayMap(keyValuePairs);
+		return values.length == 0 ? Collections.emptyList() : Collections.unmodifiableList(Arrays.asList(values));
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> asWrappingList(T[] values) {
-		return values.length == 0 ? PersistentVector.EMPTY  : (List<T>)RT.vector((Object[])values);
+		return values.length == 0 ? Collections.emptyList()  : Arrays.asList(values);
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <T> List<T> unmodifiableCopy(Collection<T> collection) {
-		return collection.isEmpty() ? PersistentVector.EMPTY : PersistentVector.create(collection);
+		return collection.isEmpty() ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<>(collection));
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K, V> unmodifiableCopy(Map<K, V> map) {
-		return map.isEmpty() ? PersistentArrayMap.EMPTY : (Map<K, V>)PersistentArrayMap.create(map);
-	}
-
-	public static Object freeze(Object value) {
-		if(value instanceof Map<?,?>) {
-			Map<?,?> map = (Map<?,?>)value;
-			Object[] keyPairs = new Object[map.size() * 2];
-			int idx = 0;
-			for(Map.Entry<?,?> entry : map.entrySet()) {
-				keyPairs[idx++] = freeze(entry.getKey());
-				keyPairs[idx++] = freeze(entry.getValue());
-			}
-			return asWrappingMap(keyPairs);
-		}
-
-		if(value instanceof Collection<?>) {
-			Collection<?> coll = (Collection<?>)value;
-			int top = coll.size();
-			Object[] values = new Object[top];
-			int idx = 0;
-			for(Object elem : coll)
-				values[idx++] = freeze(elem);
-			return asWrappingList(values);
-		}
-		return value;
+		return map.isEmpty() ? Collections.emptyMap() : Collections.unmodifiableMap(new LinkedHashMap<>(map));
 	}
 
 	public static String capitalizeSegment(String segment) {
@@ -76,7 +66,7 @@ public class Helpers {
 		case 0:
 			return segment;
 		case 1:
-			return segment.toUpperCase(Locale.ENGLISH);
+			return segment.toUpperCase();
 		default:
 			return new StringBuilder().append(Character.toUpperCase(segment.charAt(0))).append(segment, 1, len).toString();
 		}
