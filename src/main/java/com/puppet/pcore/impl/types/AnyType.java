@@ -12,7 +12,7 @@ import java.util.function.Supplier;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
 
-public class AnyType extends ModelObject implements Type, PObject {
+public class AnyType extends ModelObject implements Type, PuppetObject {
 	private static class UnresolvedTypeFinder implements Visitor {
 		String unresolved = null;
 

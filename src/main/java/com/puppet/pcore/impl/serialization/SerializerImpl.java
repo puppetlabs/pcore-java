@@ -60,7 +60,7 @@ public class SerializerImpl implements Serializer {
 	@SuppressWarnings("unchecked")
 	private <T> void writeObject(T value) throws IOException {
 		Function<T,Object[]> attributeProvider;
-		Type type = value instanceof PObject ? ((PObject)value)._pcoreType() : Pcore.infer(value);
+		Type type = value instanceof PuppetObject ? ((PuppetObject)value)._pcoreType() : Pcore.infer(value);
 		if(value instanceof DynamicObjectImpl) {
 			attributeProvider = t -> ((DynamicObjectImpl)value).getAttributes();
 		} else {

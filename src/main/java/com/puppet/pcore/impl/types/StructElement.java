@@ -1,6 +1,6 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.PObject;
+import com.puppet.pcore.PuppetObject;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.Assertions;
 import com.puppet.pcore.impl.PcoreImpl;
@@ -8,7 +8,7 @@ import com.puppet.pcore.impl.PcoreImpl;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
-public class StructElement extends ModelObject implements PObject {
+public class StructElement extends ModelObject implements PuppetObject {
 	private static ObjectType ptype;
 	public final AnyType key;
 	public final String name;

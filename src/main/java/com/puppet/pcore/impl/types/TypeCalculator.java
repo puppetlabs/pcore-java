@@ -2,7 +2,7 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.Binary;
 import com.puppet.pcore.Default;
-import com.puppet.pcore.PObject;
+import com.puppet.pcore.PuppetObject;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.impl.Polymorphic;
 import com.puppet.pcore.semver.Version;
@@ -105,7 +105,7 @@ class TypeCalculator extends Polymorphic<AnyType> {
 		return regexpType(o);
 	}
 
-	AnyType _infer(PObject o) {
+	AnyType _infer(PuppetObject o) {
 		return (AnyType)o._pcoreType();
 	}
 
