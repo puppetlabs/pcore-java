@@ -26,7 +26,7 @@ public class ResourceType extends CatalogEntryType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

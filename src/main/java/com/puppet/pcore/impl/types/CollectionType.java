@@ -27,7 +27,7 @@ public class CollectionType extends TypeContainerType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

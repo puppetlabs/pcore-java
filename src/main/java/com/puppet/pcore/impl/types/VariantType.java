@@ -31,7 +31,7 @@ public class VariantType extends TypesContainerType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

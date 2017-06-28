@@ -21,7 +21,7 @@ public class DynamicObjectImpl implements DynamicObject {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 
@@ -32,9 +32,9 @@ public class DynamicObjectImpl implements DynamicObject {
 
 		DynamicObjectImpl dynObj = (DynamicObjectImpl)o;
 		if(ptype.isEqualityIncludeType()) {
-			if(!ptype.equals(dynObj._pType()))
+			if(!ptype.equals(dynObj._pcoreType()))
 				return false;
-		} else if(!ptype.isAssignable(dynObj._pType()))
+		} else if(!ptype.isAssignable(dynObj._pcoreType()))
 			return false;
 
 		int[] ei = ptype.parameterInfo().equalityAttributeIndexes;

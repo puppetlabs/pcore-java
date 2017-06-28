@@ -22,7 +22,7 @@ public class TimeSpanType extends TimeDataType<TimeSpanType,Duration> {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

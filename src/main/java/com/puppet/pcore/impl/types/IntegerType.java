@@ -29,7 +29,7 @@ public class IntegerType extends NumericType implements MergableRange<IntegerTyp
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

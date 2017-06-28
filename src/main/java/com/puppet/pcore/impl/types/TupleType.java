@@ -38,7 +38,7 @@ public class TupleType extends TypesContainerType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

@@ -106,7 +106,7 @@ class TypeCalculator extends Polymorphic<AnyType> {
 	}
 
 	AnyType _infer(PObject o) {
-		return (AnyType)o._pType();
+		return (AnyType)o._pcoreType();
 	}
 
 	AnyType _infer(Short o) {

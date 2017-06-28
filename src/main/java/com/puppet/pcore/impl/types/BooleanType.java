@@ -14,7 +14,7 @@ public class BooleanType extends ScalarDataType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

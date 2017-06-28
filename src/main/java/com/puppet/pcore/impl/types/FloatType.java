@@ -24,7 +24,7 @@ public class FloatType extends NumericType implements MergableRange<FloatType> {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

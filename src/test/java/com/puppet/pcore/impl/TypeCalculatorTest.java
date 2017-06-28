@@ -2,7 +2,6 @@ package com.puppet.pcore.impl;
 
 import com.puppet.pcore.Binary;
 import com.puppet.pcore.Default;
-import com.puppet.pcore.Pcore;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -12,7 +11,6 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.HashMap;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -191,7 +189,7 @@ public class TypeCalculatorTest {
 		@DisplayName("Basic types _ptype")
 		public void inferBasicTypesPtype() {
 			for(AnyType type: TypeEvaluatorImpl.BASIC_TYPES.values())
-				String.format("Pcore::%sType", type.name()).equals(type._pType().name());
+				String.format("Pcore::%sType", type.name()).equals(type._pcoreType().name());
 		}
 
 		private void assertInfer(AnyType expected, Object value) {

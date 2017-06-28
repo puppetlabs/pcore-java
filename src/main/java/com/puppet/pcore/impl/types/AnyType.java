@@ -30,7 +30,7 @@ public class AnyType extends ModelObject implements Type, PObject {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

@@ -26,7 +26,7 @@ public class StructElement extends ModelObject implements PObject {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

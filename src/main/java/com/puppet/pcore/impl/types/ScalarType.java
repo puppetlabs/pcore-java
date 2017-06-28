@@ -12,7 +12,7 @@ public class ScalarType extends AnyType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

@@ -22,7 +22,7 @@ public class IteratorType extends TypeContainerType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

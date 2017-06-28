@@ -12,7 +12,7 @@ public class UnitType extends AnyType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

@@ -302,7 +302,7 @@ public class ObjectType extends MetaType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

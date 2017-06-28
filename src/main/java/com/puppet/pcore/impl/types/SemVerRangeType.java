@@ -12,7 +12,7 @@ public class SemVerRangeType extends ScalarType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

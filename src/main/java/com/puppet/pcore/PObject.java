@@ -4,5 +4,5 @@ public interface PObject {
 	/**
 	 * @return the type that describes this instance
 	 */
-	Type _pType();
+	Type _pcoreType();
 }

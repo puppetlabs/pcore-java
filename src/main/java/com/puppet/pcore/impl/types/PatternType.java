@@ -24,7 +24,7 @@ public class PatternType extends ScalarType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

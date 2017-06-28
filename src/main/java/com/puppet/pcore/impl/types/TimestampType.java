@@ -20,7 +20,7 @@ public class TimestampType extends TimeDataType<TimestampType,Instant> {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

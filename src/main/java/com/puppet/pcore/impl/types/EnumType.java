@@ -24,7 +24,7 @@ public class EnumType extends ScalarDataType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 

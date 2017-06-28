@@ -32,7 +32,7 @@ public class HashType extends CollectionType {
 	}
 
 	@Override
-	public Type _pType() {
+	public Type _pcoreType() {
 		return ptype;
 	}
 
