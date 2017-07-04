@@ -3,6 +3,8 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
+import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
@@ -31,10 +33,6 @@ public class CollectionType extends TypeContainerType {
 		return ptype;
 	}
 
-	public boolean equals(Object o) {
-		return super.equals(o) && Objects.equals(size, ((CollectionType)o).size);
-	}
-
 	@Override
 	public AnyType generalize() {
 		return equals(DEFAULT) ? this : new CollectionType(type.generalize(), (IntegerType)size.generalize());
@@ -45,11 +43,15 @@ public class CollectionType extends TypeContainerType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(CollectionType.class, "Pcore::CollectionType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::CollectionType", "Pcore::AnyType",
 				singletonMap("size_type", asMap(
 						KEY_TYPE, typeType(IntegerType.POSITIVE),
-						KEY_VALUE, IntegerType.POSITIVE)),
-				(attrs) -> collectionType((IntegerType)attrs.get(0)),
+						KEY_VALUE, IntegerType.POSITIVE)));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, collectionTypeDispatcher(),
 				(self) -> new Object[]{self.size});
 	}
 
@@ -63,9 +65,19 @@ public class CollectionType extends TypeContainerType {
 		return new CollectionType(type, size, resolved);
 	}
 
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return super.guardedEquals(o, guard) && equals(size, ((CollectionType)o).size, guard);
+	}
+
 	@Override
 	boolean isIterable(RecursionGuard guard) {
 		return true;
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return (o instanceof Map<?,?> && size.isInstance(((Map<?,?>)o).size()))
+				|| (o instanceof List<?> && size.isInstance(((List<?>)o).size()));
 	}
 
 	@Override

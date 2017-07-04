@@ -6,6 +6,7 @@ import com.puppet.pcore.impl.types.IntegerType;
 
 import java.util.function.Supplier;
 
+import static com.puppet.pcore.impl.types.TypeFactory.inferSet;
 import static java.lang.String.format;
 
 public class Assertions {
@@ -49,7 +50,13 @@ public class Assertions {
 
 		AnyType at = (AnyType)actual;
 		if(!expected.isAssignable(at))
-			throw new TypeAssertionException(TypeMismatchDescriber.SINGLETON.describeMismatch(identifier.get(), expected, at));
+			throw new TypeAssertionException(identifier.get() + ' ' + TypeMismatchDescriber.SINGLETON.describeMismatch(expected, at));
 		return at;
+	}
+
+	public static Object assertInstance(AnyType expected, Object actual, Supplier<String> identifier) {
+		if(!expected.isInstance(actual))
+			throw new TypeAssertionException(identifier.get() + ' ' + TypeMismatchDescriber.SINGLETON.describeMismatch(expected, inferSet(actual)));
+		return actual;
 	}
 }

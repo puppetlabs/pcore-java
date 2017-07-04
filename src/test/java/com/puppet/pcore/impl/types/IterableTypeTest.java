@@ -61,9 +61,9 @@ public class IterableTypeTest {
 		@Test
 		@DisplayName("iterable types will produce an iterable")
 		public void test3() {
-			Map<Boolean,List<AnyType>> partitioned = partitionBy(TypeEvaluatorImpl.BASIC_TYPES.values(), AnyType::isIterable);
-			assertTrue(all(partitioned.get(true), type -> type.asIterableType() != null));
-			assertTrue(all(partitioned.get(false), type -> type.asIterableType() == null));
+			List<AnyType>[] partitioned = partitionBy(TypeEvaluatorImpl.BASIC_TYPES.values(), AnyType::isIterable);
+			assertTrue(all(partitioned[0], type -> type.asIterableType() != null));
+			assertTrue(all(partitioned[1], type -> type.asIterableType() == null));
 		}
 	}
 }

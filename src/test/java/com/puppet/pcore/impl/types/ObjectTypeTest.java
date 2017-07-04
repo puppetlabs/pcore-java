@@ -1,6 +1,7 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.*;
+import com.puppet.pcore.impl.GivenArgumentsAccessor;
 import com.puppet.pcore.impl.types.ObjectType.Attribute;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.BeforeEach;
@@ -8,6 +9,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 
@@ -489,14 +491,94 @@ public class ObjectTypeTest extends DeclaredTypeTestBase {
 
 				Object b = t.newInstance(3.0, 8);
 				assertEquals(a, b);
+				assertEquals(a.hashCode(), b.hashCode());
 
 				Object c = t.newInstance(5.0, 5);
 				assertNotEquals(a, c);
 			}
 
 			@Test
+			@DisplayName("different types but same attributes are not equal")
+			public void equalityTypeComputation() {
+				declareObject("A",
+						"attributes => {\n" +
+								"  a => Float,\n" +
+								"  b => Integer\n" +
+								"},\n" +
+								"equality => [a]");
+				ObjectType ta = resolveObject("A");
+
+				declareObject("B",
+						"attributes => {\n" +
+								"  a => Float,\n" +
+								"  b => Integer\n" +
+								"},\n" +
+								"equality => [a]");
+				ObjectType tb = resolveObject("B");
+
+				DynamicObject a = (DynamicObject)ta.newInstance((float)3.0, 5);
+				DynamicObject b = (DynamicObject)tb.newInstance((float)3.0, 5);
+
+				assertFalse(a.equals(b));
+				assertFalse(b.equals(a));
+			}
+
+			@Test
+			@DisplayName("different types but same attributes are equal if A inherits B and equality_include_type is false")
+			public void equalityTypeComputationInherited() {
+				declareObject("A",
+						"attributes => {\n" +
+								"  a => Float,\n" +
+								"  b => Integer\n" +
+								"},\n" +
+								"equality => [a]");
+				ObjectType ta = resolveObject("A");
+
+				declareObject("B", ta, "equality_include_type => false");
+				ObjectType tb = resolveObject("B");
+
+				DynamicObject a = (DynamicObject)ta.newInstance((float)3.0, 5);
+				DynamicObject b = (DynamicObject)tb.newInstance((float)3.0, 5);
+
+				assertTrue(a.equals(b));
+				assertTrue(b.equals(a));
+			}
+
+			@Test
+			@DisplayName("different types but same attributes are equal if A inherits B and equality_include_type is false")
+			public void equalityTypeComputationInherited2() {
+				declareObject("A",
+						"attributes => {\n" +
+								"  a => Float,\n" +
+								"  b => Integer\n" +
+								"},\n" +
+								"equality => [a]");
+				ObjectType ta = resolveObject("A");
+
+				declareObject("B", ta, "equality_include_type => false");
+				ObjectType tb = resolveObject("B");
+
+				declareObject("C", tb, "equality_include_type => true");
+				ObjectType tc = resolveObject("C");
+
+				DynamicObject b = (DynamicObject)tb.newInstance((float)3.0, 5);
+				DynamicObject c = (DynamicObject)tc.newInstance((float)3.0, 5);
+
+				assertFalse(b.equals(c));
+				assertFalse(c.equals(b));
+			}
+
+			@Test
+			@DisplayName("returns false when compared to other types of objects")
+			public void equalsOtherType() {
+				declareObject("attributes => { a => Float }");
+				ObjectType t = resolveObject();
+				assertFalse(t.newInstance((float)3.0).equals((float)3.0));
+			}
+
+			@Test
 			@DisplayName("they get correct defaults")
-			public void equalityArray() {
+			public void correctDefaults() {
 				declareObject(
 						"attributes => {\n" +
 						"  a => Integer,\n" +
@@ -519,8 +601,8 @@ public class ObjectTypeTest extends DeclaredTypeTestBase {
 								"},\n" +
 								"equality => [a]");
 				ObjectType t = resolveObject();
-				Throwable ex = assertThrows(TypeResolverException.class, () -> t.newInstance(3));
-				assertEquals("Invalid number of type parameters specified: 'TestObj' requires 2 parameters, 1 provided", ex.getMessage());
+				Throwable ex = assertThrows(TypeAssertionException.class, () -> t.newInstance(3));
+				assertEquals("The factory that creates instances of type 'TestObj' expects attribute count to be 2, got 1", ex.getMessage());
 			}
 
 			@Test
@@ -533,8 +615,32 @@ public class ObjectTypeTest extends DeclaredTypeTestBase {
 								"},\n" +
 								"equality => [a]");
 				ObjectType t = resolveObject();
-				Throwable ex = assertThrows(TypeResolverException.class, () -> t.newInstance(3, 4, 5));
-				assertEquals("Invalid number of type parameters specified: 'TestObj' requires 2 parameters, 3 provided", ex.getMessage());
+				Throwable ex = assertThrows(TypeAssertionException.class, () -> t.newInstance(3, 4, 5));
+				assertEquals("The factory that creates instances of type 'TestObj' expects attribute count to be 2, got 3", ex.getMessage());
+			}
+
+			@Test
+			@DisplayName("can be created with ArgumentsAccessor")
+			public void equalityArray() throws IOException {
+				declareObject(
+						"attributes => {\n" +
+								"  a => Integer,\n" +
+								"  b => { type => Integer, value => 8 }\n" +
+								"},\n" +
+								"equality => [a]");
+				ObjectType t = resolveObject();
+				DynamicObject a = (DynamicObject)t.newInstance(new GivenArgumentsAccessor(t, 3));
+				assertEquals(3L, a.get("a"));
+				assertEquals(8L, a.get("b"));
+			}
+
+			@Test
+			@DisplayName("raises exception on attempts to access undefined attributes")
+			public void noSuchAttribute() {
+				declareObject("attributes => { a => Float }");
+				ObjectType t = resolveObject();
+				Throwable ex = assertThrows(IllegalArgumentException.class, () -> ((DynamicObject)t.newInstance((float)3.0)).get("b"));
+				assertEquals("TestObj has no attribute named 'b'", ex.getMessage());
 			}
 		}
 
@@ -776,6 +882,10 @@ public class ObjectTypeTest extends DeclaredTypeTestBase {
 
 	ObjectType declareObject(String objectHash) {
 		return (ObjectType)declareType("TestObj", String.format("Object[{%s}]", objectHash));
+	}
+
+	ObjectType declareObject(String name, String objectHash) {
+		return (ObjectType)declareType(name, String.format("Object[{%s}]", objectHash));
 	}
 
 	ObjectType declareObject(String name, ObjectType parent, String objectHash) {

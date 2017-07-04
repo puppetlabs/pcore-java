@@ -36,19 +36,29 @@ public class NotUndefType extends TypeContainerType {
 		return equals(DEFAULT) ? this : new NotUndefType(type.generalize());
 	}
 
-	@Override
-	protected boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
-		return !t.isAssignable(UndefType.DEFAULT, guard) && type.isAssignable(t, guard);
-	}
-
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(NotUndefType.class, "Pcore::NotUndefType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::NotUndefType", "Pcore::AnyType",
 				asMap(
 						"type", asMap(
 								KEY_TYPE, typeType(),
-								KEY_VALUE, anyType())),
-				(args) -> notUndefType((AnyType)args.get(0)),
+								KEY_VALUE, anyType())));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, notUndefTypeDispatcher(),
 				(self) -> new Object[]{self.type});
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o != null && type.isInstance(o, guard);
+	}
+
+	@Override
+	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
+		return !t.isAssignable(UndefType.DEFAULT, guard) && type.isAssignable(t, guard);
 	}
 
 	@Override

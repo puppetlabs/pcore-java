@@ -3,7 +3,6 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
-import java.util.List;
 import java.util.Objects;
 
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
@@ -33,15 +32,6 @@ public class RuntimeType extends AnyType {
 		return ptype;
 	}
 
-	public boolean equals(Object o) {
-		if(o instanceof RuntimeType) {
-			RuntimeType rt = (RuntimeType)o;
-			return Objects.equals(runtime, rt.runtime) && Objects.equals(name, rt.name) && Objects.equals(pattern, rt
-					.pattern);
-		}
-		return false;
-	}
-
 	@Override
 	public AnyType generalize() {
 		return DEFAULT;
@@ -51,8 +41,9 @@ public class RuntimeType extends AnyType {
 		return (Objects.hashCode(runtime) * 31 + Objects.hashCode(name)) * 31 + Objects.hashCode(pattern);
 	}
 
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(RuntimeType.class, "Pcore::RuntimeType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::RuntimeType", "Pcore::AnyType",
 				asMap(
 						"runtime", asMap(
 								KEY_TYPE, optionalType(StringType.NOT_EMPTY),
@@ -60,21 +51,27 @@ public class RuntimeType extends AnyType {
 						"name_or_pattern", asMap(
 								KEY_TYPE, optionalType(variantType(StringType.NOT_EMPTY, tupleType(asList(regexpType(), StringType
 										.NOT_EMPTY)))),
-								KEY_VALUE, null)),
-				(args) -> {
-					String runtime = (String)args.get(0);
-					Object nameOrPattern = args.get(1);
-					if(nameOrPattern instanceof String)
-						return runtimeType(runtime, (String)nameOrPattern);
-					List<?> npList = (List<?>)nameOrPattern;
-					return runtimeType(runtime, (String)npList.get(1), (RegexpType)npList.get(0));
-				},
+								KEY_VALUE, null)));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, runtimeTypeDispatcher(),
 				(self) -> new Object[]{self.runtime, self.pattern == null ? self.name : asList(self.pattern, self.name)});
 	}
 
 	@Override
 	IterableType asIterableType(RecursionGuard guard) {
 		return isIterable(guard) ? new IterableType(this) : null;
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		if(o instanceof RuntimeType) {
+			RuntimeType rt = (RuntimeType)o;
+			return Objects.equals(runtime, rt.runtime) && Objects.equals(name, rt.name) && Objects.equals(pattern, rt.pattern);
+		}
+		return false;
 	}
 
 	@Override

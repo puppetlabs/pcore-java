@@ -3,8 +3,6 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
-import java.util.Objects;
-
 import static com.puppet.pcore.impl.Assertions.assertNotNull;
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
@@ -37,15 +35,6 @@ public class CallableType extends AnyType {
 		return ptype;
 	}
 
-	public boolean equals(Object o) {
-		if(o instanceof CallableType) {
-			CallableType ct = (CallableType)o;
-			return parametersType.equals(ct.parametersType) && Objects.equals(blockType, ct.blockType) && Objects.equals
-					(returnType, ct.returnType);
-		}
-		return false;
-	}
-
 	@Override
 	public AnyType generalize() {
 		return ALL;
@@ -75,8 +64,16 @@ public class CallableType extends AnyType {
 		return new CallableType(rsParametersType, rsBlockType, rsReturnType, true);
 	}
 
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		if(o instanceof CallableType) {
+			CallableType ct = (CallableType)o;
+			return equals(parametersType, ct.parametersType, guard) && equals(blockType, ct.blockType, guard) && equals(returnType, ct.returnType, guard);
+		}
+		return false;
+	}
+
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(CallableType.class, "Pcore::CallableType", "Pcore::AnyType", asMap(
+		return ptype = pcore.createObjectType("Pcore::CallableType", "Pcore::AnyType", asMap(
 				"param_types", asMap(
 						KEY_TYPE, typeType(tupleType()),
 						KEY_VALUE, tupleType()),
@@ -85,8 +82,12 @@ public class CallableType extends AnyType {
 						KEY_VALUE, null),
 				"return_type", asMap(
 						KEY_TYPE, optionalType(typeType()),
-						KEY_VALUE, anyType())),
-				(attrs) -> callableType((TupleType)attrs.get(0), (CallableType)attrs.get(1), (AnyType)attrs.get(2)),
+						KEY_VALUE, anyType())));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, callableTypeDispatcher(),
 				(self) -> new Object[]{self.parametersType, self.blockType, self.returnType}
 		);
 	}

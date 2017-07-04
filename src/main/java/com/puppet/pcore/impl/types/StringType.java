@@ -1,15 +1,21 @@
 package com.puppet.pcore.impl.types;
 
+import com.puppet.pcore.Default;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.Assertions;
 import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
+import com.puppet.pcore.impl.StringConverter;
+import com.puppet.pcore.serialization.FactoryDispatcher;
 
 import java.util.Collections;
 import java.util.Objects;
+import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
+import static com.puppet.pcore.impl.ConstructorImpl.constructor;
+import static com.puppet.pcore.impl.FactoryDispatcherImpl.dispatcher;
 import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
@@ -19,6 +25,7 @@ public class StringType extends ScalarDataType {
 	public static final IterableType ITERABLE_TYPE = new IterableType(new StringType(integerType(1, 1)));
 	public static final AnyType NOT_EMPTY = new StringType(integerType(1));
 
+	public static final Pattern FORMAT_PATTERN = Pattern.compile("^%([\\s\\[+#0{<(|-]*)([1-9][0-9]*)?(?:\\.([0-9]+))?([a-zA-Z])$");
 	private static ObjectType ptype;
 	public final IntegerType size;
 	public final String value;
@@ -34,17 +41,32 @@ public class StringType extends ScalarDataType {
 		this.size = Assertions.assertPositive(size, () -> "String attributeCount");
 	}
 
+	public static String fromArgs(Object value, Object formats) {
+		return StringConverter.singleton.convert(value, formats);
+	}
+
 	@Override
 	public Type _pcoreType() {
 		return ptype;
 	}
 
-	public boolean equals(Object o) {
-		if(o instanceof StringType) {
-			StringType so = (StringType)o;
-			return Objects.equals(value, so.value) && Objects.equals(size, so.size);
-		}
-		return false;
+	@Override
+	public FactoryDispatcher<String> factoryDispatcher() {
+		AnyType formatType = patternType(regexpType(FORMAT_PATTERN));
+		AnyType containerFormatType = structType(
+				structElement(optionalType("format"), formatType),
+				structElement(optionalType("separator"), stringType()),
+				structElement(optionalType("separator2"), stringType()),
+				structElement(optionalType("string_formats"), hashType(typeType(), formatType))
+		);
+		AnyType typeMapType = hashType(typeType(), variantType(formatType, containerFormatType));
+
+		return dispatcher(
+			constructor((args) -> fromArgs(args.get(0), Default.SINGLETON),
+					anyType()),
+			constructor((args) -> fromArgs(args.get(0), args.get(1)),
+					anyType(), variantType(defaultType(), stringType(integerType(1)), typeMapType))
+		);
 	}
 
 	@Override
@@ -56,13 +78,18 @@ public class StringType extends ScalarDataType {
 		return Objects.hashCode(value) * 31 + Objects.hashCode(size);
 	}
 
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(StringType.class, "Pcore::StringType", "Pcore::ScalarDataType",
+		return ptype = pcore.createObjectType("Pcore::StringType", "Pcore::ScalarDataType",
 				asMap(
 						"size_type_or_value", asMap(
 								KEY_TYPE, optionalType(variantType(StringType.DEFAULT, typeType(integerType(0)))),
-								KEY_VALUE, null)),
-				(args) -> stringType(args.get(0)),
+								KEY_VALUE, null)));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, stringTypeDispatcher(),
 				(self) -> new Object[]{self.value == null ? self.size : self.value});
 	}
 
@@ -72,9 +99,24 @@ public class StringType extends ScalarDataType {
 		super.accept(visitor, guard);
 	}
 
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o instanceof String
+				&& size.isInstance(((String)o).length())
+				&& (value == null || value.equals(o));
+	}
+
 	@Override
 	IterableType asIterableType(RecursionGuard guard) {
 		return ITERABLE_TYPE;
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		if(o instanceof StringType) {
+			StringType so = (StringType)o;
+			return Objects.equals(value, so.value) && Objects.equals(size, so.size);
+		}
+		return false;
 	}
 
 	@Override

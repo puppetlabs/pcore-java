@@ -4,16 +4,13 @@ import com.puppet.pcore.*;
 import com.puppet.pcore.impl.loader.BasicLoader;
 import com.puppet.pcore.impl.loader.ParentedLoader;
 import com.puppet.pcore.impl.loader.TypeSetLoader;
+import com.puppet.pcore.impl.types.*;
+import com.puppet.pcore.serialization.FactoryDispatcher;
 import com.puppet.pcore.serialization.SerializationException;
 import com.puppet.pcore.impl.serialization.json.JsonSerializationFactory;
 import com.puppet.pcore.impl.serialization.msgpack.MsgPackSerializationFactory;
-import com.puppet.pcore.impl.types.AnyType;
-import com.puppet.pcore.impl.types.ObjectType;
-import com.puppet.pcore.impl.types.TypeFactory;
-import com.puppet.pcore.impl.types.TypeSetType;
 import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.loader.TypedName;
-import com.puppet.pcore.serialization.FactoryFunction;
 import com.puppet.pcore.serialization.SerializationFactory;
 
 import java.lang.reflect.InvocationTargetException;
@@ -30,12 +27,15 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
 public class PcoreImpl {
-	private final ImplementationRegistry implementationRegistry = new ImplementationRegistryImpl();
-	private final TypeEvaluator typeEvaluator = new TypeEvaluatorImpl();
+	private ImplementationRegistry implementationRegistry;
 	private final ThreadLocal<Loader> loader = new ThreadLocal<>();
+	private TypeEvaluatorImpl typeEvaluator;
 
 	public void initBaseTypeSystem() {
+		implementationRegistry = new ImplementationRegistryImpl();
 		loader.set(new BasicLoader());
+		typeEvaluator = new TypeEvaluatorImpl(loader.get());
+		typeEvaluator.resolveAliases();
 		try {
 			Collection<AnyType> basicTypes = TypeEvaluatorImpl.BASIC_TYPES.values();
 			List<ObjectType> metaTypes = new ArrayList<>(basicTypes.size());
@@ -46,6 +46,11 @@ public class PcoreImpl {
 			}
 			for(ObjectType metaType : metaTypes)
 				metaType.resolve();
+			for(AnyType type : basicTypes) {
+				Method registerPtypeMethod = type.getClass().getDeclaredMethod("registerImpl", PcoreImpl.class);
+				registerPtypeMethod.setAccessible(true);
+				registerPtypeMethod.invoke(null, this);
+			}
 		} catch(NoSuchMethodException | IllegalAccessException e) {
 			throw new PcoreException(e);
 		} catch(InvocationTargetException e) {
@@ -53,35 +58,40 @@ public class PcoreImpl {
 		}
 	}
 
-	public <T> ObjectType createObjectType(
-			Class<T> implClass, String typeName, String parentName, FactoryFunction<T>
-			creator) {
-		return createObjectType(implClass, typeName, parentName, emptyMap(), creator);
+	public <C> ObjectType createObjectType(
+			String typeName, String parentName) {
+		return createObjectType(typeName, parentName, emptyMap());
 	}
 
-	public <T> ObjectType createObjectType(
-			Class<T> implClass, String typeName, String parentName, Map<String,Object>
-			attributesHash, FactoryFunction<T> creator) {
-		return createObjectType(implClass, typeName, parentName, attributesHash, creator, (self) -> EMPTY_ARRAY);
+	public <T> ObjectType registerImpl(ObjectType type, FactoryDispatcher<T> creator, Function<T,Object[]> attributeSupplier) {
+		implementationRegistry.registerImplementation(type, creator, attributeSupplier);
+		return type;
 	}
 
-	public <T> ObjectType createObjectType(
-			Class<T> implClass, String typeName, String parentName, Map<String,Object>
-			attributesHash, FactoryFunction<T> creator, Function<T,Object[]> attributeSupplier) {
-		return createObjectType(implClass, typeName, parentName, attributesHash, emptyList(), creator, attributeSupplier);
+	public <T> ObjectType registerImpl(ObjectType type, FactoryDispatcher<T> creator) {
+		return registerImpl(type, creator, (self) -> EMPTY_ARRAY);
 	}
 
-	public <T> ObjectType createObjectType(
-			Class<T> implClass, String typeName, String parentName, Map<String,Object>
-			attributesHash, List<String> serialization, FactoryFunction<T> creator, Function<T,Object[]> attributeSupplier) {
-		return createObjectType(implClass, typeName, parentName, attributesHash, emptyMap(), emptyList(), serialization, creator, attributeSupplier);
+	public <C> ObjectType createObjectType(
+			String typeName, String parentName, Map<String,Object>
+			attributesHash, FactoryDispatcher<C> creator) {
+		return createObjectType(typeName, parentName, attributesHash, creator);
 	}
 
-	public <T> ObjectType createObjectType(
-			Class<T> implClass, String typeName, String parentName, Map<String,Object>
-			attributesHash, Map<String,Object> functionsHash, List<String> equality, List<String> serialization,
-			FactoryFunction<T> creator, Function<T,
-			Object[]> attributeSupplier) {
+	public <C> ObjectType createObjectType(
+			String typeName, String parentName, Map<String,Object>
+			attributesHash) {
+		return createObjectType(typeName, parentName, attributesHash, emptyList());
+	}
+
+	public <C> ObjectType createObjectType(
+			String typeName, String parentName, Map<String,Object>
+			attributesHash, List<String> serialization) {
+		return createObjectType(typeName, parentName, attributesHash, emptyMap(), emptyList(), serialization);
+	}
+
+	public <C> ObjectType createObjectType(String typeName, String parentName, Map<String,Object>
+			attributesHash, Map<String,Object> functionsHash, List<String> equality, List<String> serialization) {
 		Map<String,Object> initHash = new HashMap<>();
 		initHash.put(KEY_NAME, typeName);
 		if(parentName != null)
@@ -94,7 +104,6 @@ public class PcoreImpl {
 			initHash.put(KEY_EQUALITY, equality);
 		if(!serialization.isEmpty())
 			initHash.put(KEY_SERIALIZATION, serialization);
-		implementationRegistry.registerImplementation(typeName, implClass.getName(), creator, attributeSupplier);
 		ObjectType type = objectType(initHash);
 		loader().bind(new TypedName("type", typeName), type);
 		return type;
@@ -145,6 +154,8 @@ public class PcoreImpl {
 	}
 
 	public TypeEvaluator typeEvaluator() {
+		if(typeEvaluator == null)
+			throw new IllegalStateException("base type system is not yet initialized");
 		return typeEvaluator;
 	}
 

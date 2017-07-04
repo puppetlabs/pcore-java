@@ -28,10 +28,6 @@ public class PatternType extends ScalarType {
 		return ptype;
 	}
 
-	public boolean equals(Object o) {
-		return o instanceof PatternType && Objects.equals(regexps, ((PatternType)o).regexps);
-	}
-
 	@Override
 	public AnyType generalize() {
 		return DEFAULT;
@@ -41,12 +37,16 @@ public class PatternType extends ScalarType {
 		return regexps.hashCode();
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(PatternType.class, "Pcore::PatternType", "Pcore::ScalarType",
+		return ptype = pcore.createObjectType("Pcore::PatternType", "Pcore::ScalarType",
 				singletonMap(
-						"patterns", arrayType(variantType(typeType(regexpType()), regexpType()))),
-				(args) -> patternType((List<RegexpType>)args.get(0)),
+						"patterns", arrayType(variantType(typeType(regexpType()), regexpType()))));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, patternTypeDispatcher(),
 				(self) -> new Object[]{self.regexps});
 	}
 
@@ -55,6 +55,11 @@ public class PatternType extends ScalarType {
 		for(RegexpType regexp : regexps)
 			regexp.accept(visitor, guard);
 		super.accept(visitor, guard);
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return o instanceof PatternType && Objects.equals(regexps, ((PatternType)o).regexps);
 	}
 
 	@Override

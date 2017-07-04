@@ -9,6 +9,7 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
+import static com.puppet.pcore.impl.Helpers.any;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
@@ -35,10 +36,13 @@ public class EnumType extends ScalarDataType {
 
 	@SuppressWarnings("unchecked")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(EnumType.class, "Pcore::EnumType", "Pcore::ScalarType",
-				asMap("values", arrayType(StringType.NOT_EMPTY)),
-				(attrs) -> enumType((List<String>)attrs.get(0)),
-				(self) -> new Object[]{self.enums});
+		return ptype = pcore.createObjectType("Pcore::EnumType", "Pcore::ScalarType",
+				asMap("values", arrayType(StringType.NOT_EMPTY)));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, enumTypeDispatcher(), (self) -> new Object[]{self.enums});
 	}
 
 	@Override
@@ -50,6 +54,11 @@ public class EnumType extends ScalarDataType {
 	@Override
 	boolean isIterable(RecursionGuard guard) {
 		return true;
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o instanceof String && enums.isEmpty() || any(enums, (en) -> en.equals(o));
 	}
 
 	@Override

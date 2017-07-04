@@ -13,8 +13,6 @@ import static java.util.Collections.singletonList;
 
 public class VariantType extends TypesContainerType {
 	public static final VariantType DEFAULT = new VariantType(Collections.emptyList());
-	public static final AnyType DATA = new VariantType(asList(scalarDataType(), undefType(), ArrayType.DATA, HashType
-			.DATA));
 
 	private static ObjectType ptype;
 
@@ -42,11 +40,15 @@ public class VariantType extends TypesContainerType {
 				: variantType(distinct(map(types, AnyType::generalize)));
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(VariantType.class, "Pcore::VariantType", "Pcore::AnyType",
-				asMap("types", arrayType(typeType())),
-				(args) -> new VariantType((List<AnyType>)args.get(0)),
+		return ptype = pcore.createObjectType("Pcore::VariantType", "Pcore::AnyType",
+				asMap("types", arrayType(typeType())));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, variantTypeDispatcher(),
 				(self) -> new Object[]{self.types});
 	}
 
@@ -56,19 +58,33 @@ public class VariantType extends TypesContainerType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		for(AnyType type : types)
+			if(type.isInstance(o, guard))
+				return true;
+		return false;
+	}
+
+	@Override
 	int isReallyInstance(Object o, RecursionGuard guard) {
-		return reduce(map(types, t -> t.isReallyInstance(o, guard)), -1, (memo, r) -> r > memo ? r : memo);
+		int state = -1;
+		for(AnyType type : types) {
+			int r = type.isReallyInstance(o, guard);
+			if(r == 1)
+				return 1;
+			if(r > state)
+				state = r;
+		}
+		return state;
 	}
 
 	@Override
 	boolean isUnsafeAssignable(AnyType type, RecursionGuard guard) {
 		if(type instanceof VariantType) {
-			//  A variant is assignable if all of its options are assignable to one of this type's options
-			return this == type || all(((VariantType)type).types, other -> other instanceof DataType
-					? isAssignable(DATA, guard)
-					: (other instanceof VariantType
+			//  A variant is assignable if any of its options are assignable to one of this type's options
+			return this == type || all(((VariantType)type).types, other -> other instanceof VariantType
 							? isAssignable(other, guard)
-							: any(types, variant -> variant.isAssignable(other, guard))));
+							: any(types, variant -> variant.isAssignable(other, guard)));
 		}
 		return any(types, variant -> variant.isAssignable(type, guard));
 	}

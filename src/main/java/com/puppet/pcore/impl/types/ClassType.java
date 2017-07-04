@@ -25,10 +25,6 @@ public class ClassType extends CatalogEntryType {
 		return ptype;
 	}
 
-	public boolean equals(Object o) {
-		return super.equals(o) && Objects.equals(className, ((ClassType)o).className);
-	}
-
 	@Override
 	public AnyType generalize() {
 		return DEFAULT;
@@ -39,12 +35,20 @@ public class ClassType extends CatalogEntryType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(ClassType.class, "Pcore::ClassType", "Pcore::CatalogEntryType", asMap(
+		return ptype = pcore.createObjectType("Pcore::ClassType", "Pcore::CatalogEntryType", asMap(
 				"class_name", asMap(
 						KEY_TYPE, optionalType(stringType()),
-						KEY_VALUE, null)),
-				(attrs) -> classType((String)attrs.get(0)),
+						KEY_VALUE, null)));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, classTypeDispatcher(),
 				(self) -> new Object[]{self.className});
+	}
+
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return super.guardedEquals(o, guard) && Objects.equals(className, ((ClassType)o).className);
 	}
 
 	@Override

@@ -12,7 +12,6 @@ import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.time.DurationFormat;
 import com.puppet.pcore.time.InstantFormat;
 
-import java.lang.reflect.InvocationTargetException;
 import java.net.URI;
 import java.time.Duration;
 import java.time.Instant;
@@ -44,11 +43,11 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		coreTypes.put("catalogentry", catalogEntryType());
 		coreTypes.put("class", classType());
 		coreTypes.put("collection", collectionType());
-		coreTypes.put("data", dataType());
 		coreTypes.put("default", defaultType());
 		coreTypes.put("enum", enumType());
 		coreTypes.put("float", floatType());
 		coreTypes.put("hash", hashType());
+		coreTypes.put("init", initType());
 		coreTypes.put("integer", integerType());
 		coreTypes.put("iterable", iterableType());
 		coreTypes.put("iterator", iteratorType());
@@ -93,6 +92,25 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 					format("Invalid number of type parameters specified: '%s' requires %s parameters, %d provided", name, rq, actual));
 		}
 		return actual;
+	}
+
+	private final Loader loader;
+
+	public final AnyType data;
+	public final AnyType richDataKey;
+	public final AnyType richData;
+
+	public TypeEvaluatorImpl(Loader loader) {
+		this.loader = loader;
+		data = declareType("Data", "Variant[ScalarData,Undef,Array[Data],Hash[String,Data]]");
+		richDataKey = declareType("RichDataKey", "Variant[String,Numeric]");
+    richData = declareType("RichData", "Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Undef,Hash[RichDataKey,RichData],Array[RichData]]");
+	}
+
+	public void resolveAliases() {
+		data.resolve();
+		richDataKey.resolve();
+		richData.resolve();
 	}
 
 	public AnyType bindByName(String name, AnyType typeToBind, URI nameAuthority) {
@@ -157,14 +175,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 
 	@Override
 	public Object resolve(Expression expression) {
-		try {
-			return dispatch(expression);
-		} catch(InvocationTargetException e) {
-			Throwable te = e.getCause();
-			if(!(te instanceof RuntimeException))
-				te = new RuntimeException(te);
-			throw (RuntimeException)te;
-		}
+		return dispatch(expression);
 	}
 
 	@Override
@@ -200,10 +211,10 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 	}
 
 	Object eval(AssignmentExpression ce) {
-		if(!(ce.lhs instanceof TypeNameExpression))
-			throw new TypeResolverException("LHS of assignment expression must be a Type name");
+		if(!(ce.lhs instanceof TypeDeclarationExpression))
+			throw new TypeResolverException("LHS of assignment expression must be a Type definition");
 
-		return declareType(((TypeNameExpression)ce.lhs).name, ce.rhs, loader().getNameAuthority()).resolve();
+		return declareType(((TypeDeclarationExpression)ce.lhs).getString(), ce.rhs, loader().getNameAuthority()).resolve();
 	}
 
 	Object eval(RegexpExpression ce) {
@@ -300,6 +311,13 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 			default:
 				return hashType(assertType(args, 0, te.name), assertType(args, 1, te.name), integerType(assertRangeMin
 						(args, 2, te.name), assertMax(args, 3, te.name)));
+			}
+		case "init":
+			switch(assertParameterCount(1, Integer.MAX_VALUE, args, te.name)) {
+			case 1:
+				return initType(assertType(args, 0, te.name));
+			default:
+				return initType(assertType(args, 0, te.name), Arrays.asList(Arrays.copyOfRange(args, 1, args.length)));
 			}
 		case "integer":
 			switch(assertParameterCount(1, 2, args, te.name)) {

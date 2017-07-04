@@ -3,7 +3,7 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
-import static com.puppet.pcore.impl.types.TypeFactory.booleanType;
+import static com.puppet.pcore.impl.types.TypeFactory.booleanTypeDispatcher;
 
 public class BooleanType extends ScalarDataType {
 	public static final BooleanType DEFAULT = new BooleanType();
@@ -24,8 +24,17 @@ public class BooleanType extends ScalarDataType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(BooleanType.class, "Pcore::BooleanType", "Pcore::ScalarType",
-				(attrs) -> booleanType());
+		return ptype = pcore.createObjectType("Pcore::BooleanType", "Pcore::ScalarType");
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, booleanTypeDispatcher());
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o instanceof Boolean;
 	}
 
 	@Override

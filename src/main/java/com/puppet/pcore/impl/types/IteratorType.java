@@ -51,13 +51,18 @@ public class IteratorType extends TypeContainerType {
 		return (t instanceof IteratorType) && type.isAssignable(((IteratorType)t).type, guard);
 	}
 
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(IteratorType.class, "Pcore::IteratorType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::IteratorType", "Pcore::AnyType",
 				asMap(
 						"element_type", asMap(
 								KEY_TYPE, typeType(),
-								KEY_VALUE, anyType())),
-				(args) -> iteratorType((AnyType)args.get(0)),
+								KEY_VALUE, anyType())));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, iteratorTypeDispatcher(),
 				(self) -> new Object[]{self.type});
 	}
 }

@@ -1,9 +1,6 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.Pcore;
-import com.puppet.pcore.Type;
-import com.puppet.pcore.TypeEvaluator;
-import com.puppet.pcore.TypeResolverException;
+import com.puppet.pcore.*;
 import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
@@ -28,7 +25,7 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyMap;
 import static java.util.Collections.unmodifiableMap;
 
-public class TypeSetType extends MetaType {
+public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 	public class Reference implements Annotatable {
 		public final Map<AnyType,Map<String,?>> annotations;
 		public final String name;
@@ -94,7 +91,7 @@ public class TypeSetType extends MetaType {
 			structElement(optionalType(KEY_NAME_AUTHORITY), TYPE_URI),
 			structElement(optionalType(KEY_ANNOTATIONS), TYPE_ANNOTATIONS)
 	);
-	private static final AnyType TYPE_TYPESET_INIT = structType(
+	static final StructType TYPE_TYPESET_INIT = structType(
 			structElement(optionalType(KEY_PCORE_URI), TYPE_URI),
 			structElement(KEY_PCORE_VERSION, TYPE_STRING_OR_VERSION),
 			structElement(optionalType(KEY_NAME_AUTHORITY), TYPE_URI),
@@ -200,11 +197,11 @@ public class TypeSetType extends MetaType {
 	}
 
 	@Override
-	public Map<String,Object> initHash() {
+	public Map<String,Object> _pcoreInitHash() {
 		if(pcoreVersion == null)
 			throw new TypeResolverException("Attempt to retrieve initHash of unresolved TypeSet");
 
-		Map<String,Object> result = super.initHash();
+		Map<String,Object> result = super._pcoreInitHash();
 		if(pcoreUri != null)
 			result.put(KEY_PCORE_URI, pcoreUri.toString());
 		result.put(KEY_PCORE_VERSION, pcoreVersion.toString());
@@ -264,11 +261,37 @@ public class TypeSetType extends MetaType {
 		});
 	}
 
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(TypeSetType.class, "Pcore::TypeSetType", "Pcore::AnyType",
-				asMap("initHashExpression", TYPE_TYPESET_INIT),
-				TypeSetType::new,
-				(self) -> new Object[]{self.initHash()});
+		return ptype = pcore.createObjectType("Pcore::TypeSetType", "Pcore::AnyType",
+			asMap(
+					KEY_PCORE_URI, asMap(
+						KEY_TYPE, optionalType(TYPE_URI),
+						KEY_VALUE, null),
+					KEY_PCORE_VERSION, TYPE_STRING_OR_VERSION,
+					KEY_NAME_AUTHORITY, asMap(
+							KEY_TYPE, optionalType(TYPE_URI),
+							KEY_VALUE, null),
+					KEY_NAME, asMap(
+							KEY_TYPE, optionalType(TYPE_QUALIFIED_REFERENCE),
+							KEY_VALUE, null),
+					KEY_VERSION, TYPE_STRING_OR_VERSION,
+					KEY_TYPES, asMap(
+							KEY_TYPE, optionalType(hashType(TYPE_SIMPLE_TYPE_NAME, typeType(), integerType(1))),
+							KEY_VALUE, null),
+					KEY_REFERENCES, asMap(
+							KEY_TYPE, optionalType(hashType(TYPE_SIMPLE_TYPE_NAME, TYPE_TYPE_REFERENCE_INIT, integerType(1))),
+							KEY_VALUE, null),
+					KEY_ANNOTATIONS, asMap(
+							KEY_TYPE, optionalType(KEY_ANNOTATIONS),
+							KEY_VALUE, null)
+			));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, typeSetTypeDispatcher(),
+				(self) -> new Object[]{self._pcoreInitHash()});
 	}
 
 	@Override
@@ -361,6 +384,10 @@ public class TypeSetType extends MetaType {
 			this.references = unmodifiableMap(refMap);
 		}
 		super.initializeFromHash(initHash);
+	}
+
+	boolean isUnsafeAssignable(AnyType type, RecursionGuard guard) {
+		return getClass().equals(type.getClass()) && equals(DEFAULT) || guardedEquals(type, guard);
 	}
 
 	@SuppressWarnings("unchecked")

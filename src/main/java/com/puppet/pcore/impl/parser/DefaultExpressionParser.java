@@ -1,6 +1,7 @@
 package com.puppet.pcore.impl.parser;
 
 import com.puppet.pcore.Default;
+import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.parser.Expression;
 import com.puppet.pcore.parser.ParseException;
 
@@ -34,10 +35,14 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 	private static final int TOKEN_RB = 33;
 	private static final int TOKEN_LC = 34;
 	private static final int TOKEN_RC = 35;
+	private static final int TOKEN_DOT = 36;
 	private static final int TOKEN_TYPE_NAME_SEGMENT = 40;
 	private static final int TOKEN_IDENTIFIER_SEGMENT = 41;
 	private static final int TOKEN_LITERAL = 42;
-	private static final int TOKEN_REGEXP = 43;
+	private static final int TOKEN_LITERAL_HEREDOC = 43;
+	private static final int TOKEN_DOLLAR = 44;
+	private static final int TOKEN_VARIABLE = 45;
+	private static final int TOKEN_REGEXP = 46;
 	private static final int TOKEN_UNDEF = 50;
 	private static final int TOKEN_TRUE = 51;
 	private static final int TOKEN_FALSE = 52;
@@ -57,8 +62,10 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 	private final ExpressionFactory factory;
 	private int currentToken;
 	private String expression;
+	private String syntax;
 	private int lastTokenPos;
 	private int tokenPos;
+	private int nextLineStart = -1; // Only set after parsing heredoc
 	private Object tokenValue;
 
 	public DefaultExpressionParser(ExpressionFactory factory) {
@@ -71,6 +78,8 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 		tokenPos = 0;
 		currentToken = 0;
 		tokenValue = null;
+		syntax = null;
+		nextLineStart = -1;
 		skipWhite();
 		int start = tokenPos;
 		nextToken();
@@ -122,6 +131,14 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 	private void findIntEnd() {
 		int top = expression.length();
 		while(tokenPos < top && Character.isDigit(expression.charAt(tokenPos)))
+			++tokenPos;
+	}
+
+	private void onNewline() {
+		if(nextLineStart >= 0) {
+			tokenPos = nextLineStart;
+			nextLineStart = -1;
+		} else
 			++tokenPos;
 	}
 
@@ -179,6 +196,11 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 			++tokenPos;
 			break;
 
+		case '.':
+			currentToken = TOKEN_DOT;
+			++tokenPos;
+			break;
+
 		case ':':
 			if(tokenPos + 1 < top) {
 				c = expression.charAt(tokenPos + 1);
@@ -198,9 +220,12 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 				case ' ':
 				case '\t':
 				case '\r':
-				case '\n':
 					currentToken = TOKEN_MINUS;
 					++tokenPos;
+					break;
+				case '\n':
+					currentToken = TOKEN_MINUS;
+					onNewline();
 					break;
 				case '(':
 					currentToken = TOKEN_UNARY_MINUS;
@@ -264,6 +289,17 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 				currentToken = TOKEN_LITERAL;
 			}
 			break;
+
+		case '$':
+			tokenValue = null;
+			currentToken = TOKEN_VARIABLE;
+			tokenValue = (++tokenPos >= top) ? "" : parseVariable();
+			break;
+
+		case '@':
+			parseHeredocString();
+			break;
+
 		default:
 			if(isDigit(c)) {
 				int start = tokenPos++;
@@ -293,6 +329,26 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 				break;
 			}
 			throw syntaxError();
+		}
+	}
+
+	private String parseVariable() {
+		int start = tokenPos;
+		int top = expression.length();
+		if(tokenPos + 1 < top && expression.charAt(tokenPos) == ':' && expression.charAt(tokenPos + 1) == ':')
+			tokenPos += 2;
+
+		for(;;) {
+			int segStart = tokenPos;
+			while(tokenPos < top && isLetterOrDigit(expression.charAt(tokenPos)))
+				++tokenPos;
+			if(tokenPos == segStart)
+				return "";
+
+			if(tokenPos + 1 < top && expression.charAt(tokenPos) == ':' && expression.charAt(tokenPos + 1) == ':')
+				continue;
+
+			return expression.substring(start, tokenPos);
 		}
 	}
 
@@ -338,8 +394,16 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 			expr = factory.constant(tokenValue, expression, lastTokenPos, tokenPos - lastTokenPos);
 			nextToken();
 			break;
+		case TOKEN_LITERAL_HEREDOC:
+			expr = factory.heredoc(tokenValue, syntax, expression, lastTokenPos, tokenPos - lastTokenPos);
+			nextToken();
+			break;
 		case TOKEN_REGEXP:
 			expr = factory.regexp((String)tokenValue, expression, lastTokenPos, tokenPos - lastTokenPos);
+			nextToken();
+			break;
+		case TOKEN_VARIABLE:
+			expr = factory.variable((String)tokenValue, expression, lastTokenPos, tokenPos - lastTokenPos);
 			nextToken();
 			break;
 		case TOKEN_TYPE_NAME_SEGMENT: {
@@ -369,19 +433,26 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 			String first = (String)tokenValue;
 			int last = tokenPos;
 			nextToken();
-			while(currentToken == TOKEN_SEPARATOR) {
-				nextToken();
-				assertToken(TOKEN_IDENTIFIER_SEGMENT);
-				if(bld == null) {
-					bld = new StringBuilder();
-					bld.append(first);
-				}
-				bld.append(OPERATOR_SEPARATOR);
-				bld.append((String)tokenValue);
-				last = tokenPos;
-				nextToken();
+			if(currentToken == TOKEN_TYPE_NAME_SEGMENT && first.equals("type")) {
+				// "type TypeName" is special
+				TypeNameExpression typeName = (TypeNameExpression)parseAtom(tokenPos);
+				expr = factory.typeDeclaration(typeName.name, expression, atomStart, (typeName.offset - atomStart) + typeName.length);
 			}
-			expr = factory.identifier(bld == null ? first : bld.toString(), expression, atomStart, last - atomStart);
+			else {
+				while(currentToken == TOKEN_SEPARATOR) {
+					nextToken();
+					assertToken(TOKEN_IDENTIFIER_SEGMENT);
+					if(bld == null) {
+						bld = new StringBuilder();
+						bld.append(first);
+					}
+					bld.append(OPERATOR_SEPARATOR);
+					bld.append((String)tokenValue);
+					last = tokenPos;
+					nextToken();
+				}
+				expr = factory.identifier(bld == null ? first : bld.toString(), expression, atomStart, last - atomStart);
+			}
 			break;
 		}
 		case TOKEN_UNDEF:
@@ -408,18 +479,284 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 
 	private Expression parseBinary(int binaryStart) {
 		Expression expr = parseUnary(binaryStart);
-		if(currentToken == TOKEN_LB) {
-			int pos = tokenPos;
-			nextToken();
-			expr = factory.access(expr, parseArray(pos), expression, binaryStart, tokenPos - binaryStart);
-			assertToken(TOKEN_RB);
-			nextToken();
-		} else if(currentToken == TOKEN_ASSIGN) {
-			int pos = tokenPos;
-			nextToken();
-			expr = factory.assignment(expr, parseBinary(pos), expression, binaryStart, tokenPos - binaryStart);
+		for(;;) {
+			if(currentToken == TOKEN_LB) {
+				int pos = tokenPos;
+				nextToken();
+				expr = factory.access(expr, parseArray(pos), expression, binaryStart, tokenPos - binaryStart);
+				assertToken(TOKEN_RB);
+				nextToken();
+			} else if(currentToken == TOKEN_DOT) {
+				int pos = tokenPos;
+				nextToken();
+				expr = factory.named_access(expr, parseUnary(pos), expression, binaryStart, tokenPos - binaryStart);
+			} else if(currentToken == TOKEN_ASSIGN) {
+				int pos = tokenPos;
+				nextToken();
+				expr = factory.assignment(expr, parseBinary(pos), expression, binaryStart, tokenPos - binaryStart);
+			} else
+				break;
 		}
 		return expr;
+	}
+
+	private void parseHeredocString() {
+		int top = expression.length();
+		if(++tokenPos >= top || expression.charAt(tokenPos) != '(') {
+			currentToken = TOKEN_ERROR;
+			return;
+		}
+
+		int escapeStart = -1;
+		int quoteStart = -1;
+		int syntaxStart = -1;
+		String tag = null;
+		char[] flags = null;
+		int heredocTagEnd = -1;
+		syntax = null;
+
+		for(int start = ++tokenPos; tokenPos < top; ++tokenPos) {
+			char ec = expression.charAt(tokenPos);
+
+			switch(ec) {
+			case ')':
+				if(syntaxStart > 0)
+					syntax = expression.substring(syntaxStart, tokenPos);
+				if(escapeStart > 0) {
+					flags = extractFlags(escapeStart, tokenPos);
+					if(flags == null) {
+						currentToken = TOKEN_ERROR;
+						return;
+					}
+				}
+				if(tag == null)
+					tag = expression.substring(start, tokenPos);
+				heredocTagEnd = tokenPos + 1;
+				break;
+			case '\n':
+				currentToken = TOKEN_ERROR;
+				return;
+			case ':':
+				if(syntaxStart > 0) {
+					currentToken = TOKEN_ERROR;
+					return;
+				}
+				if(tag == null)
+					tag = expression.substring(start, tokenPos);
+				syntaxStart = tokenPos + 1;
+				continue;
+			case '/':
+				if(escapeStart > 0) {
+					currentToken = TOKEN_ERROR;
+					return;
+				}
+				if(tag == null)
+					tag = expression.substring(start, tokenPos);
+				else if(syntaxStart > 0) {
+					syntax = expression.substring(syntaxStart, tokenPos);
+					syntaxStart = -1;
+				}
+				escapeStart = tokenPos + 1;
+				continue;
+			case '"':
+				if(tag != null) {
+					currentToken = TOKEN_ERROR;
+					return;
+				}
+				quoteStart = ++tokenPos;
+				while(tokenPos < top) {
+					char q = expression.charAt(tokenPos);
+					if(q == '"')
+						break;
+					if(q == '\n') {
+						currentToken = TOKEN_ERROR;
+						return;
+					}
+					++tokenPos;
+				}
+				if(tokenPos == quoteStart) {
+					currentToken = TOKEN_ERROR;
+					return;
+				}
+				tag = expression.substring(quoteStart, tokenPos);
+				continue;
+			default:
+				continue;
+			}
+			break;
+		}
+
+		if(tag == null || tag.isEmpty()) {
+			currentToken = TOKEN_ERROR;
+			return;
+		}
+
+		int heredocStart = -1;
+		for(++tokenPos; tokenPos < top; ++tokenPos) {
+			char c = expression.charAt(tokenPos);
+			if(c == '#')
+				c = skipWhite(true);
+			else if(c == '/' && tokenPos + 1 < top && expression.charAt(tokenPos + 1) == '*') {
+				--tokenPos;
+				c = skipWhite(true);
+			}
+
+			if(c == '\n') {
+				if(nextLineStart >= 0) {
+					tokenPos = nextLineStart;
+					nextLineStart = -1;
+				} else
+					++tokenPos;
+				heredocStart = tokenPos;
+				break;
+			}
+		}
+
+		if(heredocStart == -1) {
+			currentToken = TOKEN_ERROR;
+			return;
+		}
+
+		boolean suppressLastNL = false;
+		int heredocContentEnd = -1;
+		int heredocEnd = -1;
+		int indentStrip = 0;
+		int tagLen = tag.length();
+
+		for(; tokenPos < top; ++tokenPos) {
+			char ec = expression.charAt(tokenPos);
+			if(ec == '\n' && ++tokenPos < top) {
+				int lineStart = tokenPos;
+				skipWhite(true);
+				if(tokenPos >= top)
+					break;
+				ec = expression.charAt(tokenPos);
+				if(ec == '|') {
+					indentStrip = tokenPos - lineStart;
+					++tokenPos;
+					skipWhite(true);
+					if(tokenPos >= top)
+						break;
+					ec = expression.charAt(tokenPos);
+				}
+				if(ec == '-') {
+					++tokenPos;
+					suppressLastNL = true;
+					skipWhite(true);
+					if(tokenPos >= top)
+						break;
+					ec = expression.charAt(tokenPos);
+				}
+				if(ec == '\n') {
+					--tokenPos;
+					continue;
+				}
+				if(!(tokenPos + tagLen <= top && expression.substring(tokenPos, tokenPos + tagLen).equals(tag)))
+					continue;
+
+				tokenPos += tagLen;
+				while(tokenPos < top) {
+					ec = expression.charAt(tokenPos);
+					if(ec == '\n')
+						break;
+					if(!Character.isWhitespace(ec))
+						break;
+					++tokenPos;
+				}
+				if(ec != '\n' && tokenPos != top)
+					continue;
+				heredocContentEnd = lineStart;
+				if(suppressLastNL) {
+					--heredocContentEnd;
+					if(expression.charAt(heredocContentEnd - 1) == '\r')
+						--heredocContentEnd;
+				}
+				heredocEnd = tokenPos + 1;
+				break;
+			}
+		}
+
+		if(heredocContentEnd == -1) {
+			currentToken = TOKEN_ERROR;
+			return;
+		}
+
+		currentToken = TOKEN_LITERAL_HEREDOC;
+		tokenPos = heredocTagEnd;
+		nextLineStart = heredocEnd;
+		String heredoc = expression.substring(heredocStart, heredocContentEnd);
+		if(flags != null)
+			heredoc = applyEscapes(heredoc, flags);
+		if(indentStrip > 0)
+			heredoc = Helpers.unindent(heredoc, indentStrip);
+		tokenValue = heredoc;
+	}
+
+	private char[] extractFlags(int start, int end) {
+		int top = end - start;
+		char[] flags = new char[top];
+		for(int idx = 0; idx < top; ++idx) {
+			char flag = expression.charAt(start++);
+			switch(flag) {
+			case 't':case 'r':case 'n':case 's':case '$':
+				flags[idx] = flag;
+				break;
+			case 'L':
+				flags[idx] = '\n';
+				break;
+			default:
+				return null;
+			}
+		}
+		return flags;
+	}
+
+	private String applyEscapes(String str, char[] flags) {
+		StringBuilder bld = new StringBuilder();
+		int top = str.length();
+		for(int idx = 0; idx < top; ++idx) {
+			char c = str.charAt(idx);
+			if(c == '\\' && idx + 1 < top) {
+				c = str.charAt(++idx);
+				boolean escaped = false;
+				int fi = flags.length;
+				while(--fi >= 0) {
+					if(flags[fi] == c) {
+						escaped = true;
+						break;
+					}
+				}
+				if(!escaped) {
+					bld.append('\\');
+					bld.append(c);
+					continue;
+				}
+
+				switch(c) {
+				case 'r':
+					bld.append('\r');
+					break;
+				case 'n':
+					bld.append('\n');
+					break;
+				case 't':
+					bld.append('\t');
+					break;
+				case 's':
+					bld.append(' ');
+					break;
+				case 'u':
+					idx = appendUnicode(str, idx, bld);
+					break;
+				case '\n':
+					break;
+				default:
+					bld.append(c);
+				}
+			} else
+				bld.append(c);
+		}
+		return bld.toString();
 	}
 
 	private void parseDelimitedString(char delimiter, EscapeHandler escapeHandler) {
@@ -508,45 +845,8 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 				buf.append(' ');
 				break;
 			case 'u':
-				if(tokenPos + 4 >= expression.length())
-					return -1;
-				ec = expression.charAt(tokenPos);
-				if(isHexDigit(ec)) {
-					// Must be XXXX (a four-digit hex number)
-					char[] digits = new char[]{ec, 0, 0, 0};
-					for(int i = 1; i < 4; ++i) {
-						char digit = expression.charAt(tokenPos + i);
-						if(!isHexDigit(digit))
-							return -1;
-						digits[i] = digit;
-					}
-					buf.append(Character.toChars(Integer.parseInt(new String(digits), 16)));
-					tokenPos += 4;
-					break;
-				}
-
-				if(ec == '{') {
-					// Must be {XXXXXX} (a hex number between two and six digits)
-					StringBuilder digits = new StringBuilder();
-					int top = expression.length();
-
-					while(++tokenPos < top) {
-						char digit = expression.charAt(tokenPos);
-						if(isHexDigit(digit)) {
-							digits.append(digit);
-							continue;
-						}
-
-						if(digit == '}' && digits.length() >= 2 && digits.length() <= 6) {
-							buf.append(Character.toChars(Integer.parseInt(digits.toString(), 16)));
-							++tokenPos;
-							break;
-						}
-						return -1;
-					}
-					break;
-				}
-				return -1;
+				tokenPos = appendUnicode(expression, tokenPos, buf);
+				break;
 			default:
 				// Unrecognized escape sequence. Treat as literal backslash
 				buf.append('\\');
@@ -554,6 +854,47 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 			}
 			return tokenPos;
 		});
+	}
+
+	private static int appendUnicode(String expression, int tokenPos, StringBuilder buf) {
+		if(tokenPos + 4 >= expression.length())
+			return -1;
+		char ec = expression.charAt(tokenPos);
+		if(isHexDigit(ec)) {
+			// Must be XXXX (a four-digit hex number)
+			char[] digits = new char[]{ec, 0, 0, 0};
+			for(int i = 1; i < 4; ++i) {
+				char digit = expression.charAt(tokenPos + i);
+				if(!isHexDigit(digit))
+					return -1;
+				digits[i] = digit;
+			}
+			buf.append(Character.toChars(Integer.parseInt(new String(digits), 16)));
+			return tokenPos + 4;
+		}
+
+		if(ec == '{') {
+			// Must be {XXXXXX} (a hex number between two and six digits)
+			StringBuilder digits = new StringBuilder();
+			int top = expression.length();
+
+			while(++tokenPos < top) {
+				char digit = expression.charAt(tokenPos);
+				if(isHexDigit(digit)) {
+					digits.append(digit);
+					continue;
+				}
+
+				if(digit == '}' && digits.length() >= 2 && digits.length() <= 6) {
+					buf.append(Character.toChars(Integer.parseInt(digits.toString(), 16)));
+					++tokenPos;
+					break;
+				}
+				return -1;
+			}
+			return tokenPos;
+		}
+		return -1;
 	}
 
 	private List<Expression> parseHash(int start) {
@@ -606,15 +947,66 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 	}
 
 	private char skipWhite() {
+		return skipWhite(false);
+	}
+
+	private char skipWhite(boolean breakOnNewline) {
+		char commentStart = 0;
 		int top = expression.length();
-		char c = 0;
 		while(tokenPos < top) {
-			c = expression.charAt(tokenPos);
-			if(!Character.isWhitespace(c))
+			char c = expression.charAt(tokenPos);
+			switch(c) {
+			case '\n':
+				if(commentStart == '*')
+					break;
+
+				if(breakOnNewline)
+					return c;
+
+				if(nextLineStart >= 0) {
+					tokenPos = nextLineStart - 1;
+					nextLineStart = -1;
+				}
+				if(commentStart == '#')
+					commentStart = 0;
 				break;
+
+			case '#':
+				if(commentStart == 0)
+					commentStart = '#';
+				break;
+
+			case '/':
+				if(commentStart == 0) {
+					if(tokenPos + 1 < top && expression.charAt(tokenPos + 1) == '*') {
+						++tokenPos;
+						commentStart = '*';
+						break;
+					}
+				}
+				return c;
+
+			case '*':
+				if(commentStart == '*' && tokenPos + 1 < top && expression.charAt(tokenPos + 1) == '/') {
+					++tokenPos;
+					commentStart = 0;
+					break;
+				}
+				return c;
+
+			case ' ':
+			case '\r':
+			case '\t':
+				break;
+
+			default:
+				if(commentStart == 0)
+					return c;
+				break;
+			}
 			++tokenPos;
 		}
-		return c;
+		return 0;
 	}
 
 	private ParseException syntaxError() {

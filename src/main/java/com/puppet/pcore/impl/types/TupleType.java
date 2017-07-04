@@ -3,6 +3,7 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
+import com.puppet.pcore.serialization.FactoryDispatcher;
 
 import java.util.Collections;
 import java.util.List;
@@ -11,6 +12,7 @@ import java.util.Objects;
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
 import static com.puppet.pcore.impl.Helpers.asMap;
+import static com.puppet.pcore.impl.types.ArrayType.arrayFactoryDispatcher;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class TupleType extends TypesContainerType {
@@ -42,8 +44,9 @@ public class TupleType extends TypesContainerType {
 		return ptype;
 	}
 
-	public boolean equals(Object o) {
-		return super.equals(o) && Objects.equals(size, ((TupleType)o).size);
+	@Override
+	public FactoryDispatcher<List<?>> factoryDispatcher() {
+		return arrayFactoryDispatcher();
 	}
 
 	@Override
@@ -55,15 +58,19 @@ public class TupleType extends TypesContainerType {
 		return super.hashCode() * 31 + Objects.hashCode(size);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(TupleType.class, "Pcore::TupleType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::TupleType", "Pcore::AnyType",
 				asMap(
 						"types", arrayType(typeType()),
 						"size_type", asMap(
 								KEY_TYPE, optionalType(typeType(IntegerType.POSITIVE)),
-								KEY_VALUE, null)),
-				(args) -> tupleType((List<AnyType>)args.get(0), (IntegerType)args.get(1)),
+								KEY_VALUE, null)));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, tupleTypeDispatcher(),
 				(self) -> new Object[]{self.types, self.size});
 	}
 
@@ -82,6 +89,11 @@ public class TupleType extends TypesContainerType {
 	@Override
 	TypesContainerType copyWith(List<AnyType> types, boolean resolved) {
 		return new TupleType(types, size, true);
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return super.guardedEquals(o, guard) && equals(size, ((TupleType)o).size, guard);
 	}
 
 	@Override

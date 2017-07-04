@@ -13,13 +13,21 @@ public interface ExpressionFactory {
 
 	Expression constant(Object value, String expression, int offset, int length);
 
+	Expression heredoc(Object value, String syntax, String expression, int offset, int length);
+
 	Expression hash(List<Expression> expressionPairs, String expression, int offset, int length);
 
 	Expression identifier(String s, String string, int offset, int length);
+
+	Expression named_access(Expression lhs, Expression rhs, String expression, int offset, int length);
 
 	Expression negate(Expression expr, String expression, int offset, int length);
 
 	Expression regexp(String value, String tokenValue, int offset, int length);
 
-	Expression typeName(String s1, String s, int offset, int length);
+	Expression typeName(String name, String expression, int offset, int length);
+
+	Expression typeDeclaration(String typeName, String expression, int offset, int length);
+
+	Expression variable(String typeName, String expression, int offset, int length);
 }

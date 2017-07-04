@@ -3,6 +3,7 @@ package com.puppet.pcore.impl;
 import com.puppet.pcore.DynamicObject;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.types.ObjectType;
+import com.puppet.pcore.impl.types.ParameterInfo;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
 
 import java.io.IOException;
@@ -20,6 +21,11 @@ public class DynamicObjectImpl implements DynamicObject {
 		this.attributes = argumentsAccessor.getAll();
 	}
 
+	public DynamicObjectImpl(ObjectType ptype, Object... args) {
+		this.ptype = ptype;
+		this.attributes = new GivenArgumentsAccessor(ptype, args).getAll();
+	}
+
 	@Override
 	public Type _pcoreType() {
 		return ptype;
@@ -32,10 +38,15 @@ public class DynamicObjectImpl implements DynamicObject {
 
 		DynamicObjectImpl dynObj = (DynamicObjectImpl)o;
 		if(ptype.isEqualityIncludeType()) {
-			if(!ptype.equals(dynObj._pcoreType()))
+			if(dynObj.ptype.isEqualityIncludeType()) {
+				if(!ptype.equals(dynObj.ptype))
+					return false;
+			} else if(!ptype.isAssignable(dynObj.ptype))
 				return false;
-		} else if(!ptype.isAssignable(dynObj._pcoreType()))
-			return false;
+		} else {
+			if(!dynObj.ptype.isAssignable(ptype))
+				return false;
+		}
 
 		int[] ei = ptype.parameterInfo().equalityAttributeIndexes;
 		for(int i : ei)
@@ -46,7 +57,7 @@ public class DynamicObjectImpl implements DynamicObject {
 
 	@Override
 	public Object get(String attrName) {
-		ObjectType.ParameterInfo pi = ptype.parameterInfo();
+		ParameterInfo pi = ptype.parameterInfo();
 		Integer idx = pi.attributeIndex.get(attrName);
 		if(idx == null)
 			throw new IllegalArgumentException(format("%s has no attribute named '%s'", ptype.label(), attrName));

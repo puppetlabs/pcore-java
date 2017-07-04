@@ -112,7 +112,7 @@ abstract class MetaType extends AnyType implements Annotatable {
 		return value instanceof AnyType ? ((AnyType)value).resolve() : value;
 	}
 
-	public Map<String,Object> initHash() {
+	public Map<String,Object> _pcoreInitHash() {
 		Map<String,Object> result = new LinkedHashMap<>();
 		Map<AnyType,Map<String,?>> annotations = getAnnotations();
 		if(!annotations.isEmpty())

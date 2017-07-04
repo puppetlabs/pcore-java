@@ -1,8 +1,10 @@
 package com.puppet.pcore.serialization;
 
+import com.puppet.pcore.PcoreException;
 import com.puppet.pcore.Type;
 
 import java.io.IOException;
+import java.util.List;
 
 /**
  * Provides access to positional arguments. An instance of this interface is typically
@@ -22,6 +24,19 @@ public interface ArgumentsAccessor {
 	 * @throws IOException if a {@link Deserializer} was unable to read the arguments
 	 */
 	Object[] getAll() throws IOException;
+
+
+	/**
+	 * @return all arguments as a list
+	 * @throws IOException if a {@link Deserializer} was unable to read the arguments
+	 */
+	List<Object> getArgumentList() throws IOException;
+
+	/**
+	 * Returns the type that describes the parameters tuple
+	 * @return the parameters type
+	 */
+	public Type getParametersType();
 
 	/**
 	 * The type that the arguments are intended for

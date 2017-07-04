@@ -48,26 +48,26 @@ public class JsonPacker extends Polymorphic<Void> implements ExtensionAwarePacke
 
 	@Override
 	public void write(String val) throws IOException {
-		// Bypass dispatch
+		// Bypass constructor
 		_write(val);
 	}
 
 	@Override
 	public void write(long val) throws IOException {
-		// Bypass dispatch
+		// Bypass constructor
 		_write(val);
 	}
 
 	@Override
 	public void write(int val) throws IOException {
-		// Bypass dispatch
+		// Bypass constructor
 		_write(val);
 	}
 
 	@Override
 	public void write(Object val) throws IOException {
 		try {
-			dispatch(val);
+			dispatchWOCatch(val);
 		} catch(InvocationTargetException e) {
 			Throwable te = e.getCause();
 			if(te instanceof IOException)

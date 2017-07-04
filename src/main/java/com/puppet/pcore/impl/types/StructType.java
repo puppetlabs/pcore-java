@@ -33,10 +33,6 @@ public class StructType extends AnyType {
 		return ptype;
 	}
 
-	public boolean equals(Object o) {
-		return o instanceof StructType && elements.equals(((StructType)o).elements);
-	}
-
 	@Override
 	public AnyType generalize() {
 		return DEFAULT;
@@ -56,12 +52,17 @@ public class StructType extends AnyType {
 		return hashedMembers;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		StructElement.registerPcoreType(pcore);
-		return ptype = pcore.createObjectType(StructType.class, "Pcore::StructType", "Pcore::AnyType",
-				asMap("elements", arrayType(typeReferenceType("Pcore::StructElement"))),
-				(args) -> structType((List<StructElement>)args.get(0)),
+		return ptype = pcore.createObjectType("Pcore::StructType", "Pcore::AnyType",
+				asMap("elements", arrayType(typeReferenceType("Pcore::StructElement"))));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		StructElement.registerImpl(pcore);
+		pcore.registerImpl(ptype, structTypeDispatcher(),
 				(self) -> new Object[]{self.elements});
 	}
 
@@ -79,6 +80,10 @@ public class StructType extends AnyType {
 		return iterableType(tupleType(asList(
 				variantType(map(elements, member -> member.key)),
 				variantType(map(elements, member -> member.value))), HashType.KEY_PAIR_TUPLE_SIZE));
+	}
+
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return o instanceof StructType && equals(elements, ((StructType)o).elements, guard);
 	}
 
 	@Override

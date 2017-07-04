@@ -3,6 +3,8 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
+import static com.puppet.pcore.impl.types.TypeFactory.scalarDataTypeDispatcher;
+
 public class ScalarDataType extends ScalarType {
 	public static final ScalarDataType DEFAULT = new ScalarDataType();
 
@@ -21,9 +23,19 @@ public class ScalarDataType extends ScalarType {
 		return DEFAULT;
 	}
 
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(ScalarDataType.class, "Pcore::ScalarDataType", "Pcore::ScalarType", (args)
-				-> DEFAULT);
+		return ptype = pcore.createObjectType("Pcore::ScalarDataType", "Pcore::ScalarType");
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, scalarDataTypeDispatcher());
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o == null || o instanceof String || o instanceof Number || o instanceof Boolean;
 	}
 
 	@Override

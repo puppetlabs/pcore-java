@@ -1,14 +1,16 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.*;
-import com.puppet.pcore.impl.Helpers;
-import com.puppet.pcore.impl.PcoreImpl;
-import com.puppet.pcore.impl.TypeFormatter;
-import com.puppet.pcore.impl.TypeMismatchDescriber;
+import com.puppet.pcore.impl.*;
+import com.puppet.pcore.serialization.ArgumentsAccessor;
+import com.puppet.pcore.serialization.Constructor;
+import com.puppet.pcore.serialization.FactoryDispatcher;
 
-import java.util.List;
+import java.io.IOException;
+import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.puppet.pcore.impl.Helpers.any;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
 
@@ -38,8 +40,8 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		if(nullOK && actual == null || isInstance(actual))
 			return actual;
 
-		throw new TypeAssertionException(
-				TypeMismatchDescriber.SINGLETON.describeMismatch(identifier.get(), this, inferSet(actual)));
+		throw new TypeAssertionException(identifier.get() + ' ' +
+				TypeMismatchDescriber.SINGLETON.describeMismatch(this, inferSet(actual)));
 	}
 
 	public <T> T assertInstanceOf(T actual, Supplier<String> identifier) {
@@ -55,11 +57,6 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		return notAssignableCommon((AnyType)other);
 	}
 
-	@Override
-	public boolean equals(Object o) {
-		return o != null && o.getClass().equals(getClass());
-	}
-
 	public String findUnresolvedType() {
 		UnresolvedTypeFinder unresolvedFinder = new UnresolvedTypeFinder();
 		accept(unresolvedFinder, null);
@@ -71,8 +68,7 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		return DEFAULT;
 	}
 
-	@Override
-	public List<TupleType> constructorSignatures() {
+	public FactoryDispatcher<? extends Object> factoryDispatcher() {
 		throw new PcoreException(format("Creation of new instance of type '%s' is not supported", name()));
 	}
 
@@ -102,6 +98,14 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		return s.substring(0, s.length() - 4);
 	}
 
+	public Object newInstance(ArgumentsAccessor args) throws IOException {
+		return factoryDispatcher().createInstance(this, args);
+	}
+
+	public Object newInstance(Object... args) {
+		return factoryDispatcher().createInstance(this, args);
+	}
+
 	@Override
 	public AnyType normalize() {
 		return this;
@@ -109,6 +113,27 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 
 	public AnyType resolve() {
 		return this;
+	}
+
+	public ParameterInfo parameterInfo() {
+		throw new PcoreException(format("Creation of new instance of type '%s' is not supported", name()));
+	}
+
+	public boolean roundtripWithString() {
+		return false;
+	}
+
+	public boolean roundtripWithHash() {
+		return any(factoryDispatcher().constructors(), Constructor::isHashConstructor);
+	}
+
+	public Map<?, ?> assertHashInitializer(Map<?, ?> hash) {
+		for(ConstructorImpl<?> ctor : ((FactoryDispatcherImpl<?>)factoryDispatcher()).constructors())
+			if(ctor.isHashConstructor()) {
+				ctor.signature().types.get(0).assertInstanceOf(hash, () -> format("initializer hash for %s", name()));
+				return hash;
+			}
+		throw new PcoreException(format("Creation of new instance of type '%s' using an initializer hash is not supported", name()));
 	}
 
 	@Override
@@ -134,7 +159,12 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 
 	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(AnyType.class, "Pcore::AnyType", "Any", (attrs) -> DEFAULT);
+		return ptype = pcore.createObjectType("Pcore::AnyType", null);
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, anyTypeDispatcher());
 	}
 
 	/**
@@ -157,6 +187,11 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 	}
 
 	void checkSelfRecursion(AnyType originator) {
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return o != null && o.getClass().equals(getClass());
 	}
 
 	/**

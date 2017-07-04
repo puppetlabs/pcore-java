@@ -426,6 +426,22 @@ public class DurationFormat {
 				timeSpan));
 	}
 
+	public static String defaultFormat(Duration timeSpan) {
+		return DEFAULTS.get(0).format(timeSpan);
+	}
+
+	public static Duration parse(String timeSpan, List<String> formats) {
+		for(String format : formats) {
+			try {
+				return parse(timeSpan, format);
+			} catch(IllegalArgumentException ignored) {
+			}
+		}
+		throw new IllegalArgumentException(String.format(
+				"Unable to parse '%s' using any of the default formats",
+				timeSpan));
+	}
+
 	public static String format(Duration timeSpan, String pattern) {
 		return FormatParser.singleton.parseFormat(pattern).format(timeSpan);
 	}

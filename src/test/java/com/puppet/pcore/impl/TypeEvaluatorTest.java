@@ -13,6 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.regex.Pattern;
 
+import static com.puppet.pcore.TestHelper.multiline;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -392,6 +393,27 @@ public class TypeEvaluatorTest {
 				Assertions.assertEquals(variantType(stringType(), integerType()), resolveType("Variant[String,Integer]"));
 
 			}
+
+			@Test
+			@DisplayName("Type with ML comments]")
+			public void variantTypeWithComments() {
+				Assertions.assertEquals(variantType(stringType(), integerType()), resolveType(
+						multiline(
+								"Variant[String, # this is the name",
+								"Integer # this is the numeric index",
+								"]")));
+			}
+
+			@Test
+			@DisplayName("Type with ML comments]")
+			public void variantTypeWithMLComments() {
+				Assertions.assertEquals(variantType(stringType(), integerType()), resolveType(
+						multiline(
+								"Variant[String /* this is",
+								"the name */,",
+								"Integer /* this is",
+								"the numeric index*/]")));
+			}
 		}
 
 		@Nested
@@ -455,7 +477,7 @@ public class TypeEvaluatorTest {
 			@Test
 			@DisplayName("declares a TypeAlias")
 			public void typeAlias1() {
-				Assertions.assertEquals(typeAliasType("MyType", typeReferenceType("String[1,20]")).resolve(), resolveType("MyType = String[1,20]"));
+				Assertions.assertEquals(typeAliasType("MyType", typeReferenceType("String[1,20]")).resolve(), resolveType("type MyType = String[1,20]"));
 			}
 		}
 	}

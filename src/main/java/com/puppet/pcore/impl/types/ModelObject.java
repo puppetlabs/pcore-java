@@ -1,6 +1,8 @@
 package com.puppet.pcore.impl.types;
 
 import java.util.IdentityHashMap;
+import java.util.Iterator;
+import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -139,7 +141,62 @@ abstract class ModelObject {
 		}
 	}
 
+	protected static boolean equals(AnyType a, AnyType b, RecursionGuard guard) {
+		return (a == b) || (a != null && a.guardedEquals(b, guard));
+	}
+
+	protected static boolean equals(List<?> a, List<?> b, RecursionGuard guard) {
+		if (a == b)
+			return true;
+
+		int idx = a.size();
+		if (idx != b.size())
+			return false;
+
+		while(--idx >= 0) {
+			Object av = a.get(idx);
+			if(av instanceof ModelObject) {
+				if(!((ModelObject)av).guardedEquals(b.get(idx), guard))
+					return false;
+			} else {
+				if(!av.equals(b.get(idx)))
+					return false;
+			}
+		}
+
+		return true;
+	}
+
+	protected static <K,V extends ModelObject> boolean equals(Map<K,V> a, Map<K,V> b, RecursionGuard guard) {
+		if (a == b)
+			return true;
+
+		if (a.size() != b.size())
+			return false;
+
+		Iterator<Map.Entry<K,V>> i = a.entrySet().iterator();
+		while (i.hasNext()) {
+			Map.Entry<K,V> e = i.next();
+			K key = e.getKey();
+			V value = e.getValue();
+			if (value == null) {
+				if (!(b.get(key) == null && b.containsKey(key)))
+					return false;
+			} else {
+				if (!value.guardedEquals(b.get(key), guard))
+					return false;
+			}
+		}
+		return true;
+	}
+
+	public final boolean equals(Object o) {
+		return guardedEquals(o, null);
+	}
+
 	void accept(Visitor visitor, RecursionGuard guard) {
 		visitor.visit(this, guard);
 	}
+
+	abstract boolean guardedEquals(Object o, RecursionGuard guard);
 }

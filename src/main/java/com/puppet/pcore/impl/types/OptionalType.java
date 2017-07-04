@@ -36,19 +36,29 @@ public class OptionalType extends TypeContainerType {
 		return equals(DEFAULT) ? this : new OptionalType(type.generalize());
 	}
 
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(OptionalType.class, "Pcore::OptionalType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::OptionalType", "Pcore::AnyType",
 				asMap(
 						"type", asMap(
 								KEY_TYPE, typeType(),
-								KEY_VALUE, anyType())),
-				(args) -> optionalType((AnyType)args.get(0)),
+								KEY_VALUE, anyType())));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, optionalTypeDispatcher(),
 				(self) -> new Object[]{self.type});
 	}
 
 	@Override
 	AnyType copyWith(AnyType type, boolean resolved) {
 		return new OptionalType(type, resolved);
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o == null || type.isInstance(o, guard);
 	}
 
 	@Override

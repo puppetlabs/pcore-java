@@ -134,8 +134,6 @@ public class Version implements Comparable<Version>, Serializable {
 	}
 
 	private static void joinParts(List<?> parts, StringBuilder bld) {
-		if(parts == null)
-			return;
 		int top = parts.size();
 		if(top > 0) {
 			bld.append(parts.get(0));
@@ -169,19 +167,17 @@ public class Version implements Comparable<Version>, Serializable {
 	 * @throws IllegalArgumentException if the version string is not a valid SemVer version.
 	 */
 	public static Version create(String version) throws IllegalArgumentException {
-		if(version == null || version.length() == 0)
-			return null;
-
-		Matcher m = VERSION_PATTERN.matcher(version);
-		if(m.matches())
-			return fromMatch(m);
+		if(version != null) {
+			Matcher m = VERSION_PATTERN.matcher(version);
+			if(m.matches())
+				return fromMatch(m);
+		}
 		throw new IllegalArgumentException("The string '" + version + "' does not represent a valid semantic version");
 	}
 
 	/**
 	 * Creates a new instance from the given <code>version</code> string. This method will return <code>null</code> on
-	 * <code>null</code> or
-	 * invalid input.
+	 * <code>null</code> or invalid input.
 	 *
 	 * @param version The version in string form
 	 * @return The created version.

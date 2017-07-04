@@ -138,7 +138,8 @@ abstract class RuntimeTypes {
 	@Test
 	@DisplayName("Map")
 	void rwMap() throws IOException {
-		Map<String,Object> map = asMap("top-level", 32L, "sub-level", asMap("a", "sub-a", "b", "sub-b"));
+		Map<String,Object> submap = asMap("a", "sub-a", "b", "sub-b");
+		Map<String,Object> map = asMap("top-level", 32L, "sub-level", submap, "sub-level-again", submap);
 		assertEquals(map, writeAndRead(map));
 	}
 
@@ -309,6 +310,18 @@ abstract class PcoreTypes {
 	}
 
 	@Test
+	@DisplayName("Init[Integer]")
+	void rwInitType() throws IOException {
+		assertWriteAndRead("Init[Integer]");
+	}
+
+	@Test
+	@DisplayName("Init[String,'%p']")
+	void rwInitWithArgsType() throws IOException {
+		assertWriteAndRead("Init[String,'%p']");
+	}
+
+	@Test
 	@DisplayName("Integer[-3,5]")
 	void rwIntegerType() throws IOException {
 		assertWriteAndRead("Integer[-3,5]");
@@ -449,7 +462,7 @@ abstract class PcoreTypes {
 	@Test
 	@DisplayName("MyAlias = Tuple[String,Integer,Timestamp,3,8]")
 	void rwTypeAliasType() throws IOException {
-		assertWriteAndRead("MyAlias = Tuple[String,Integer,Timestamp,3,8]");
+		assertWriteAndRead("type MyAlias = Tuple[String,Integer,Timestamp,3,8]");
 	}
 
 	@Test

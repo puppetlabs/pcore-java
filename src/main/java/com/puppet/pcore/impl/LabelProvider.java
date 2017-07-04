@@ -25,6 +25,10 @@ public class LabelProvider {
 		return article(txt, true) + ' ' + txt;
 	}
 
+	public static String article(String txt) {
+		return article(txt, false);
+	}
+
 	public static String article(String txt, boolean uc) {
 		if(txt.length() > 0) {
 			char c = txt.charAt(0);

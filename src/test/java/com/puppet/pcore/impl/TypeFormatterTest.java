@@ -393,12 +393,12 @@ public class TypeFormatterTest {
 
 	@Test
 	public void resourceTypeWithName() {
-		assertEquals("Foo::FeeBar::Fim", resourceType("foo::feeBar::fim").toString());
+		assertEquals("Foo::Feebar::Fim", resourceType("foo::feebar::fim").toString());
 	}
 
 	@Test
 	public void resourceTypeWithNameAndTitle() {
-		assertEquals("Foo::FeeBar::Fim['entitled']", resourceType("foo::feeBar::fim", "entitled").toString());
+		assertEquals("Foo::Feebar::Fim['entitled']", resourceType("foo::feebar::fim", "entitled").toString());
 	}
 
 	@Test
@@ -546,7 +546,7 @@ public class TypeFormatterTest {
 
 	@Test
 	public void typeReferenceWithType() {
-		assertEquals("TypeReference[\"The::Test['hello']\"]", typeReferenceType("The::Test['hello']").toString());
+		assertEquals("TypeReference['The::Test[\\'hello\\']']", typeReferenceType("The::Test['hello']").toString());
 	}
 
 	@Test

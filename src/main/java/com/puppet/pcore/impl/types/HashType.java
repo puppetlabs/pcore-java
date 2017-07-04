@@ -3,6 +3,8 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
+import java.util.Map;
+
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
 import static com.puppet.pcore.impl.Helpers.all;
@@ -11,7 +13,6 @@ import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
 
 public class HashType extends CollectionType {
-	public static final HashType DATA = new HashType(stringType(), dataType(), IntegerType.POSITIVE);
 	public static final HashType DEFAULT = new HashType(anyType(), anyType(), IntegerType.POSITIVE);
 	public static final HashType EMPTY = new HashType(unitType(), unitType(), integerType(0, 0));
 	public static final IntegerType KEY_PAIR_TUPLE_SIZE = integerType(2, 2);
@@ -43,10 +44,6 @@ public class HashType extends CollectionType {
 		return iterableType(tupleType(asList(keyType, type), KEY_PAIR_TUPLE_SIZE));
 	}
 
-	public boolean equals(Object o) {
-		return super.equals(o) && keyType.equals(((HashType)o).keyType);
-	}
-
 	@Override
 	public AnyType generalize() {
 		return equals(DEFAULT)
@@ -75,12 +72,21 @@ public class HashType extends CollectionType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		if(o instanceof Map<?,?>) {
+			Map<?,?> mo = (Map<?,?>)o;
+			return size.isInstance(mo.size()) && (DEFAULT.equals(this) || all(mo.entrySet(),
+					(entry) -> keyType.isInstance(entry.getKey()) && type.isInstance(entry.getValue())));
+		}
+		return false;
+	}
+
+	@Override
 	protected boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		if(t instanceof HashType) {
 			HashType ht = (HashType)t;
 			return size.min == 0 && EMPTY.equals(ht)
-					|| super.isUnsafeAssignable(t, guard) && type.isAssignable(ht.type, guard) && keyType.isAssignable(ht
-					.keyType, guard);
+					|| super.isUnsafeAssignable(t, guard) && type.isAssignable(ht.type, guard) && keyType.isAssignable(ht.keyType, guard);
 		}
 
 		if(t instanceof StructType) {
@@ -100,8 +106,12 @@ public class HashType extends CollectionType {
 		return hashType(keyType.common(ht.keyType), type.common(ht.type));
 	}
 
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return super.guardedEquals(o, guard) && keyType.guardedEquals(((HashType)o).keyType, guard);
+	}
+
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(HashType.class, "Pcore::HashType", "Pcore::CollectionType",
+		return ptype = pcore.createObjectType("Pcore::HashType", "Pcore::CollectionType",
 				asMap(
 						"key_type", asMap(
 								KEY_TYPE, typeType(),
@@ -109,8 +119,12 @@ public class HashType extends CollectionType {
 						"value_type", asMap(
 								KEY_TYPE, typeType(),
 								KEY_VALUE, anyType())),
-				asList("key_type", "value_type", "size_type"),
-				(attrs) -> hashType((AnyType)attrs.get(0), (AnyType)attrs.get(1), (IntegerType)attrs.get(2)),
+				asList("key_type", "value_type", "size_type"));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, hashTypeDispatcher(),
 				(self) -> new Object[]{self.keyType, self.type, self.size});
 	}
 }

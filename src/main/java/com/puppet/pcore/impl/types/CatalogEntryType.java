@@ -3,6 +3,8 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
+import static com.puppet.pcore.impl.types.TypeFactory.catalogEntryTypeDispatcher;
+
 public class CatalogEntryType extends AnyType {
 	public static final CatalogEntryType DEFAULT = new CatalogEntryType();
 
@@ -22,8 +24,12 @@ public class CatalogEntryType extends AnyType {
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(CatalogEntryType.class, "Pcore::CatalogEntryType", "Pcore::AnyType", (attrs)
-				-> DEFAULT);
+		return ptype = pcore.createObjectType("Pcore::CatalogEntryType", "Pcore::AnyType");
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, catalogEntryTypeDispatcher());
 	}
 
 	@Override

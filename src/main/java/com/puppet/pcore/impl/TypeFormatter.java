@@ -16,6 +16,7 @@ import java.util.regex.Pattern;
 import static com.puppet.pcore.impl.Constants.KEY_REFERENCES;
 import static com.puppet.pcore.impl.Constants.KEY_TYPES;
 import static com.puppet.pcore.impl.Helpers.*;
+import static com.puppet.pcore.impl.StringConverter.puppetQuote;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -57,14 +58,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	public void format(Object value) {
-		try {
-			dispatch(value);
-		} catch(InvocationTargetException e) {
-			Throwable te = e.getCause();
-			if(!(te instanceof RuntimeException))
-				te = new RuntimeException(te);
-			throw (RuntimeException)te;
-		}
+		dispatch(value);
 	}
 
 	@Override
@@ -118,10 +112,6 @@ public class TypeFormatter extends Polymorphic<Void> {
 	void _format(CollectionType t) {
 		List<String> range = rangeArrayPart(t.size, true);
 		appendArray("Collection", range.isEmpty(), () -> appendFormatted(false, range));
-	}
-
-	void _format(DataType t) {
-		out.append("Data");
 	}
 
 	void _format(DefaultType t) {
@@ -210,6 +200,13 @@ public class TypeFormatter extends Polymorphic<Void> {
 
 	void _format(Long l) {
 		out.append(l.toString());
+	}
+
+	void _format(InitType t) {
+		appendArray("Init", AnyType.DEFAULT.equals(t.type), () -> {
+			appendValues(!t.initArgs.isEmpty(), t.type);
+			appendValues(false, t.initArgs);
+		});
 	}
 
 	void _format(IntegerType t) {
@@ -392,7 +389,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 
 	@SuppressWarnings("unchecked")
 	void _format(TypeSetType t) {
-		appendArray("TypeSet", () -> appendHash(t.initHash(), (k) -> out.append(symbolicKey(k)), (e) -> {
+		appendArray("TypeSet", () -> appendHash(t._pcoreInitHash(), (k) -> out.append(symbolicKey(k)), (e) -> {
 			switch(e.getKey()) {
 			case KEY_TYPES:
 				TypeSetType saveTS = typeSet;
@@ -468,7 +465,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 		if(paramTypes.isEmpty() && IntegerType.ZERO_SIZE.equals(t.parametersType.size))
 			appendValues(true, 0, 0);
 		else {
-			appendValues(true, filter(paramTypes, pt -> !(pt instanceof UnitType)).toArray());
+			appendValues(true, select(paramTypes, pt -> !(pt instanceof UnitType)).toArray());
 			appendFormatted(true, rangeArrayPart(t.parametersType.size, false));
 		}
 		if(t.blockType != null)

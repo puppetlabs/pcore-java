@@ -10,9 +10,11 @@ import org.junit.jupiter.api.Test;
 import java.util.Collections;
 import java.util.List;
 
+import static com.puppet.pcore.TestHelper.multiline;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.fail;
 
 @DisplayName("The DefaultExpressionParser")
 public class ExpressionParserTest {
@@ -118,6 +120,12 @@ public class ExpressionParserTest {
 		}
 
 		@Test
+		@DisplayName("type definition")
+		public void parseTypeDefinition() {
+			assertEquals(typeDeclaration("MyType"), parser.parse("type MyType"));
+		}
+
+		@Test
 		public void singleQuotedStringWithDoubleQuotes() {
 			assertEquals(constant("string\"with\"quotes"), parser.parse("'string\"with\"quotes'"));
 		}
@@ -161,6 +169,253 @@ public class ExpressionParserTest {
 		@DisplayName("zero hex")
 		public void zeroHex() {
 			assertEquals(constant(0x0), parser.parse("0x0"));
+		}
+	}
+
+	@Nested
+	@DisplayName("parses assignment")
+	class Assignment {
+		@Test
+		@DisplayName("type alias")
+		void typeAlias() {
+			assertEquals(assignment(typeDeclaration("MyType"), access(typeName("Variant"), asList(typeName("Integer"), typeName("String")))),
+					parser.parse("type MyType = Variant[Integer,String]"));
+		}
+	}
+
+	@Nested
+	@DisplayName("parses heredoc with")
+	class Heredoc {
+		@Test
+		@DisplayName("multiple lines")
+		void plain() {
+			assertEquals(
+					heredoc(multiline(
+							"This is",
+							"heredoc text")),
+					parser.parse(multiline(
+							"@(END)",
+							"This is",
+							"heredoc text",
+							"END")));
+		}
+
+		@Test
+		@DisplayName("quoted tag")
+		void quotedTag() {
+			assertEquals(
+					heredoc(multiline(
+							"This\tis",
+							"heredoc text")),
+					parser.parse(multiline(
+							"@(\"END\"/t)",
+							"This\\tis",
+							"heredoc text",
+							"END")));
+		}
+
+		@Test
+		@DisplayName("whitespace after end")
+		void wsAfterEnd() {
+			assertEquals(
+					heredoc(multiline(
+							"This is",
+							"/* heredoc */ text")),
+					parser.parse(multiline(
+							"@(END)",
+							"This is",
+							"/* heredoc */ text",
+							"/* this comment doesn't",
+							"matter one bit */END  ")));
+		}
+
+		@Test
+		@DisplayName("end tag with trailing characters")
+		void endTagEmbedded() {
+			assertEquals(
+					heredoc(multiline(
+							"This is not the",
+							"END because there's more",
+							"")),
+					parser.parse(multiline(
+							"@(END)",
+							"This is not the",
+							"END because there's more",
+							"",
+							"END")));
+		}
+
+		@Test
+		@DisplayName("no newline after end")
+		void noNLAfterEnd() {
+			assertEquals(
+					heredoc(multiline(
+							"This is",
+							"heredoc text")),
+					parser.parse(multiline(false,
+							"@(END)",
+							"This is",
+							"heredoc text",
+							"END")));
+		}
+
+		@Test
+		@DisplayName("margin")
+		void withMargin() {
+			assertEquals(
+					heredoc(multiline(
+							"This is",
+							"heredoc text")),
+					parser.parse(multiline(
+							"@(END)",
+							"    This is",
+							"    heredoc text",
+							"    | END")));
+		}
+
+		@Test
+		@DisplayName("margin and newline trim")
+		void withMarginAndNewlineTrim() {
+			assertEquals(
+					heredoc(multiline(false,
+							"This is",
+							"heredoc text")),
+					parser.parse(multiline(
+							"@(END)",
+							"    This is",
+							"    heredoc text",
+							"    |- END")));
+		}
+
+		@Test
+		@DisplayName("syntax and escape specification")
+		void syntaxAndEscape() {
+			assertEquals(
+					heredoc("Tex\tt\\n", "syntax"),
+					parser.parse(multiline(
+							"@(END:syntax/t)",
+							"Tex\\tt\\n",
+							"|- END")));
+		}
+
+		@Test
+		@DisplayName("escaped newlines without preceding whitespace")
+		void escapedNewlines() {
+			assertEquals(
+					heredoc("First Line Second Line"),
+					parser.parse(multiline(
+							"@(END/L)",
+							"First Line\\",
+							" Second Line",
+							"|- END")));
+		}
+
+		@Test
+		@DisplayName("escaped newlines with proper margin")
+		void escapedNewlinesAndProperMargin() {
+			assertEquals(
+					heredoc(" First Line  Second Line"),
+					parser.parse(multiline(
+							"@(END/L)",
+							" First Line\\",
+							"  Second Line",
+							"|- END")));
+		}
+
+		@Test
+		@DisplayName("multiple heredocs on the same line")
+		void multipleOnSameLine() {
+			assertEquals(hash(asList(heredoc("hello"), heredoc("world"))), parser.parse(multiline(
+					"{ @(foo) => @(bar) }",
+					"hello",
+					"-foo",
+					"world",
+					"-bar")));
+		}
+	}
+
+	@Nested
+	@DisplayName("fails heredoc parse when")
+	class HeredocFails {
+		@Test
+		@DisplayName("unterminated tag")
+		void unterminatedTag() {
+			assertThrows(ParseException.class, () -> parser.parse(multiline(
+					"@(END",
+					"text",
+					"|- END")));
+		}
+
+		@Test
+		@DisplayName("unterminated quoted tag")
+		void unterminatedQuotedTag() {
+			assertThrows(ParseException.class, () -> parser.parse(multiline(
+					"@(\"END)",
+					"text",
+					"|- END")));
+		}
+
+		@Test
+		@DisplayName("unsupported flag")
+		void unsupportedFlag() {
+			assertThrows(ParseException.class, () -> parser.parse(multiline(
+					"@(END/x)",
+					"text",
+					"|- END")));
+		}
+
+		@Test
+		@DisplayName("bad start")
+		void badStart() {
+			assertThrows(ParseException.class, () -> parser.parse(multiline(
+					"@ (END)",
+					"text",
+					"|- END")));
+		}
+
+		@Test
+		@DisplayName("empty tag")
+		void emptyTag() {
+			assertThrows(ParseException.class, () -> parser.parse(multiline(
+					"@()",
+					"text",
+					"|-")));
+		}
+
+		@Test
+		@DisplayName("empty quoted tag")
+		void emptyQuotedTag() {
+			assertThrows(ParseException.class, () -> parser.parse(multiline(
+					"@(\"\")",
+					"text",
+					"|-")));
+		}
+
+		@Test
+		@DisplayName("more than one tag")
+		void multipleTags() {
+			assertThrows(ParseException.class, () -> parser.parse(multiline(
+					"@(\"ONE\"\"TWO\")",
+					"text",
+					"|- TWO")));
+		}
+
+		@Test
+		@DisplayName("more than one syntax")
+		void multipleSyntaxes() {
+			assertThrows(ParseException.class, () -> parser.parse(multiline(
+					"@(END:json:yaml)",
+					"text",
+					"|- END")));
+		}
+
+		@Test
+		@DisplayName("more than one flags spec")
+		void multipleFlagSpecs() {
+			assertThrows(ParseException.class, () -> parser.parse(multiline(
+					"@(END/n/s)",
+					"text",
+					"|- END")));
 		}
 	}
 
@@ -286,8 +541,20 @@ public class ExpressionParserTest {
 		return factory.array(expressions, "", 0, 0);
 	}
 
+	Expression assignment(Expression a, Expression b) {
+		return factory.assignment(a, b, "", 0, 0);
+	}
+
 	Expression constant(Object value) {
 		return factory.constant(value, "", 0, 0);
+	}
+
+	Expression heredoc(Object value) {
+		return factory.heredoc(value, null, "", 0, 0);
+	}
+
+	Expression heredoc(Object value, String syntax) {
+		return factory.heredoc(value, syntax, "", 0, 0);
 	}
 
 	Expression hash(List<Expression> expressions) {
@@ -308,5 +575,9 @@ public class ExpressionParserTest {
 
 	Expression typeName(String value) {
 		return factory.typeName(value, "", 0, 0);
+	}
+
+	Expression typeDeclaration(String value) {
+		return factory.typeDeclaration(value, "", 0, 0);
 	}
 }

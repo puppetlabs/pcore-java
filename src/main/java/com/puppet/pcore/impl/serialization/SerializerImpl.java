@@ -4,6 +4,7 @@ import com.puppet.pcore.*;
 import com.puppet.pcore.impl.DynamicObjectImpl;
 import com.puppet.pcore.impl.serialization.extension.*;
 import com.puppet.pcore.impl.types.ObjectType;
+import com.puppet.pcore.impl.types.ParameterInfo;
 import com.puppet.pcore.impl.types.TypeReferenceType;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -61,30 +62,11 @@ public class SerializerImpl implements Serializer {
 	private <T> void writeObject(T value) throws IOException {
 		Function<T,Object[]> attributeProvider;
 		Type type = value instanceof PuppetObject ? ((PuppetObject)value)._pcoreType() : Pcore.infer(value);
-		if(value instanceof DynamicObjectImpl) {
-			attributeProvider = t -> ((DynamicObjectImpl)value).getAttributes();
-		} else {
-			Class<T> implClass = (Class<T>)value.getClass();
-			if(!(type instanceof ObjectType))
-				throw new SerializationException(format("No Puppet Type found for %s", implClass.getName()));
+		if(!(type instanceof ObjectType))
+			throw new SerializationException(format("No Puppet Type found for %s", value.getClass().getName()));
 
-			attributeProvider = Pcore.implementationRegistry().attributeProviderFor(implClass);
-			if(attributeProvider == null)
-				throw new SerializationException(format("No Object Writer found for %s", implClass.getName()));
-		}
-
-		Object[] args = attributeProvider.apply(value);
-		ObjectType.ParameterInfo pi = ((ObjectType)type).parameterInfo();
-
-		// Limit the write to not include trailing defaults
+		Object[] args = ((ObjectType)type).attributeValuesFor(value);
 		int top = args.length;
-		while(--top >= 0) {
-			ObjectType.Attribute attr = pi.attributes.get(top);
-			if(!(attr.hasValue() && Objects.equals(attr.value(), args[top])))
-				break;
-		}
-		++top;
-
 		if(type.name().startsWith("Pcore::")) {
 			objectsWritten.put(value, objectsWritten.size());
 			startPcoreObject(type.name(), top);

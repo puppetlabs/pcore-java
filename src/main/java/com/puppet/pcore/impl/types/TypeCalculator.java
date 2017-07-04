@@ -1,9 +1,6 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.Binary;
-import com.puppet.pcore.Default;
-import com.puppet.pcore.PuppetObject;
-import com.puppet.pcore.Pcore;
+import com.puppet.pcore.*;
 import com.puppet.pcore.impl.Polymorphic;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -12,6 +9,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
@@ -77,6 +75,10 @@ class TypeCalculator extends Polymorphic<AnyType> {
 		return timestampType(o, o);
 	}
 
+	AnyType _infer(Iterator o) {
+		return iteratorType();
+	}
+
 	AnyType _infer(Integer o) {
 		long val = o.longValue();
 		return integerType(val, val);
@@ -97,21 +99,22 @@ class TypeCalculator extends Polymorphic<AnyType> {
 	}
 
 	AnyType _infer(Object o) {
-		AnyType type = (AnyType)Pcore.implementationRegistry().typeFor(o.getClass());
-		return type == null ? runtimeType("java", o.getClass().getName()) : type;
+		if(o instanceof PuppetObject)
+			return (AnyType)((PuppetObject)o)._pcoreType();
+		return runtimeType("java", o.getClass().getName());
 	}
 
 	AnyType _infer(Pattern o) {
 		return regexpType(o);
 	}
 
-	AnyType _infer(PuppetObject o) {
-		return (AnyType)o._pcoreType();
-	}
-
 	AnyType _infer(Short o) {
 		long val = o.longValue();
 		return integerType(val, val);
+	}
+
+	AnyType _infer(Sensitive o) {
+		return sensitiveType();
 	}
 
 	AnyType _infer(String o) {
@@ -131,14 +134,7 @@ class TypeCalculator extends Polymorphic<AnyType> {
 	}
 
 	AnyType infer(Object o) {
-		try {
-			return dispatch(o);
-		} catch(InvocationTargetException e) {
-			Throwable te = e.getCause();
-			if(!(te instanceof RuntimeException))
-				te = new RuntimeException(te);
-			throw (RuntimeException)te;
-		}
+		return dispatch(o);
 	}
 
 	AnyType inferAndReduceType(Collection<?> objects) {

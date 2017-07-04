@@ -1,23 +1,56 @@
 package com.puppet.pcore.impl;
 
+import com.puppet.pcore.impl.types.AnyType;
+
 import java.util.*;
+import java.util.Map.Entry;
+import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import static java.util.Collections.unmodifiableList;
-import static java.util.Collections.unmodifiableMap;
+import static com.puppet.pcore.impl.Assertions.assertInstance;
+import static com.puppet.pcore.impl.types.TypeFactory.booleanType;
+import static java.lang.String.format;
+import static java.util.Collections.*;
 
 public class Helpers {
 	private static final Pattern CLASS_NAME = Pattern.compile("^[A-Z]\\w*(?:::[A-Z]\\w*)*$");
 	private static final Pattern COLON_SPLIT = Pattern.compile("::");
+
+	public static class MapEntry<K, V> implements Entry<K, V> {
+		public final K key;
+		public final V value;
+
+		public MapEntry(K key, V value) {
+			this.key = key;
+			this.value = value;
+		}
+
+		@Override
+		public K getKey() {
+			return key;
+		}
+
+		@Override
+		public V getValue() {
+			return value;
+		}
+
+		@Override
+		public V setValue(V value) {
+			throw new UnsupportedOperationException();
+		}
+	}
 
 	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K,V> asMap(Object... keyValuePairs) {
 		int len = keyValuePairs.length;
 		if(len == 0)
 			return Collections.emptyMap();
+		if(len == 2)
+			return Collections.singletonMap((K)keyValuePairs[0], (V)keyValuePairs[1]);
 
 		if((len % 2) != 0)
 			throw new IllegalArgumentException("asMap called with uneven number of arguments");
@@ -28,14 +61,28 @@ public class Helpers {
 		return map;
 	}
 
+	public static <K, V> MapEntry<K, V> entry(K key, V value) {
+		return new MapEntry<>(key, value);
+	}
+
+	@SuppressWarnings("unchecked")
+	public static <K, V> Map<K,V> asMap(Entry<K, V>... entries) {
+		if(entries.length == 0)
+			return Collections.emptyMap();
+		if(entries.length == 1)
+			return Collections.singletonMap(entries[0].getKey(), entries[0].getValue());
+
+		Map<K, V> map = new LinkedHashMap<>();
+		for(Entry<K, V> entry : entries)
+			map.put(entry.getKey(), entry.getValue());
+		return map;
+	}
+
 	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K,V> asMap(List<?> keyValuePairs) {
 		int len = keyValuePairs.size();
 		if(len == 0)
 			return Collections.emptyMap();
-
-		if((len % 2) != 0)
-			throw new IllegalArgumentException("asMap called with uneven number of arguments");
 
 		Map<K, V> map = new LinkedHashMap<>();
 		for(int idx = 0; idx < len; idx += 2)
@@ -54,13 +101,27 @@ public class Helpers {
 	}
 
 	@SuppressWarnings("unchecked")
-	public static <T> List<T> unmodifiableCopy(Collection<T> collection) {
+	public static <T> List<T> unmodifiableCopy(Collection<? extends T> collection) {
 		return collection.isEmpty() ? Collections.emptyList() : unmodifiableList(new ArrayList<>(collection));
 	}
 
 	@SuppressWarnings("unchecked")
 	public static <K, V> Map<K, V> unmodifiableCopy(Map<K, V> map) {
 		return map.isEmpty() ? Collections.emptyMap() : unmodifiableMap(new LinkedHashMap<>(map));
+	}
+
+	public static List<?> mapAsPairs(Map<?, ?> map) {
+		return map(map.entrySet(), (e) -> asList(e.getKey(), e.getValue()));
+	}
+
+	public static Map<?,?> pairsAsMap(List<List<?>> pairs) {
+		Map<Object, Object> result = new LinkedHashMap<>(pairs.size());
+		for(List<?> pair : pairs) {
+			if(pair.size() != 2)
+				throw new IllegalArgumentException("must be a list of two element lists");
+			result.put(pair.get(0), pair.get(1));
+		}
+		return unmodifiableMap(result);
 	}
 
 	public static String capitalizeSegment(String segment) {
@@ -71,13 +132,15 @@ public class Helpers {
 		case 1:
 			return segment.toUpperCase();
 		default:
-			return new StringBuilder().append(Character.toUpperCase(segment.charAt(0))).append(segment, 1, len).toString();
+			StringBuilder bld = new StringBuilder();
+			bld.append(Character.toUpperCase(segment.charAt(0)));
+			for(int idx = 1; idx < len; ++idx)
+				bld.append(Character.toLowerCase(segment.charAt(idx)));
+			return bld.toString();
 		}
 	}
 
 	public static String capitalizeSegments(String typeName) {
-		if(CLASS_NAME.matcher(typeName).matches())
-			return typeName;
 		String[] segments = COLON_SPLIT.split(typeName);
 		int idx = segments.length;
 		while(--idx >= 0)
@@ -156,58 +219,10 @@ public class Helpers {
 		}
 	}
 
-	public static <T> List<T> mergeUnique(List<? extends T> a, List<? extends T> b) {
+	public static <T> List<T> mergeUnique(Collection<? extends T> a, Collection<? extends T> b) {
 		Set<T> uniqueSet = new LinkedHashSet<>(a);
 		uniqueSet.addAll(b);
 		return unmodifiableCopy(uniqueSet);
-	}
-
-	public static void puppetQuote(String s, StringBuilder bld) {
-		int top = s.length();
-		boolean dQuote = false;
-		int start = bld.length();
-		bld.append('\'');
-		for(int idx = 0; idx < top; ++idx) {
-			char c = s.charAt(idx);
-			switch(c) {
-			case '\t':
-				dQuote = true;
-				bld.append("\\t");
-				break;
-			case '\n':
-				dQuote = true;
-				bld.append("\\n");
-				break;
-			case '\r':
-				dQuote = true;
-				bld.append("\\r");
-				break;
-			case '"':
-				dQuote = true;
-				bld.append("\\\"");
-				break;
-			case '\\':
-				dQuote = true;
-				bld.append("\\\\");
-				break;
-			case '\'':
-			case '$':
-				dQuote = true;
-				bld.append(c);
-				break;
-			default:
-				if(c < 0x20 || c > 0x7f) {
-					dQuote = true;
-					bld.append(String.format("\\u{%X}", (int)c));
-				} else
-					bld.append(c);
-			}
-		}
-		if(dQuote) {
-			bld.append('"');
-			bld.setCharAt(start, '"');
-		} else
-			bld.append('\'');
 	}
 
 	public static void puppetRegexp(String s, StringBuilder bld) {
@@ -233,7 +248,7 @@ public class Helpers {
 				break;
 			default:
 				if(c < 0x20 || c > 0x7f)
-					bld.append(String.format("\\u{%X}", (int)c));
+					bld.append(format("\\u{%X}", (int)c));
 				else
 					bld.append(c);
 			}
@@ -259,11 +274,42 @@ public class Helpers {
 		return true;
 	}
 
-	public static <T> List<T> filter(Collection<? extends T> collection, Predicate<? super T> condition) {
+	public static <K, V> Map<K, V> select(Map<K, V> map, Predicate<? super Entry<K, V>> condition) {
+		if(map.isEmpty())
+			return map;
+
+		Map<K, V> result = new LinkedHashMap<>();
+		for(Entry<K, V> entry : map.entrySet())
+			if(condition.test(entry))
+				result.put(entry.getKey(), entry.getValue());
+		return result;
+	}
+
+	public static <T> List<T> select(Collection<? extends T> collection, Predicate<? super T> condition) {
 		int top = collection.size();
 		List<T> result = new ArrayList<>(top);
 		for(T elem : collection)
 			if(condition.test(elem))
+				result.add(elem);
+		return unmodifiableCopy(result);
+	}
+
+	public static <K, V> Map<K, V> reject(Map<K, V> map, Predicate<? super Entry<K, V>> condition) {
+		if(map.isEmpty())
+			return map;
+
+		Map<K, V> result = new LinkedHashMap<>();
+		for(Entry<K, V> entry : map.entrySet())
+			if(!condition.test(entry))
+				result.put(entry.getKey(), entry.getValue());
+		return result;
+	}
+
+	public static <T> List<T> reject(Collection<? extends T> collection, Predicate<? super T> condition) {
+		int top = collection.size();
+		List<T> result = new ArrayList<>(top);
+		for(T elem : collection)
+			if(!condition.test(elem))
 				result.add(elem);
 		return unmodifiableCopy(result);
 	}
@@ -285,6 +331,42 @@ public class Helpers {
 		return asList(result);
 	}
 
+	public static <K, V, VR> Map<K, VR> mapValues(Map<K, V> collection, BiFunction<? super K, ? super V, ? extends VR> mapper) {
+		int top = collection.size();
+		if(top == 0)
+			return emptyMap();
+		Iterator<Entry<K, V>> iterator = collection.entrySet().iterator();
+		if(top == 1) {
+			Entry<K, V> entry = iterator.next();
+			return singletonMap(entry.getKey(), mapper.apply(entry.getKey(), entry.getValue()));
+		}
+		LinkedHashMap<K, VR> result = new LinkedHashMap<>();
+		while(iterator.hasNext()) {
+			Entry<K, V> entry = iterator.next();
+			result.put(entry.getKey(), mapper.apply(entry.getKey(), entry.getValue()));
+		}
+		return result;
+	}
+
+	public static <K, V, KR, VR> Map<KR, VR> map(Map<K, V> collection, BiFunction<? super K, ? super V, ? extends Entry<? extends KR, ? extends VR>> mapper) {
+		int top = collection.size();
+		if(top == 0)
+			return emptyMap();
+		Iterator<Entry<K, V>> iterator = collection.entrySet().iterator();
+		if(top == 1) {
+			Entry<K, V> entry = iterator.next();
+			Entry<? extends KR, ? extends VR> result = mapper.apply(entry.getKey(), entry.getValue());
+			return singletonMap(result.getKey(), result.getValue());
+		}
+		LinkedHashMap<KR, VR> result = new LinkedHashMap<>();
+		while(iterator.hasNext()) {
+			Entry<K, V> entry = iterator.next();
+			Entry<? extends KR, ? extends VR> resultEntry = mapper.apply(entry.getKey(), entry.getValue());
+			result.put(resultEntry.getKey(), resultEntry.getValue());
+		}
+		return result;
+	}
+
 	public static <T, R> R reduce(Collection<? extends T> collection, R identity, BiFunction<R, T, R> accumulator) {
 		R result = identity;
 		for(T elem : collection)
@@ -297,6 +379,34 @@ public class Helpers {
 			if(condition.test(elem))
 				return true;
 		return false;
+	}
+
+	public static <T> void eachWithIndex(List<T> list, BiConsumer<T, Integer> block) {
+		int top = list.size();
+		for(int idx = 0; idx < top; ++idx)
+			block.accept(list.get(idx), idx);
+	}
+
+	public static <T,R> List<R> mapWithIndex(List<T> list, BiFunction<T, Integer, R> block) {
+		int top = list.size();
+		if(top == 0)
+			return emptyList();
+		if(top == 1)
+			return singletonList(block.apply(list.get(0), 0));
+		ArrayList<R> result = new ArrayList<>();
+		for(int idx = 0; idx < top; ++idx)
+			result.add(block.apply(list.get(idx), idx));
+		return result;
+	}
+
+	public static <T> List<T> concat(Collection<T> a, Collection<T> b) {
+		Object[] all = new Object[a.size() + b.size()];
+		int idx = 0;
+		for(Object v : a)
+			all[idx++] = v;
+		for(Object v : b)
+			all[idx++] = v;
+		return (List<T>)Arrays.asList(all);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -314,7 +424,7 @@ public class Helpers {
 		return unmodifiableCopy(new LinkedHashSet<>(collection));
 	}
 
-	public static <T> Map<Boolean, List<T>> partitionBy(Collection<T> collection, Predicate<? super T> condition) {
+	public static <T> List<T>[] partitionBy(Collection<T> collection, Predicate<? super T> condition) {
 		List<T> trueList = new ArrayList<>();
 		List<T> falseList = new ArrayList<>();
 		for(T elem : collection) {
@@ -323,7 +433,7 @@ public class Helpers {
 			else
 				falseList.add(elem);
 		}
-		return asMap(true, trueList, false, falseList);
+		return new List[] { trueList, falseList };
 	}
 
 	public static <T, G> Map<G, List<T>> groupBy(Collection<T> collection, Function<? super T, ? extends G> grouper) {
@@ -338,5 +448,28 @@ public class Helpers {
 			groupList.add(elem);
 		}
 		return unmodifiableMap(result);
+	}
+
+	public static String unindent(String heredoc, int indentStrip) {
+		StringBuilder bld = new StringBuilder();
+		int top = heredoc.length();
+		int pos = 0;
+		boolean ws = true;
+		for(int idx = 0; idx < top; ++idx, ++pos) {
+			char c = heredoc.charAt(idx);
+			if(c == '\n') {
+				pos = -1;
+				bld.append(c);
+				ws = true;
+				continue;
+			}
+
+			if(ws && pos < indentStrip) {
+				ws = Character.isWhitespace(c);
+				continue;
+			}
+			bld.append(c);
+		}
+		return bld.toString();
 	}
 }

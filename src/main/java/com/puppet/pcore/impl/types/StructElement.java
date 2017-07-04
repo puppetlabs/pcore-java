@@ -25,30 +25,40 @@ public class StructElement extends ModelObject implements PuppetObject {
 		this.value = value;
 	}
 
-	@Override
-	public Type _pcoreType() {
+	public static AnyType pcoreType() {
 		return ptype;
 	}
 
-	public boolean equals(Object o) {
-		if(o instanceof StructElement) {
-			StructElement mo = (StructElement)o;
-			return key.equals(mo.key) && value.equals(mo.value);
-		}
-		return false;
+	@Override
+	public Type _pcoreType() {
+		return ptype;
 	}
 
 	public int hashCode() {
 		return key.hashCode() * 31 + value.hashCode();
 	}
 
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(StructElement.class, "Pcore::StructElement", null,
+		return ptype = pcore.createObjectType("Pcore::StructElement", null,
 				asMap(
 						"key_type", typeType(),
-						"value_type", typeType()),
-				(args) -> structElement((AnyType)args.get(0), (AnyType)args.get(1)),
+						"value_type", typeType()));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, structElementDispatcher(),
 				(self) -> new Object[]{self.key, self.value});
+	}
+
+	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		if(o instanceof StructElement) {
+			StructElement mo = (StructElement)o;
+			return key.guardedEquals(mo.key, guard) && value.guardedEquals(mo.value, guard);
+		}
+		return false;
 	}
 
 	@Override

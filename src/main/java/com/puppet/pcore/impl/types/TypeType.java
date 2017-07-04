@@ -31,13 +31,18 @@ public class TypeType extends TypeContainerType {
 		return DEFAULT;
 	}
 
+	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		return ptype = pcore.createObjectType(TypeType.class, "Pcore::TypeType", "Pcore::AnyType",
+		return ptype = pcore.createObjectType("Pcore::TypeType", "Pcore::AnyType",
 				asMap(
 						"type", asMap(
 								KEY_TYPE, typeType(),
-								KEY_VALUE, anyType())),
-				(args) -> typeType((AnyType)args.get(0)),
+								KEY_VALUE, anyType())));
+	}
+
+	@SuppressWarnings("unused")
+	static void registerImpl(PcoreImpl pcore) {
+		pcore.registerImpl(ptype, typeTypeDispatcher(),
 				(self) -> new Object[]{self.type});
 	}
 
