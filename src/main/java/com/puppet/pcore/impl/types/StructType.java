@@ -87,6 +87,28 @@ public class StructType extends AnyType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		if(o instanceof Map<?,?>) {
+			Map<?,?> mo = (Map<?,?>)o;
+			int matched = 0;
+			for(StructElement element : elements) {
+				String key = element.name;
+				Object v = mo.get(key);
+				if(v == null && !mo.containsKey(key)) {
+					if(!element.key.isAssignable(undefType(), guard))
+						return false;
+				} else {
+					++matched;
+					if(!element.value.isInstance(v, guard))
+						return false;
+				}
+			}
+			return matched == mo.size();
+		}
+		return false;
+	}
+
+	@Override
 	boolean isIterable(RecursionGuard guard) {
 		return true;
 	}

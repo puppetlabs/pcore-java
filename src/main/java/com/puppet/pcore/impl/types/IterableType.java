@@ -47,6 +47,11 @@ public class IterableType extends TypeContainerType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o instanceof Iterable<?> && isAssignable(inferSet(o), guard);
+	}
+
+	@Override
 	protected boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		if(type.isAssignable(AnyType.DEFAULT, guard))
 			// Don't request the iterable_type. Since this Iterable accepts Any element, it is enough that o is iterable.

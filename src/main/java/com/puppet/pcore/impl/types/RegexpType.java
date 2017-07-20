@@ -105,12 +105,11 @@ public class RegexpType extends ScalarType {
 
 	@Override
 	boolean isInstance(Object o, RecursionGuard guard) {
-		return o instanceof Pattern && patternString.equals(DEFAULT_PATTERN) || patternWithFlagsExpanded((Pattern)o).equals(patternString);
+		return o instanceof Pattern && (patternString.equals(DEFAULT_PATTERN) || patternWithFlagsExpanded((Pattern)o).equals(patternString));
 	}
 
 	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
-		return t instanceof RegexpType && (patternString.equals(DEFAULT_PATTERN) || patternString.equals(((RegexpType)t)
-				.patternString));
+		return t instanceof RegexpType && (patternString.equals(DEFAULT_PATTERN) || patternString.equals(((RegexpType)t).patternString));
 	}
 }

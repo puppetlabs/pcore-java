@@ -19,7 +19,7 @@ public class StructElement extends ModelObject implements PuppetObject {
 			this.name = (String)key;
 			this.key = stringType(name);
 		} else {
-			this.key = Assertions.assertType(StructType.KEY_TYPE, key, () -> "Key in StructType");
+			this.key = (AnyType)key; // Assertions.assertType(StructType.KEY_TYPE, key, () -> "Key in StructType");
 			this.name = ((StringType)this.key.actualType()).value;
 		}
 		this.value = value;

@@ -745,6 +745,14 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		if(o instanceof PuppetObject)
+			return isAssignable((AnyType)((PuppetObject)o)._pcoreType(), guard);
+
+		return false;
+	}
+
+	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		if(t instanceof ObjectType) {
 			ObjectType ot = (ObjectType)t;

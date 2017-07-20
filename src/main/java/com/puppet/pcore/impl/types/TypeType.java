@@ -65,6 +65,15 @@ public class TypeType extends TypeContainerType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		if(o instanceof AnyType)
+			return type.isAssignable((AnyType)o, guard);
+		if(o instanceof Class<?>)
+			return type.isAssignable(infer(o), guard);
+		return false;
+	}
+
+	@Override
 	boolean isIterable(RecursionGuard guard) {
 		return type instanceof EnumType || type instanceof IntegerType && ((IntegerType)type).isFiniteRange();
 	}

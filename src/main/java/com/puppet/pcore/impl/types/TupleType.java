@@ -97,6 +97,27 @@ public class TupleType extends TypesContainerType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		if(o instanceof List<?>) {
+			List<?> lo = (List<?>)o;
+			int oSize = lo.size();
+			if(givenOrActualSize.isInstance(oSize, guard)) {
+				int last = types.size() - 1;
+				if(last >= 0) {
+					for(int idx = 0, tdx = 0; idx < oSize; ++idx) {
+						if(!types.get(tdx).isInstance(lo.get(idx), guard))
+							return false;
+						if(tdx < last)
+							++tdx;
+					}
+				}
+				return true;
+			}
+		}
+		return false;
+	}
+
+	@Override
 	boolean isIterable(RecursionGuard guard) {
 		return true;
 	}

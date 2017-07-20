@@ -4,6 +4,7 @@ import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
 import static com.puppet.pcore.impl.types.TypeFactory.catalogEntryTypeDispatcher;
+import static com.puppet.pcore.impl.types.TypeFactory.infer;
 
 public class CatalogEntryType extends AnyType {
 	public static final CatalogEntryType DEFAULT = new CatalogEntryType();
@@ -30,6 +31,11 @@ public class CatalogEntryType extends AnyType {
 	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, catalogEntryTypeDispatcher());
+	}
+
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return isAssignable(infer(o), guard);
 	}
 
 	@Override

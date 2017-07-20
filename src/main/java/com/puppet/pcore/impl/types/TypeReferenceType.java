@@ -55,6 +55,11 @@ public class TypeReferenceType extends AnyType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return false;
+	}
+
+	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		return equals(t);
 	}

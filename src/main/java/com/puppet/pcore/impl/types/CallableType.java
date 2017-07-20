@@ -93,6 +93,11 @@ public class CallableType extends AnyType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return isAssignable(infer(o), guard);
+	}
+
+	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		if(!(t instanceof CallableType))
 			return false;

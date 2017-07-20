@@ -239,7 +239,7 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 	}
 
 	boolean isInstance(Object o, RecursionGuard guard) {
-		return isAssignable(inferSet(o), guard);
+		return true;
 	}
 
 	final boolean isIterable() {

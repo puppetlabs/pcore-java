@@ -3,6 +3,8 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
+import java.util.Iterator;
+
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
 import static com.puppet.pcore.impl.Helpers.asMap;
@@ -47,7 +49,12 @@ public class IteratorType extends TypeContainerType {
 	}
 
 	@Override
-	protected boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o instanceof Iterator<?> && isAssignable(inferSet(o), guard);
+	}
+
+	@Override
+	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		return (t instanceof IteratorType) && type.isAssignable(((IteratorType)t).type, guard);
 	}
 

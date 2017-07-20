@@ -54,6 +54,10 @@ class TypeCalculator extends Polymorphic<AnyType> {
 		return collectionType(sizeAsType(o));
 	}
 
+	AnyType _infer(Class<?> o) {
+		return runtimeType(((Class<?>)o).getName());
+	}
+
 	AnyType _infer(Default o) {
 		return defaultType();
 	}

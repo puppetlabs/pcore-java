@@ -65,6 +65,11 @@ public class SensitiveType extends TypeContainerType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return o instanceof Sensitive && type.isInstance(((Sensitive)o).unwrap(), guard);
+	}
+
+	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		return t instanceof SensitiveType && type.isAssignable(((SensitiveType)t).type, guard);
 	}

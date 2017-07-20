@@ -63,6 +63,15 @@ public class PatternType extends ScalarType {
 	}
 
 	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		if(o instanceof String) {
+			String so = (String)o;
+			return regexps.isEmpty() || any(regexps, regexp -> regexp.matches(so));
+		}
+		return false;
+	}
+
+	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		if(this == t)
 			return true;

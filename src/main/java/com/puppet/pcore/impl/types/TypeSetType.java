@@ -386,6 +386,11 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 		super.initializeFromHash(initHash);
 	}
 
+	@Override
+	boolean isInstance(Object o, RecursionGuard guard) {
+		return isAssignable(infer(o), guard);
+	}
+
 	boolean isUnsafeAssignable(AnyType type, RecursionGuard guard) {
 		return getClass().equals(type.getClass()) && equals(DEFAULT) || guardedEquals(type, guard);
 	}
