@@ -2,6 +2,7 @@ package com.puppet.pcore;
 
 import org.junit.jupiter.api.DynamicTest;
 
+import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
@@ -39,7 +40,7 @@ public class TestHelper {
 			fail(String.format("%sexpected '%s' to match pattern /%s/", buildPrefix(messageSupplier.get()), actual, expected));
 	}
 
-	public static <K, V> Iterable<DynamicTest> dynamicMapTest(Map<K, V> map, BiFunction<K, V, String> title, BiConsumer<K, V> test) {
+	public static <K, V> List<DynamicTest> dynamicMapTest(Map<K, V> map, BiFunction<K, V, String> title, BiConsumer<K, V> test) {
 		return map(map.entrySet(),
 				(entry) -> dynamicTest(
 						title.apply(entry.getKey(), entry.getValue()),

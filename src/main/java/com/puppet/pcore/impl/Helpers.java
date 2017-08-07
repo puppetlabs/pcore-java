@@ -110,6 +110,13 @@ public class Helpers {
 		return map(map.entrySet(), (e) -> asList(e.getKey(), e.getValue()));
 	}
 
+	public static <K, V> Map<K, V> merge(Map<K, V> ...maps) {
+		Map<K,V> result = new LinkedHashMap<>();
+		for(Map<K, V> map : maps)
+			result.putAll(map);
+		return result;
+	}
+
 	public static Map<?,?> pairsAsMap(List<List<?>> pairs) {
 		Map<Object, Object> result = new LinkedHashMap<>(pairs.size());
 		for(List<?> pair : pairs) {

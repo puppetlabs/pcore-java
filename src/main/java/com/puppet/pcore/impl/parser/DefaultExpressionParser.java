@@ -128,10 +128,18 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 			throw syntaxError();
 	}
 
-	private void findIntEnd() {
+	private int skipDecimalDigits() {
+		int digitCount = 0;
 		int top = expression.length();
-		while(tokenPos < top && isDigit(expression.charAt(tokenPos)))
+		if(tokenPos < top) {
+			if(expression.charAt(tokenPos) == '-')
+				tokenPos++;
+		}
+		while(tokenPos < top && isDigit(expression.charAt(tokenPos))) {
+			digitCount++;
 			++tokenPos;
+		}
+		return digitCount;
 	}
 
 	private void nextToken() {
@@ -254,7 +262,8 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 				tokenValue = Long.valueOf(expression.substring(start, tokenPos), 8);
 				currentToken = TOKEN_LITERAL;
 			} else if(c == '.' || c == 'e' || c == 'E') {
-				parseDouble(tokenPos - 1, c);
+				++tokenPos;
+				parseDouble(tokenPos - 2, c);
 				break;
 			} else {
 				tokenValue = 0;
@@ -274,10 +283,11 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 		default:
 			if(isDigit(c)) {
 				int start = tokenPos++;
-				findIntEnd();
+				skipDecimalDigits();
 				if(tokenPos + 1 < top) {
 					c = expression.charAt(tokenPos);
 					if(c == '.' || c == 'e' || c == 'E') {
+						++tokenPos;
 						parseDouble(start, c);
 						break;
 					}
@@ -768,28 +778,24 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 	}
 
 	private void parseDouble(int start, char d) {
+		if(skipDecimalDigits() == 0) {
+			// Digit expected
+			throw syntaxError();
+		}
 		int top = expression.length();
-		if(tokenPos + 1 >= top)
-			// Must be room for the separator and at least one digit
-			throw syntaxError();
-
-		int segStart = ++tokenPos;
-		findIntEnd();
-		if(segStart == tokenPos)
-			// No digits
-			throw syntaxError();
-
 		if(d == '.' && tokenPos + 1 < top) {
 			// Check for 'e'
 			char c = expression.charAt(tokenPos);
 			if(c == 'e' || c == 'E') {
-				segStart = ++tokenPos;
-				findIntEnd();
-				if(segStart == tokenPos)
+				++tokenPos;
+				if(skipDecimalDigits() == 0)
 					// No digits
 					throw syntaxError();
 			}
 		}
+		if(tokenPos < top && isLetter(expression.charAt(tokenPos)))
+			throw syntaxError();
+
 		tokenValue = Double.valueOf(expression.substring(start, tokenPos));
 		currentToken = TOKEN_LITERAL;
 	}

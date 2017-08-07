@@ -5,6 +5,7 @@ import org.junit.jupiter.api.*;
 
 import java.time.Instant;
 import java.time.ZoneId;
+import java.util.*;
 
 import static com.puppet.pcore.TestHelper.assertMatches;
 import static com.puppet.pcore.TestHelper.dynamicMapTest;
@@ -128,49 +129,64 @@ public class InstantFormatTest {
 		@TestFactory
 		@DisplayName("the format")
 		Iterable<DynamicTest> fmtAndArg() {
-			return dynamicMapTest(
+			Map<String,Helpers.MapEntry<String,Helpers.MapEntry<String, String>>> tests = new LinkedHashMap<>();
+			tests.putAll(
 					Helpers.asMap(
 							entry("%y-%m-%d", entry("12-10-11", entry("2012-10-11T00:00:00Z", "+0200"))),
 							entry("%y-%B-%d", entry("12-October-11", entry("2012-10-11T00:00:00Z", "+0200"))),
 							entry("%y-%^B-%d", entry("12-OCTOBER-11", entry("2012-10-11T00:00:00Z", "+0200"))),
 							entry("%y-%h-%d", entry("12-Oct-11", entry("2012-10-11T00:00:00Z", "+0200"))),
 							entry("%y-%^h-%d", entry("12-OCT-11", entry("2012-10-11T00:00:00Z", "+0200"))),
-							entry("%y-%^B-%d %H:%M %z", entry("12-OCTOBER-11 02:23 +0200", entry("2012-10-11T00:23:00Z", "+0200"))),
+							entry("%y-%^B-%d %H:%M %z", entry("12-OCTOBER-11 02:23 +0200", entry("2012-10-11T00:23:00Z", "+0200")))));
+
+			tests.putAll(
+					Helpers.asMap(
 							entry("%y-%j", entry("12-285", entry("2012-10-11T00:00:00Z", "+0200"))),
 							entry("%c", entry("Thu Oct 11 02:23:00 2012", entry("2012-10-11T00:23:00Z", "+0200"))),
 							entry("%D %r", entry("10/11/12 02:23:00 AM", entry("2012-10-11T00:23:00Z", "+0200"))),
 							entry("%D %I:%M:%S %P", entry("10/11/12 02:23:00 am", entry("2012-10-11T00:23:00Z", "+0200"))),
 							entry("%_12y-%3m-%d", entry("          12-010-11", entry("2012-10-11T00:23:00Z", "+0000"))),
-							entry("%04y-%3m-%d", entry("0012-010-11", entry("2012-10-11T00:23:00Z", "+0000"))),
+							entry("%04y-%3m-%d", entry("0012-010-11", entry("2012-10-11T00:23:00Z", "+0000")))));
+
+			tests.putAll(
+					Helpers.asMap(
 							entry("%-4y-%3m-%d", entry("12-010-11", entry("2012-10-11T00:23:00Z", "+0000"))),
 							entry("%FT%T.%N", entry("2012-10-11T11:12:13.003211", entry("2012-10-11T11:12:13.003211Z", "+0000"))),
 							entry("%F %T %z", entry("2012-10-11 14:12:13 +0300", entry("2012-10-11T11:12:13Z", "+0300"))),
 							entry("%F %T %:z", entry("2012-10-11 14:12:13 +03:00", entry("2012-10-11T11:12:13Z", "+0300"))),
 							entry("%F %T %::z", entry("2012-10-11 14:12:13 +03:00:00", entry("2012-10-11T11:12:13Z", "+0300"))),
+							entry("%A", entry("Thursday", entry("2012-10-11T13:02:03.123Z", "+0000")))));
+
+			tests.putAll(
+					Helpers.asMap(
 							entry("%k", entry(" 1", entry("2012-10-11T01:02:03Z", "+0000"))),
 							entry("%l", entry(" 1", entry("2012-10-11T13:02:03Z", "+0000"))),
 							entry("%l:%M:%S.%L", entry(" 1:02:03.123", entry("2012-10-11T13:02:03.123Z", "+0000"))),
-							entry("%A", entry("Thursday", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%^A", entry("THURSDAY", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%a", entry("Thu", entry("2012-10-11T13:02:03.123Z", "+0000"))),
-							entry("%^a", entry("THU", entry("2012-10-11T13:02:03.123Z", "+0000"))),
+							entry("%^a", entry("THU", entry("2012-10-11T13:02:03.123Z", "+0000")))));
+
+			tests.putAll(
+					Helpers.asMap(
 							entry("%u", entry("4", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%w", entry("5", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%G", entry("2012", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%g", entry("12", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%V", entry("41", entry("2012-10-11T13:02:03.123Z", "+0000"))),
-							entry("%U", entry("41", entry("2012-10-11T13:02:03.123Z", "+0000"))),
+							entry("%U", entry("41", entry("2012-10-11T13:02:03.123Z", "+0000")))));
+
+			tests.putAll(
+					Helpers.asMap(
 							entry("%W", entry("41", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%s", entry("1349960523", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%F%n%T", entry("2012-10-11\n13:02:03", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%F%t%T", entry("2012-10-11\t13:02:03", entry("2012-10-11T13:02:03.123Z", "+0000"))),
 							entry("%v", entry("11-OCT-2012", entry("2012-10-11T13:02:03.123Z", "+0000"))),
-							entry("%R", entry("13:02", entry("2012-10-11T13:02:03.123Z", "+0000")))
-					),
-					(fmt, e) -> format("the format '%s' formats '%s' into '%s' using zone '%s'", fmt, e.value.key, e.key, e.value.value),
-					(fmt, e) -> assertEquals(e.key, iformat(Instant.parse(e.value.key), fmt, e.value.value))
-			);
-		}
+							entry("%R", entry("13:02", entry("2012-10-11T13:02:03.123Z", "+0000")))));
 
+			return dynamicMapTest(tests,
+					(fmt, e) -> format("the format '%s' formats '%s' into '%s' using zone '%s'", fmt, e.value.key, e.key, e.value.value),
+					(fmt, e) -> assertEquals(e.key, iformat(Instant.parse(e.value.key), fmt, e.value.value)));
+		}
 	}
 }
