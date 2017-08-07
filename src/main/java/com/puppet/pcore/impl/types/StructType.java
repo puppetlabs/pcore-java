@@ -15,7 +15,7 @@ import static java.util.Collections.unmodifiableMap;
 
 public class StructType extends AnyType {
 
-	public static final StructType DEFAULT = new StructType(Collections.emptyList());
+	static final StructType DEFAULT = new StructType(Collections.emptyList());
 	static final AnyType KEY_TYPE = variantType(StringType.NOT_EMPTY, optionalType(StringType.NOT_EMPTY));
 
 	private static ObjectType ptype;
@@ -52,16 +52,12 @@ public class StructType extends AnyType {
 		return hashedMembers;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
-		StructElement.registerPcoreType(pcore);
 		return ptype = pcore.createObjectType("Pcore::StructType", "Pcore::AnyType",
 				asMap("elements", arrayType(typeReferenceType("Pcore::StructElement"))));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
-		StructElement.registerImpl(pcore);
 		pcore.registerImpl(ptype, structTypeDispatcher(),
 				(self) -> new Object[]{self.elements});
 	}
@@ -82,6 +78,7 @@ public class StructType extends AnyType {
 				variantType(map(elements, member -> member.value))), HashType.KEY_PAIR_TUPLE_SIZE));
 	}
 
+	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
 		return o instanceof StructType && equals(elements, ((StructType)o).elements, guard);
 	}

@@ -102,7 +102,7 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 			structElement(optionalType(KEY_ANNOTATIONS), TYPE_ANNOTATIONS)
 	);
 
-	public static final TypeSetType DEFAULT = new TypeSetType(asMap(
+	static final TypeSetType DEFAULT = new TypeSetType(asMap(
 			KEY_NAME, "DefaultTypeSet",
 			KEY_NAME_AUTHORITY, RUNTIME_NAME_AUTHORITY.toString(),
 			KEY_PCORE_URI, PCORE_URI.toString(),
@@ -261,7 +261,6 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 		});
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::TypeSetType", "Pcore::AnyType",
 			asMap(
@@ -288,7 +287,6 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 			));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, typeSetTypeDispatcher(),
 				(self) -> new Object[]{self._pcoreInitHash()});
@@ -351,16 +349,8 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 				String refName = ref.name;
 				URI refNa = ref.nameAuthority;
 
-				Map<String,List<VersionRange>> naRoots = rootMap.get(refNa);
-				if(naRoots == null) {
-					naRoots = new HashMap<>();
-					rootMap.put(refNa, naRoots);
-				}
-				List<VersionRange> ranges = naRoots.get(refName);
-				if(ranges == null) {
-					ranges = new ArrayList<>();
-					naRoots.put(refName, ranges);
-				}
+				Map<String,List<VersionRange>> naRoots = rootMap.computeIfAbsent(refNa, k -> new HashMap<>());
+				List<VersionRange> ranges = naRoots.computeIfAbsent(refName, k -> new ArrayList<>());
 				for(VersionRange range : ranges) {
 					if(range.isOverlap(ref.versionRange))
 						throw new TypeResolverException(format(
@@ -391,6 +381,7 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 		return isAssignable(infer(o), guard);
 	}
 
+	@Override
 	boolean isUnsafeAssignable(AnyType type, RecursionGuard guard) {
 		return getClass().equals(type.getClass()) && equals(DEFAULT) || guardedEquals(type, guard);
 	}

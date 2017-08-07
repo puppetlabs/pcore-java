@@ -27,7 +27,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SuppressWarnings("unused")
 @DisplayName("The StringConverter")
 public class StringConverterTest {
-	static StringConverter converter = StringConverter.singleton;
+	static final StringConverter converter = StringConverter.singleton;
 
 	@Nested
 	@DisplayName("format")
@@ -253,6 +253,7 @@ public class StringConverterTest {
 			assertEquals(result, converter.convert(asList(1, 2, 9, asList(3, 4), asList(5, asList(6, 7)), 8, 900), formats));
 		}
 
+		@SuppressWarnings("unchecked")
 		@Test
 		@DisplayName("indents and breaks nested sequences when one is placed first")
 		void altModeIndentsAndBreaksPlacedFirst() {
@@ -281,7 +282,7 @@ public class StringConverterTest {
 	@Nested
 	@DisplayName("when converting binary")
 	class ConvertBinaryTest {
-		Binary sample = new Binary(new byte[]{'b', 'i', 'n', 'a', 'r', 'y'});
+		final Binary sample = new Binary(new byte[]{'b', 'i', 'n', 'a', 'r', 'y'});
 
 		@Test
 		@DisplayName("the binary is converted to strict base64 string unquoted by default (same as %B)")
@@ -774,7 +775,7 @@ public class StringConverterTest {
 	@Nested
 	@DisplayName("when converting regexp")
 	class ConvertRegexpTest {
-		Pattern sample = Pattern.compile(".*");
+		final Pattern sample = Pattern.compile(".*");
 
 		@TestFactory
 		@DisplayName("the format")
@@ -845,7 +846,7 @@ public class StringConverterTest {
 		@Nested
 		@DisplayName("the %p format for string produces")
 		class StringPTest {
-			Map<AnyType,Object> stringFormats = singletonMap(stringType(), "%p");
+			final Map<AnyType,Object> stringFormats = singletonMap(stringType(), "%p");
 
 			@Test
 			@DisplayName("double quoted result for string that contains control characters")

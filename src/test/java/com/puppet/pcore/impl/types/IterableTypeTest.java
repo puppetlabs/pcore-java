@@ -7,7 +7,6 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
-import java.util.Map;
 
 import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.partitionBy;

@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-@SuppressWarnings("unused")
+@SuppressWarnings({"unused", "ResultOfMethodCallIgnored"})
 @DisplayName("Binary")
 public class BinaryTest {
 	@Test
@@ -128,7 +128,7 @@ public class BinaryTest {
 		assertEquals(1, bf.get());
 		assertEquals(2, bf.get());
 		assertEquals(3, bf.get());
-		assertThrows(BufferUnderflowException.class, () -> bf.get());
+		assertThrows(BufferUnderflowException.class, bf::get);
 	}
 
 	@Test

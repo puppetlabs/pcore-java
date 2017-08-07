@@ -2,13 +2,9 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.Binary;
 import com.puppet.pcore.TypeAssertionException;
-import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.asList;

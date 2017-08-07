@@ -11,7 +11,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class ResourceType extends CatalogEntryType {
-	public static final ResourceType DEFAULT = new ResourceType(null, null);
+	static final ResourceType DEFAULT = new ResourceType(null, null);
 
 	private static ObjectType ptype;
 	public final String title;
@@ -38,7 +38,6 @@ public class ResourceType extends CatalogEntryType {
 		return Objects.hashCode(downcasedName) * 31 + Objects.hashCode(title);
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::ResourceType", "Pcore::CatalogEntryType",
 				asMap(
@@ -50,7 +49,6 @@ public class ResourceType extends CatalogEntryType {
 								KEY_VALUE, null)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, resourceTypeDispatcher(),
 				(self) -> new Object[]{self.typeName, self.title});

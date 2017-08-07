@@ -1,11 +1,8 @@
 package com.puppet.pcore.impl;
 
-import com.puppet.pcore.PcoreException;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.TypeAssertionException;
-import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
-import com.puppet.pcore.serialization.Constructor;
 import com.puppet.pcore.serialization.FactoryDispatcher;
 
 import java.io.IOException;
@@ -20,8 +17,9 @@ import static java.lang.String.format;
 public class FactoryDispatcherImpl<C> implements FactoryDispatcher<C> {
 	private final List<ConstructorImpl<C>> constructors;
 
+	@SafeVarargs
 	public static <C> FactoryDispatcherImpl<C> dispatcher(ConstructorImpl<C> ...constructors) {
-		return new FactoryDispatcherImpl<C>(asList(constructors));
+		return new FactoryDispatcherImpl<>(asList(constructors));
 	}
 
 	public FactoryDispatcherImpl(List<ConstructorImpl<C>> constructors) {
@@ -52,6 +50,6 @@ public class FactoryDispatcherImpl<C> implements FactoryDispatcher<C> {
 		throw new TypeAssertionException(format(
 				"The factory that creates instances of type '%s' %s",
 				type,
-				TypeMismatchDescriber.SINGLETON.describeMismatch(variantType(map(constructors, ctor -> ctor.signature())), inferSet(args))));
+				TypeMismatchDescriber.SINGLETON.describeMismatch(variantType(map(constructors, ConstructorImpl::signature)), inferSet(args))));
 	}
 }

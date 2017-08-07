@@ -3,19 +3,13 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.PcoreException;
 import com.puppet.pcore.Sensitive;
 import com.puppet.pcore.TypeAssertionException;
-import com.puppet.pcore.impl.Helpers;
-import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.util.HashMap;
-import java.util.Map;
 
 import static com.puppet.pcore.TestHelper.assertMatches;
-import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.asList;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;

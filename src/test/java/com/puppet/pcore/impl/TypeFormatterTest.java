@@ -4,8 +4,6 @@ import com.puppet.pcore.Binary;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.impl.types.AnyType;
-import com.puppet.pcore.impl.types.ArrayType;
-import com.puppet.pcore.impl.types.HashType;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.Test;
@@ -39,8 +37,8 @@ public class TypeFormatterTest {
 	}
 
 	@Test
-	public void arrayTypeEmpty() {
-		assertEquals("Array[0, 0]", ArrayType.EMPTY.toString());
+	public void arrayTypeEmptyS() {
+		assertEquals("Array[0, 0]", arrayTypeEmpty().toString());
 	}
 
 	@Test
@@ -226,8 +224,8 @@ public class TypeFormatterTest {
 	}
 
 	@Test
-	public void hashTypeEmpty() {
-		assertEquals("Hash[0, 0]", HashType.EMPTY.toString());
+	public void hashTypeEmptyS() {
+		assertEquals("Hash[0, 0]", hashTypeEmpty().toString());
 	}
 
 	@Test

@@ -9,7 +9,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class IterableType extends TypeContainerType {
-	public static final IterableType DEFAULT = new IterableType(AnyType.DEFAULT);
+	static final IterableType DEFAULT = new IterableType(AnyType.DEFAULT);
 
 	private static ObjectType ptype;
 
@@ -61,7 +61,6 @@ public class IterableType extends TypeContainerType {
 		return it != null && type.isAssignable(it.type, guard);
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::IterableType", "Pcore::AnyType",
 				asMap(
@@ -70,7 +69,6 @@ public class IterableType extends TypeContainerType {
 								KEY_VALUE, anyType())));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, iterableTypeDispatcher(),
 				(self) -> new Object[]{self.type});

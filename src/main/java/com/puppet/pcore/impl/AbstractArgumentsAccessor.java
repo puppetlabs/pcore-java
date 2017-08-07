@@ -1,6 +1,5 @@
 package com.puppet.pcore.impl;
 
-import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.types.ObjectType;
 import com.puppet.pcore.impl.types.ObjectType.Attribute;
 import com.puppet.pcore.impl.types.ParameterInfo;
@@ -10,9 +9,7 @@ import com.puppet.pcore.serialization.ArgumentsAccessor;
 import java.util.List;
 import java.util.Map;
 
-import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.impl.TypeEvaluatorImpl.assertParameterCount;
-import static com.puppet.pcore.impl.types.TypeFactory.tupleType;
 
 public abstract class AbstractArgumentsAccessor implements ArgumentsAccessor {
 	protected final int numberOfGivenArguments;
@@ -31,6 +28,7 @@ public abstract class AbstractArgumentsAccessor implements ArgumentsAccessor {
 		return type;
 	}
 
+	@Override
 	public TupleType getParametersType() {
 		return parameterInfo.parametersType();
 	}

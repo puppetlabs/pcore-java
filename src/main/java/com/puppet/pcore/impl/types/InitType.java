@@ -20,7 +20,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 public class InitType extends TypeContainerType {
-	public static final InitType DEFAULT = new InitType(AnyType.DEFAULT, emptyList(), true);
+	static final InitType DEFAULT = new InitType(AnyType.DEFAULT, emptyList(), true);
 
 	private static ObjectType ptype;
 
@@ -59,6 +59,7 @@ public class InitType extends TypeContainerType {
 		return type.actualType();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<?> factoryDispatcher() {
 		if(AnyType.DEFAULT.equals(type))
@@ -110,7 +111,6 @@ public class InitType extends TypeContainerType {
 								KEY_VALUE, emptyList())));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, initTypeDispatcher(),
 				(self) -> new Object[]{self.type, self.initArgs});
@@ -121,6 +121,7 @@ public class InitType extends TypeContainerType {
 		return new InitType(type, initArgs, resolved);
 	}
 
+	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
 		return super.guardedEquals(o, guard) && equals(initArgs, ((InitType)o).initArgs, guard);
 	}
@@ -190,7 +191,7 @@ public class InitType extends TypeContainerType {
 			singleTypes.addAll(map(partitioned[0], (tuple) -> tuple.types.get(0)));
 			otherTuples = partitioned[1];
 		} else {
-			List<AnyType> initArgTypes = map(initArgs, (arg) -> inferSet(arg));
+			List<AnyType> initArgTypes = map(initArgs, TypeFactory::inferSet);
 			int argCount = 1 + initArgTypes.size();
 
 			paramTuples = select(paramTuples, (tuple) -> {

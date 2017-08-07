@@ -6,7 +6,6 @@ import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.time.DurationFormat;
 
-import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -36,7 +35,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	private boolean expanded;
 	private IdentityHashMap<Object,Object> guard;
 	private int indent;
-	private int indentWidth;
+	private final int indentWidth;
 	private TypeSetType typeSet;
 
 	public TypeFormatter(StringBuilder out) {
@@ -71,10 +70,10 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(ArrayType t) {
-		if(t.equals((ArrayType.EMPTY)))
+		if(t.equals((arrayTypeEmpty())))
 			appendArray("Array", () -> appendValues(false, 0, 0));
 		else
-			appendArray("Array", t.equals(ArrayType.DEFAULT), () -> {
+			appendArray("Array", t.equals(arrayType()), () -> {
 				appendValues(true, t.type);
 				appendFormatted(true, rangeArrayPart(t.size, true));
 				chompList();
@@ -90,8 +89,8 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(CallableType t) {
-		if(AnyType.DEFAULT.equals(t.returnType))
-			appendArray("Callable", TupleType.DEFAULT.equals(t.parametersType), () -> appendCallableParams(t));
+		if(anyType().equals(t.returnType))
+			appendArray("Callable", tupleType().equals(t.parametersType), () -> appendCallableParams(t));
 		else {
 			appendArray("Callable", () -> {
 				appendArray("", () -> appendCallableParams(t));
@@ -176,10 +175,10 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(HashType t) {
-		if(HashType.EMPTY.equals(t))
+		if(hashTypeEmpty().equals(t))
 			appendArray("Hash", () -> appendValues(false, 0, 0));
 		else
-			appendArray("Hash", HashType.DEFAULT.equals(t), () -> {
+			appendArray("Hash", hashType().equals(t), () -> {
 				appendValues(true, t.keyType, t.type);
 				appendFormatted(true, rangeArrayPart(t.size, true));
 				chompList();
@@ -203,7 +202,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(InitType t) {
-		appendArray("Init", AnyType.DEFAULT.equals(t.type), () -> {
+		appendArray("Init", anyType().equals(t.type), () -> {
 			appendValues(!t.initArgs.isEmpty(), t.type);
 			appendValues(false, t.initArgs);
 		});
@@ -214,11 +213,11 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(IterableType t) {
-		appendArray("Iterable", AnyType.DEFAULT.equals(t.type), () -> format(t.type));
+		appendArray("Iterable", anyType().equals(t.type), () -> format(t.type));
 	}
 
 	void _format(IteratorType t) {
-		appendArray("Iterator", AnyType.DEFAULT.equals(t.type), () -> format(t.type));
+		appendArray("Iterator", anyType().equals(t.type), () -> format(t.type));
 	}
 
 	void _format(List<?> list) {
@@ -226,7 +225,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(NotUndefType t) {
-		appendArray("NotUndef", AnyType.DEFAULT.equals(t.type), () -> {
+		appendArray("NotUndef", anyType().equals(t.type), () -> {
 			AnyType tt = t.type;
 			format(tt instanceof StringType && ((StringType)tt).value != null ? ((StringType)tt).value : tt);
 		});
@@ -248,7 +247,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(OptionalType t) {
-		appendArray("Optional", AnyType.DEFAULT.equals(t.type), () -> {
+		appendArray("Optional", anyType().equals(t.type), () -> {
 			AnyType tt = t.type;
 			format(tt instanceof StringType && ((StringType)tt).value != null ? ((StringType)tt).value : tt);
 		});
@@ -299,7 +298,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(SensitiveType t) {
-		appendArray("Sensitive", AnyType.DEFAULT.equals(t.type), () -> format(t.type));
+		appendArray("Sensitive", anyType().equals(t.type), () -> format(t.type));
 	}
 
 	void _format(String s) {
@@ -416,7 +415,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(TypeType t) {
-		appendArray("Type", AnyType.DEFAULT.equals(t.type), () -> format(t.type));
+		appendArray("Type", anyType().equals(t.type), () -> format(t.type));
 	}
 
 	void _format(UndefType t) {
@@ -462,7 +461,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 
 	private void appendCallableParams(CallableType t) {
 		List<AnyType> paramTypes = t.parametersType.types;
-		if(paramTypes.isEmpty() && IntegerType.ZERO_SIZE.equals(t.parametersType.size))
+		if(paramTypes.isEmpty() && integerTypeZero().equals(t.parametersType.size))
 			appendValues(true, 0, 0);
 		else {
 			appendValues(true, select(paramTypes, pt -> !(pt instanceof UnitType)).toArray());
@@ -596,7 +595,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	private List<String> rangeArrayPart(IntegerType t, boolean skipDefault) {
-		return t == null || skipDefault && IntegerType.POSITIVE.equals(t)
+		return t == null || skipDefault && integerTypePositive().equals(t)
 				? Collections.emptyList()
 				: asList(
 						t.min == Long.MIN_VALUE ? "default" : Long.toString(t.min),

@@ -1,6 +1,5 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;

@@ -11,7 +11,7 @@ import java.util.regex.Pattern;
 import static com.puppet.pcore.impl.types.TypeFactory.scalarTypeDispatcher;
 
 public class ScalarType extends AnyType {
-	public static final ScalarType DEFAULT = new ScalarType();
+	static final ScalarType DEFAULT = new ScalarType();
 
 	private static ObjectType ptype;
 
@@ -28,12 +28,10 @@ public class ScalarType extends AnyType {
 		return DEFAULT;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::ScalarType", "Pcore::AnyType");
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, scalarTypeDispatcher());
 	}

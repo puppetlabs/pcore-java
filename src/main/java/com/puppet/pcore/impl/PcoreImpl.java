@@ -13,8 +13,6 @@ import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.loader.TypedName;
 import com.puppet.pcore.serialization.SerializationFactory;
 
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.*;
 import java.util.function.Function;
 import java.util.function.Supplier;
@@ -34,28 +32,11 @@ public class PcoreImpl {
 	public void initBaseTypeSystem() {
 		implementationRegistry = new ImplementationRegistryImpl();
 		loader.set(new BasicLoader());
-		typeEvaluator = new TypeEvaluatorImpl(loader.get());
+		typeEvaluator = new TypeEvaluatorImpl();
 		typeEvaluator.resolveAliases();
-		try {
-			Collection<AnyType> basicTypes = TypeEvaluatorImpl.BASIC_TYPES.values();
-			List<ObjectType> metaTypes = new ArrayList<>(basicTypes.size());
-			for(AnyType type : basicTypes) {
-				Method registerPtypeMethod = type.getClass().getDeclaredMethod("registerPcoreType", PcoreImpl.class);
-				registerPtypeMethod.setAccessible(true);
-				metaTypes.add((ObjectType)registerPtypeMethod.invoke(null, this));
-			}
-			for(ObjectType metaType : metaTypes)
-				metaType.resolve();
-			for(AnyType type : basicTypes) {
-				Method registerPtypeMethod = type.getClass().getDeclaredMethod("registerImpl", PcoreImpl.class);
-				registerPtypeMethod.setAccessible(true);
-				registerPtypeMethod.invoke(null, this);
-			}
-		} catch(NoSuchMethodException | IllegalAccessException e) {
-			throw new PcoreException(e);
-		} catch(InvocationTargetException e) {
-			throw new PcoreException(e.getTargetException());
-		}
+		for(AnyType metaType : TypeFactory.registerPcoreTypes(this))
+			metaType.resolve();
+		TypeFactory.registerImpls(this);
 	}
 
 	public <C> ObjectType createObjectType(
@@ -63,19 +44,12 @@ public class PcoreImpl {
 		return createObjectType(typeName, parentName, emptyMap());
 	}
 
-	public <T> ObjectType registerImpl(ObjectType type, FactoryDispatcher<T> creator, Function<T,Object[]> attributeSupplier) {
+	public <T> void registerImpl(ObjectType type, FactoryDispatcher<T> creator, Function<T,Object[]> attributeSupplier) {
 		implementationRegistry.registerImplementation(type, creator, attributeSupplier);
-		return type;
 	}
 
-	public <T> ObjectType registerImpl(ObjectType type, FactoryDispatcher<T> creator) {
-		return registerImpl(type, creator, (self) -> EMPTY_ARRAY);
-	}
-
-	public <C> ObjectType createObjectType(
-			String typeName, String parentName, Map<String,Object>
-			attributesHash, FactoryDispatcher<C> creator) {
-		return createObjectType(typeName, parentName, attributesHash, creator);
+	public <T> void registerImpl(ObjectType type, FactoryDispatcher<T> creator) {
+		registerImpl(type, creator, (self) -> EMPTY_ARRAY);
 	}
 
 	public <C> ObjectType createObjectType(

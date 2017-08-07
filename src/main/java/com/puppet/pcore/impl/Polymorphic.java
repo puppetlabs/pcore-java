@@ -86,7 +86,7 @@ public abstract class Polymorphic<T> {
 		}
 	}
 
-	@SuppressWarnings("unchecked")
+	@SuppressWarnings({"unchecked", "UnusedReturnValue"})
 	protected T dispatchWOCatch(Object ...args) throws InvocationTargetException {
 		Method m = getDispatchMap().findMethod(args[0]);
 		try {

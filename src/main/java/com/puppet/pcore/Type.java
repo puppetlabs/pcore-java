@@ -1,9 +1,6 @@
 package com.puppet.pcore;
 
-import com.puppet.pcore.serialization.Constructor;
 import com.puppet.pcore.serialization.FactoryDispatcher;
-
-import java.util.List;
 
 /**
  * A Pcore type.
@@ -29,7 +26,7 @@ public interface Type {
 	 * @return list of tuples where each tuple describes the parameter signature of a constructor
 	 * @throws PcoreException if creating instances of this type is an unsupported operatoin
 	 */
-	<T extends Object> FactoryDispatcher<T> factoryDispatcher();
+	<T> FactoryDispatcher<T> factoryDispatcher();
 
 	/**
 	 * Checks if the given type is assignable to this type

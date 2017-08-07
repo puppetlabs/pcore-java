@@ -1,16 +1,13 @@
 package com.puppet.pcore.time;
 
-import com.puppet.pcore.TestHelper;
 import com.puppet.pcore.impl.Helpers;
 import org.junit.jupiter.api.*;
 
 import java.time.Instant;
 import java.time.ZoneId;
-import java.util.List;
 
 import static com.puppet.pcore.TestHelper.assertMatches;
 import static com.puppet.pcore.TestHelper.dynamicMapTest;
-import static com.puppet.pcore.impl.Helpers.asList;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.Helpers.entry;
 import static java.lang.String.format;
@@ -30,6 +27,7 @@ public class InstantFormatTest {
 			return new InstantFormat().parse(instant, pattern);
 		}
 
+		@SuppressWarnings("unchecked")
 		@TestFactory
 		@DisplayName("the format")
 		Iterable<DynamicTest> fmtAndArg() {
@@ -45,6 +43,7 @@ public class InstantFormatTest {
 			);
 		}
 
+		@SuppressWarnings("unchecked")
 		@TestFactory
 		@DisplayName("the string")
 		Iterable<DynamicTest> parsedUsingDefault() {
@@ -125,11 +124,12 @@ public class InstantFormatTest {
 			return new InstantFormat().format(instant, pattern, ZoneId.of(zoneId));
 		}
 
+		@SuppressWarnings("unchecked")
 		@TestFactory
 		@DisplayName("the format")
 		Iterable<DynamicTest> fmtAndArg() {
 			return dynamicMapTest(
-					Helpers.<String,Helpers.MapEntry<String,Helpers.MapEntry<String,String>>>asMap(
+					Helpers.asMap(
 							entry("%y-%m-%d", entry("12-10-11", entry("2012-10-11T00:00:00Z", "+0200"))),
 							entry("%y-%B-%d", entry("12-October-11", entry("2012-10-11T00:00:00Z", "+0200"))),
 							entry("%y-%^B-%d", entry("12-OCTOBER-11", entry("2012-10-11T00:00:00Z", "+0200"))),

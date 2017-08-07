@@ -6,7 +6,7 @@ import com.puppet.pcore.impl.PcoreImpl;
 import static com.puppet.pcore.impl.types.TypeFactory.booleanTypeDispatcher;
 
 public class BooleanType extends ScalarDataType {
-	public static final BooleanType DEFAULT = new BooleanType();
+	static final BooleanType DEFAULT = new BooleanType();
 
 	private static ObjectType ptype;
 
@@ -27,7 +27,6 @@ public class BooleanType extends ScalarDataType {
 		return ptype = pcore.createObjectType("Pcore::BooleanType", "Pcore::ScalarType");
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, booleanTypeDispatcher());
 	}

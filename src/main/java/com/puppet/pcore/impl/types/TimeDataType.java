@@ -30,6 +30,7 @@ abstract class TimeDataType<T extends TimeDataType<T,E>, E extends Comparable<E>
 				: null;
 	}
 
+	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
 		if(getClass().isInstance(o)) {
 			@SuppressWarnings("unchecked") TimeDataType<T,E> ft = (T)o;

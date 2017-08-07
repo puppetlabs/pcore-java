@@ -1,12 +1,9 @@
 package com.puppet.pcore.impl;
 
-import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.types.*;
 import com.puppet.pcore.serialization.Constructor;
 import com.puppet.pcore.serialization.FactoryFunction;
 
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 
@@ -23,20 +20,12 @@ public class ConstructorImpl<T> implements Constructor<T> {
 	private final TupleType signature;
 	private final FactoryFunction<T> initFunction;
 
+	@SuppressWarnings("unchecked")
 	public static <T> ConstructorImpl<T> constructor(ObjectType type) {
-		ParameterInfo pi = type.parameterInfo();
-		List<ObjectType.Attribute> attrs = pi.attributes;
-		int count = attrs.size();
-		List<StructElement> elems = new ArrayList<>(count);
-		for(int idx = 0; idx < count; ++idx) {
-			ObjectType.Attribute attr = attrs.get(idx);
-			elems.add(idx >= pi.requiredCount
-				? structElement(optionalType(attr.name), attr.type)
-				: structElement(attr.name, attr.type));
-		}
-
 		return hashConstructor(argValues -> {
 			Map<String,Object> hash = (Map<String,Object>)argValues.get(0);
+			ParameterInfo pi = type.parameterInfo();
+			List<ObjectType.Attribute> attrs = pi.attributes;
 			int top = attrs.size();
 			Object[] args = new Object[top];
 			for(int idx = 0; idx < top; ++idx) {
@@ -51,7 +40,7 @@ public class ConstructorImpl<T> implements Constructor<T> {
 				args[idx] = val;
 			}
 			return (T)type.newInstance(args);
-		}, structType(elems));
+		}, type.initType());
 	}
 
 	public static <T> ConstructorImpl<T> constructor(FactoryFunction<T> initFunction, AnyType...paramTypes) {
@@ -59,11 +48,11 @@ public class ConstructorImpl<T> implements Constructor<T> {
 	}
 
 	public static <T> ConstructorImpl<T> constructor(FactoryFunction<T> initFunction, TupleType paramTypes) {
-		return new ConstructorImpl<T>(paramTypes, initFunction);
+		return new ConstructorImpl<>(paramTypes, initFunction);
 	}
 
 	public static <T> ConstructorImpl<T> hashConstructor(FactoryFunction<T> initFunction, StructType hashType) {
-		return new HashConstructor<T>(hashType, initFunction);
+		return new HashConstructor<>(hashType, initFunction);
 	}
 
 	ConstructorImpl(TupleType signature, FactoryFunction<T> initFunction) {
@@ -76,6 +65,7 @@ public class ConstructorImpl<T> implements Constructor<T> {
 		return initFunction;
 	}
 
+	@Override
 	public boolean isHashConstructor() {
 		return false;
 	}
@@ -91,6 +81,7 @@ class HashConstructor<T> extends ConstructorImpl<T> {
 		super(tupleType(singletonList(hashType)), initFunction);
 	}
 
+	@Override
 	public boolean isHashConstructor() {
 		return true;
 	}

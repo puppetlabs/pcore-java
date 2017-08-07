@@ -13,7 +13,7 @@ import static java.util.regex.Pattern.*;
 
 public class RegexpType extends ScalarType {
 	public static final String DEFAULT_PATTERN = ".*";
-	public static final RegexpType DEFAULT = new RegexpType(DEFAULT_PATTERN);
+	static final RegexpType DEFAULT = new RegexpType(DEFAULT_PATTERN);
 
 	private static ObjectType ptype;
 	public final String patternString;
@@ -80,11 +80,11 @@ public class RegexpType extends ScalarType {
 		return pattern;
 	}
 
+	@Override
 	public boolean roundtripWithString() {
 		return true;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::RegexpType", "Pcore::ScalarType",
 				asMap(
@@ -93,12 +93,12 @@ public class RegexpType extends ScalarType {
 								KEY_VALUE, DEFAULT_PATTERN)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, regexpTypeDispatcher(),
 				(self) -> new Object[]{self.patternString});
 	}
 
+	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
 		return o instanceof RegexpType && patternString.equals(((RegexpType)o).patternString);
 	}

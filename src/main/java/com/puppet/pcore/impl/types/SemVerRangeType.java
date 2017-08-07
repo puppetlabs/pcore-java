@@ -11,7 +11,7 @@ import static com.puppet.pcore.impl.types.TypeFactory.semVerRangeTypeDispatcher;
 import static com.puppet.pcore.impl.types.TypeFactory.stringType;
 
 public class SemVerRangeType extends AnyType {
-	public static final SemVerRangeType DEFAULT = new SemVerRangeType();
+	static final SemVerRangeType DEFAULT = new SemVerRangeType();
 
 	private static ObjectType ptype;
 
@@ -28,6 +28,7 @@ public class SemVerRangeType extends AnyType {
 		return DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<VersionRange> factoryDispatcher() {
 		AnyType formatType = stringType(2);
@@ -38,6 +39,7 @@ public class SemVerRangeType extends AnyType {
 		);
 	}
 
+	@Override
 	public boolean roundtripWithString() {
 		return true;
 	}
@@ -52,12 +54,10 @@ public class SemVerRangeType extends AnyType {
 		return t instanceof SemVerRangeType;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::SemVerRangeType", "Pcore::AnyType");
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, semVerRangeTypeDispatcher());
 	}

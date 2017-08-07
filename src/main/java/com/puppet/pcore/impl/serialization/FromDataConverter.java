@@ -4,7 +4,6 @@ import com.puppet.pcore.*;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.TupleType;
 import com.puppet.pcore.impl.types.TypeReferenceType;
-import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
 import com.puppet.pcore.serialization.FactoryDispatcher;
 import com.puppet.pcore.serialization.SerializationException;
@@ -68,10 +67,12 @@ public class FromDataConverter implements Converter {
 			super(value);
 		}
 
+		@Override
 		Object get(Object key) {
 			return entries.get(((Number)key).intValue());
 		}
 
+		@Override
 		void update(Object key, RefEntry value) {
 			int idx = ((Number)key).intValue();
 			if(idx == entries.size())
@@ -82,8 +83,9 @@ public class FromDataConverter implements Converter {
 				entries.set(idx, value);
 		}
 
+		@Override
 		Object resolvedEntries() {
-			return map(entries, entry -> entry.getValue());
+			return map(entries, RefEntry::getValue);
 		}
 	}
 
@@ -98,6 +100,7 @@ public class FromDataConverter implements Converter {
 			super(value);
 		}
 
+		@Override
 		Object get(Object key) {
 			return entries.get(key);
 		}
@@ -106,10 +109,12 @@ public class FromDataConverter implements Converter {
 			return mapValues(entries, (k, v) -> v.getValue());
 		}
 
+		@Override
 		Object resolvedEntries() {
 			return getEntries();
 		}
 
+		@Override
 		void update(Object key, RefEntry value) {
 			entries.put((String)key, value);
 		}
@@ -128,7 +133,6 @@ public class FromDataConverter implements Converter {
 	}
 
 	private final boolean allowUnresolved;
-	private final Loader loader;
 	private RefEntry root;
 	private RefEntry current;
 	private Object currentKey;
@@ -137,10 +141,10 @@ public class FromDataConverter implements Converter {
 
 	public FromDataConverter(Map<String, Object> options) {
 		allowUnresolved = get(options, "allow_unresolved", false);
-		loader = get(options, "loader", Loader.class);
 		root = NO_VALUE;
 	}
 
+	@SuppressWarnings("unchecked")
 	private final Map<String,BiFunction<Map<String, Object>, String, Object>> pcoreTypeProcs = asMap(
 			entry(PCORE_TYPE_HASH, (Map<String, Object> hash, String typeValue) -> {
 				List<Object> value = (List<Object>)hash.get(PCORE_VALUE_KEY);
@@ -178,11 +182,12 @@ public class FromDataConverter implements Converter {
 					return hash;
 				throw new SerializationException(format("No implementation mapping found for Puppet Type %s", typeValue));
 			}
-			return pcoreTypeHashToValue((AnyType)type, value);
+			return pcoreTypeHashToValue(type, value);
 		}
 		throw new SerializationException(format("Cannot parse a type from %s", typeValue));
 	}
 
+	@SuppressWarnings("unchecked")
 	public Object convert(Object value) {
 		if(value instanceof Map<?, ?>) {
 			Map<String, Object> hash = (Map<String,Object>)value;
@@ -219,6 +224,7 @@ public class FromDataConverter implements Converter {
 		return value;
 	}
 
+	@SuppressWarnings("unchecked")
 	private <T> T build(RefEntry value, Runnable block) {
 		if(current != null)
 			current.update(currentKey, value);
@@ -226,14 +232,14 @@ public class FromDataConverter implements Converter {
 		return (T)value.getValue();
 	}
 
-	private <T> T withValue(RefEntry value, Runnable block) {
+	@SuppressWarnings("unchecked")
+	private void withValue(RefEntry value, Runnable block) {
 		if(root == NO_VALUE)
 			root = value;
 		RefEntry parent = current;
 		current = value;
 		block.run();
 		current = parent;
-		return (T)value.getValue();
 	}
 
 	private void with(Object key, Runnable block) {
@@ -324,6 +330,7 @@ public class FromDataConverter implements Converter {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private Object pcoreTypeHashToValue(AnyType pcoreType, Object value) {
 		if(value instanceof Map<?, ?>) {
 			// Complex object

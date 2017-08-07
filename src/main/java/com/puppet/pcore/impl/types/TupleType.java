@@ -16,8 +16,8 @@ import static com.puppet.pcore.impl.types.ArrayType.arrayFactoryDispatcher;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class TupleType extends TypesContainerType {
-	public static final TupleType DEFAULT = new TupleType(Collections.emptyList(), IntegerType.POSITIVE);
-	public static final TupleType EXPLICIT_EMPTY = new TupleType(Collections.emptyList(), IntegerType.ZERO_SIZE);
+	static final TupleType DEFAULT = new TupleType(Collections.emptyList(), IntegerType.POSITIVE);
+	static final TupleType EXPLICIT_EMPTY = new TupleType(Collections.emptyList(), IntegerType.ZERO_SIZE);
 
 	private static ObjectType ptype;
 	public final IntegerType givenOrActualSize;
@@ -58,7 +58,6 @@ public class TupleType extends TypesContainerType {
 		return super.hashCode() * 31 + Objects.hashCode(size);
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::TupleType", "Pcore::AnyType",
 				asMap(
@@ -68,7 +67,6 @@ public class TupleType extends TypesContainerType {
 								KEY_VALUE, null)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, tupleTypeDispatcher(),
 				(self) -> new Object[]{self.types, self.size});

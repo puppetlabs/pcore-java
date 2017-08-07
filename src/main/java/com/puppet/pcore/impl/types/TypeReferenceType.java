@@ -8,7 +8,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.typeReferenceTypeDispatcher;
 
 public class TypeReferenceType extends AnyType {
-	public static final TypeReferenceType DEFAULT = new TypeReferenceType("UnresolvedReference");
+	static final TypeReferenceType DEFAULT = new TypeReferenceType("UnresolvedReference");
 
 	private static ObjectType ptype;
 	public final String typeString;
@@ -36,14 +36,12 @@ public class TypeReferenceType extends AnyType {
 		return typeString.equals(DEFAULT.typeString) ? this : (AnyType)Pcore.typeEvaluator().resolveType(typeString);
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::TypeReferenceType", "Pcore::AnyType",
 				asMap(
 						"typeString", StringType.NOT_EMPTY));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, typeReferenceTypeDispatcher(),
 				(self) -> new Object[]{self.typeString});

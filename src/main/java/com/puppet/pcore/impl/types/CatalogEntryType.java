@@ -7,7 +7,7 @@ import static com.puppet.pcore.impl.types.TypeFactory.catalogEntryTypeDispatcher
 import static com.puppet.pcore.impl.types.TypeFactory.infer;
 
 public class CatalogEntryType extends AnyType {
-	public static final CatalogEntryType DEFAULT = new CatalogEntryType();
+	static final CatalogEntryType DEFAULT = new CatalogEntryType();
 
 	private static ObjectType ptype;
 
@@ -28,7 +28,6 @@ public class CatalogEntryType extends AnyType {
 		return ptype = pcore.createObjectType("Pcore::CatalogEntryType", "Pcore::AnyType");
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, catalogEntryTypeDispatcher());
 	}

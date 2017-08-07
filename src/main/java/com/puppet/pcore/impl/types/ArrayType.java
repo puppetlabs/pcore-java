@@ -21,8 +21,8 @@ import static java.util.Collections.singletonList;
 import static java.util.Collections.singletonMap;
 
 public class ArrayType extends CollectionType {
-	public static final ArrayType DEFAULT = new ArrayType(AnyType.DEFAULT, IntegerType.POSITIVE);
-	public static final ArrayType EMPTY = new ArrayType(UnitType.DEFAULT, IntegerType.ZERO_SIZE);
+	static final ArrayType DEFAULT = new ArrayType(AnyType.DEFAULT, IntegerType.POSITIVE);
+	static final ArrayType EMPTY = new ArrayType(UnitType.DEFAULT, IntegerType.ZERO_SIZE);
 
 	private static ObjectType ptype;
 
@@ -44,7 +44,6 @@ public class ArrayType extends CollectionType {
 		return equals(DEFAULT) ? this : new ArrayType(type.generalize(), IntegerType.POSITIVE);
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::ArrayType", "Pcore::CollectionType",
 				singletonMap("element_type", asMap(
@@ -53,7 +52,6 @@ public class ArrayType extends CollectionType {
 				asList("element_type", "size_type"));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, arrayTypeDispatcher(), (self) -> new Object[]{self.type, self.size});
 	}
@@ -63,6 +61,7 @@ public class ArrayType extends CollectionType {
 		return arrayFactoryDispatcher();
 	}
 
+	@SuppressWarnings("unchecked")
 	static FactoryDispatcher<List<?>> arrayFactoryDispatcher() {
 		return dispatcher(
 			constructor((args) -> {

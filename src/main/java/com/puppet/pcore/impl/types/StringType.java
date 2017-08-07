@@ -21,9 +21,9 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class StringType extends ScalarDataType {
-	public static final StringType DEFAULT = new StringType(IntegerType.POSITIVE);
-	public static final IterableType ITERABLE_TYPE = new IterableType(new StringType(integerType(1, 1)));
-	public static final AnyType NOT_EMPTY = new StringType(integerType(1));
+	static final StringType DEFAULT = new StringType(IntegerType.POSITIVE);
+	static final IterableType ITERABLE_TYPE = new IterableType(new StringType(integerType(1, 1)));
+	static final AnyType NOT_EMPTY = new StringType(integerType(1));
 
 	public static final Pattern FORMAT_PATTERN = Pattern.compile("^%([\\s\\[+#0{<(|-]*)([1-9][0-9]*)?(?:\\.([0-9]+))?([a-zA-Z])$");
 	private static ObjectType ptype;
@@ -50,6 +50,7 @@ public class StringType extends ScalarDataType {
 		return ptype;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<String> factoryDispatcher() {
 		AnyType formatType = patternType(regexpType(FORMAT_PATTERN));
@@ -78,7 +79,6 @@ public class StringType extends ScalarDataType {
 		return Objects.hashCode(value) * 31 + Objects.hashCode(size);
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::StringType", "Pcore::ScalarDataType",
 				asMap(
@@ -87,7 +87,6 @@ public class StringType extends ScalarDataType {
 								KEY_VALUE, null)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, stringTypeDispatcher(),
 				(self) -> new Object[]{self.value == null ? self.size : self.value});
@@ -99,6 +98,7 @@ public class StringType extends ScalarDataType {
 		super.accept(visitor, guard);
 	}
 
+	@Override
 	boolean isInstance(Object o, RecursionGuard guard) {
 		return o instanceof String
 				&& size.isInstance(((String)o).length())

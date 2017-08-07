@@ -130,15 +130,7 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 
 	private void findIntEnd() {
 		int top = expression.length();
-		while(tokenPos < top && Character.isDigit(expression.charAt(tokenPos)))
-			++tokenPos;
-	}
-
-	private void onNewline() {
-		if(nextLineStart >= 0) {
-			tokenPos = nextLineStart;
-			nextLineStart = -1;
-		} else
+		while(tokenPos < top && isDigit(expression.charAt(tokenPos)))
 			++tokenPos;
 	}
 
@@ -155,20 +147,16 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 		lastTokenPos = tokenPos;
 		switch(c) {
 		case '=':
-			if(tokenPos + 1 < top) {
-				switch(expression.charAt(tokenPos + 1)) {
+			++tokenPos;
+			currentToken = TOKEN_ASSIGN;
+			if(tokenPos < top) {
+				switch(expression.charAt(tokenPos)) {
 				case '>':
 					tokenValue = OPERATOR_ARROW;
 					currentToken = TOKEN_ARROW;
-					tokenPos += 2;
-					break;
-				default:
-					currentToken = TOKEN_ASSIGN;
 					++tokenPos;
-					break;
 				}
-			} else
-				currentToken = TOKEN_ERROR;
+			}
 			break;
 
 		case '{':
@@ -214,30 +202,11 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 			break;
 
 		case '-':
-			if(tokenPos + 1 < top) {
-				c = expression.charAt(tokenPos + 1);
-				switch(c) {
-				case ' ':
-				case '\t':
-				case '\r':
-					currentToken = TOKEN_MINUS;
-					++tokenPos;
-					break;
-				case '\n':
-					currentToken = TOKEN_MINUS;
-					onNewline();
-					break;
-				case '(':
-					currentToken = TOKEN_UNARY_MINUS;
-					++tokenPos;
-					break;
-				default:
-					currentToken = isLetterOrDigit(c) ? TOKEN_UNARY_MINUS : TOKEN_MINUS;
-					++tokenPos;
-				}
-			} else {
-				currentToken = TOKEN_MINUS;
-				++tokenPos;
+			currentToken = TOKEN_MINUS;
+			++tokenPos;
+			if(tokenPos < top) {
+				c = expression.charAt(tokenPos);
+				currentToken = c == '(' || isLetterOrDigit(c) ? TOKEN_UNARY_MINUS : TOKEN_MINUS;
 			}
 			break;
 
@@ -263,15 +232,18 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 			}
 			c = expression.charAt(tokenPos);
 			if(c == 'x' || c == 'X') {
-				if(tokenPos + 1 >= top)
-					throw syntaxError();
+				if(tokenPos + 1 >= top) {
+					currentToken = TOKEN_ERROR;
+					break;
+				}
 				int start = ++tokenPos;
-				c = expression.charAt(tokenPos);
-				if(!isHexDigit(c))
-					throw syntaxError();
-				while(++tokenPos < top)
+				for(; tokenPos < top; ++tokenPos)
 					if(!isHexDigit(expression.charAt(tokenPos)))
 						break;
+				if(tokenPos == start) {
+					currentToken = TOKEN_ERROR;
+					break;
+				}
 				tokenValue = Long.valueOf(expression.substring(start, tokenPos), 16);
 				currentToken = TOKEN_LITERAL;
 			} else if(isOctalDigit(c)) {
@@ -291,7 +263,6 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 			break;
 
 		case '$':
-			tokenValue = null;
 			currentToken = TOKEN_VARIABLE;
 			tokenValue = (++tokenPos >= top) ? "" : parseVariable();
 			break;
@@ -480,18 +451,16 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 	private Expression parseBinary(int binaryStart) {
 		Expression expr = parseUnary(binaryStart);
 		for(;;) {
+			int pos = tokenPos;
 			if(currentToken == TOKEN_LB) {
-				int pos = tokenPos;
 				nextToken();
 				expr = factory.access(expr, parseArray(pos), expression, binaryStart, tokenPos - binaryStart);
 				assertToken(TOKEN_RB);
 				nextToken();
 			} else if(currentToken == TOKEN_DOT) {
-				int pos = tokenPos;
 				nextToken();
 				expr = factory.named_access(expr, parseUnary(pos), expression, binaryStart, tokenPos - binaryStart);
 			} else if(currentToken == TOKEN_ASSIGN) {
-				int pos = tokenPos;
 				nextToken();
 				expr = factory.assignment(expr, parseBinary(pos), expression, binaryStart, tokenPos - binaryStart);
 			} else
@@ -663,16 +632,17 @@ public class DefaultExpressionParser implements com.puppet.pcore.parser.Expressi
 						break;
 					++tokenPos;
 				}
-				if(ec != '\n' && tokenPos != top)
-					continue;
-				heredocContentEnd = lineStart;
-				if(suppressLastNL) {
-					--heredocContentEnd;
-					if(expression.charAt(heredocContentEnd - 1) == '\r')
+
+				if(ec == '\n' || tokenPos == top) {
+					heredocContentEnd = lineStart;
+					if(suppressLastNL) {
 						--heredocContentEnd;
+						if(expression.charAt(heredocContentEnd - 1) == '\r')
+							--heredocContentEnd;
+					}
+					heredocEnd = tokenPos + 1;
+					break;
 				}
-				heredocEnd = tokenPos + 1;
-				break;
 			}
 		}
 

@@ -14,8 +14,8 @@ import static com.puppet.pcore.TestHelper.multiline;
 import static java.util.Arrays.asList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
+@SuppressWarnings("SameParameterValue")
 @DisplayName("The DefaultExpressionParser")
 public class ExpressionParserTest {
 	@Nested
@@ -61,15 +61,27 @@ public class ExpressionParserTest {
 		}
 
 		@Test
-		@DisplayName("number with fragment and exponent")
-		public void floatWithExponentFragment() {
-			assertEquals(constant(32.3e7), parser.parse("32.3e7"));
+		@DisplayName("number with exponent")
+		public void floatWithExponent() {
+			assertEquals(constant(32e7), parser.parse("32e7"));
+		}
+
+		@Test
+		@DisplayName("number with negative exponent")
+		public void floatWithNegativeExponent() {
+			assertEquals(constant(32e-7), parser.parse("32e-7"));
 		}
 
 		@Test
 		@DisplayName("negative number with fragment and exponent")
 		public void negativeFloatWithExponentFragment() {
 			assertEquals(constant(-32.3e7), parser.parse("-32.3e7"));
+		}
+
+		@Test
+		@DisplayName("number with fragment and negative exponent")
+		public void floatWithNegativeExponentFragment() {
+			assertEquals(constant(32.3e-7), parser.parse("32.3e-7"));
 		}
 
 		@Test

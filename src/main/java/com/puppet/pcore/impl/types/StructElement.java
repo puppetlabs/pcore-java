@@ -2,7 +2,6 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.PuppetObject;
 import com.puppet.pcore.Type;
-import com.puppet.pcore.impl.Assertions;
 import com.puppet.pcore.impl.PcoreImpl;
 
 import static com.puppet.pcore.impl.Helpers.asMap;
@@ -38,7 +37,6 @@ public class StructElement extends ModelObject implements PuppetObject {
 		return key.hashCode() * 31 + value.hashCode();
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::StructElement", null,
 				asMap(
@@ -46,7 +44,6 @@ public class StructElement extends ModelObject implements PuppetObject {
 						"value_type", typeType()));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, structElementDispatcher(),
 				(self) -> new Object[]{self.key, self.value});

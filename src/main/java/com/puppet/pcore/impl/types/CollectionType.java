@@ -14,7 +14,7 @@ import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Collections.singletonMap;
 
 public class CollectionType extends TypeContainerType {
-	public static final CollectionType DEFAULT = new CollectionType(AnyType.DEFAULT, IntegerType.POSITIVE);
+	static final CollectionType DEFAULT = new CollectionType(AnyType.DEFAULT, IntegerType.POSITIVE);
 
 	private static ObjectType ptype;
 	public final IntegerType size;
@@ -49,7 +49,6 @@ public class CollectionType extends TypeContainerType {
 						KEY_VALUE, IntegerType.POSITIVE)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, collectionTypeDispatcher(),
 				(self) -> new Object[]{self.size});
@@ -65,6 +64,7 @@ public class CollectionType extends TypeContainerType {
 		return new CollectionType(type, size, resolved);
 	}
 
+	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
 		return super.guardedEquals(o, guard) && equals(size, ((CollectionType)o).size, guard);
 	}

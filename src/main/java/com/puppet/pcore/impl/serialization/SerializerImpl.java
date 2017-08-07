@@ -1,10 +1,8 @@
 package com.puppet.pcore.impl.serialization;
 
 import com.puppet.pcore.*;
-import com.puppet.pcore.impl.DynamicObjectImpl;
 import com.puppet.pcore.impl.serialization.extension.*;
 import com.puppet.pcore.impl.types.ObjectType;
-import com.puppet.pcore.impl.types.ParameterInfo;
 import com.puppet.pcore.impl.types.TypeReferenceType;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -18,7 +16,6 @@ import java.time.Instant;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Objects;
 import java.util.function.Function;
 import java.util.regex.Pattern;
 
@@ -75,8 +72,8 @@ public class SerializerImpl implements Serializer {
 			write(type);
 			objectsWritten.put(value, objectsWritten.size());
 		}
-		for(int idx = 0; idx < top; ++idx)
-			write(args[idx]);
+		for(Object arg : args)
+			write(arg);
 	}
 
 	private void writeTabulatedFirstTime(Object value) throws IOException {

@@ -1,6 +1,5 @@
 package com.puppet.pcore.serialization;
 
-import com.puppet.pcore.PcoreException;
 import com.puppet.pcore.Type;
 
 import java.io.IOException;
@@ -36,7 +35,7 @@ public interface ArgumentsAccessor {
 	 * Returns the type that describes the parameters tuple
 	 * @return the parameters type
 	 */
-	public Type getParametersType();
+	Type getParametersType();
 
 	/**
 	 * The type that the arguments are intended for

@@ -8,15 +8,8 @@ import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.time.DurationFormat;
 import com.puppet.pcore.time.InstantFormat;
 
-import java.lang.reflect.InvocationTargetException;
-import java.nio.CharBuffer;
-import java.nio.charset.CharacterCodingException;
-import java.nio.charset.Charset;
-import java.nio.charset.CharsetDecoder;
-import java.nio.charset.StandardCharsets;
 import java.time.Duration;
 import java.time.Instant;
-import java.time.ZoneOffset;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -307,6 +300,7 @@ public class StringConverter extends Polymorphic<String> {
 		return dispatch(valueType, value, stringFormats, indent);
 	}
 
+	@SuppressWarnings("unchecked")
 	Map<AnyType, Format> validateFormats(Object formats) {
 		if(formats == null)
 			return null;
@@ -349,7 +343,7 @@ public class StringConverter extends Polymorphic<String> {
 		return v instanceof List || v instanceof Map;
 	}
 
-	String string(AnyType valType, Object val, Map<AnyType, Format> formatMap, Indentation _) {
+	String string(AnyType valType, Object val, Map<AnyType, Format> formatMap, Indentation indent) {
 		Format f = getFormat(valType, formatMap);
 		return format(f.origFmt.replace('p', 's'), val);
 	}
@@ -381,7 +375,7 @@ public class StringConverter extends Polymorphic<String> {
 
 		// Make a first pass to format each element
 		final int top = val.size();
-		List<String> mapped = new ArrayList<String>(top);
+		List<String> mapped = new ArrayList<>(top);
 		boolean[] hashOrArray = new boolean[top];
 
 		Indentation firstPassIndent = childrenIndent;
@@ -496,7 +490,7 @@ public class StringConverter extends Polymorphic<String> {
 		}
 	}
 
-	String string(DefaultType valType, Object val, Map<AnyType, Format> formatMap, Indentation _) {
+	String string(DefaultType valType, Object val, Map<AnyType, Format> formatMap, Indentation indent) {
 		Format f = getFormat(valType, formatMap);
 		String v;
 		switch(f.fmt) {
@@ -512,7 +506,7 @@ public class StringConverter extends Polymorphic<String> {
 		return applyStringFlags(f, v);
 	}
 
-	String string(FloatType valType, Number val, Map<AnyType, Format> formatMap, Indentation _) {
+	String string(FloatType valType, Number val, Map<AnyType, Format> formatMap, Indentation indent) {
 		Format f = getFormat(valType, formatMap);
 		switch(f.fmt) {
 		case 'd':
@@ -523,7 +517,7 @@ public class StringConverter extends Polymorphic<String> {
 		case 'B':
 			long iv = val.longValue();
 			AnyType ivt = infer(iv);
-			return convert(ivt, iv, singletonMap(ivt, f), _);
+			return convert(ivt, iv, singletonMap(ivt, f), indent);
 		case 'p':
 			return format(f.origFmt.replace('p', 'g'), val);
 		case 'e':
@@ -636,7 +630,7 @@ public class StringConverter extends Polymorphic<String> {
 		}
 	}
 
-	String string(IntegerType valType, Number val, Map<AnyType, Format> formatMap, Indentation _) {
+	String string(IntegerType valType, Number val, Map<AnyType, Format> formatMap, Indentation indent) {
 		Format f = getFormat(valType, formatMap);
 		switch(f.fmt) {
 		case 'x':
@@ -731,7 +725,7 @@ public class StringConverter extends Polymorphic<String> {
 		}
 	}
 
-	String string(RegexpType valType, Pattern val, Map<AnyType, Format> formatMap, Indentation _) {
+	String string(RegexpType valType, Pattern val, Map<AnyType, Format> formatMap, Indentation indent) {
 		Format f = getFormat(valType, formatMap);
 		String rxString = RegexpType.patternWithFlagsExpanded(val);
 		switch(f.fmt) {
@@ -762,7 +756,7 @@ public class StringConverter extends Polymorphic<String> {
 		}
 	}
 
-	String string(StringType valType, String val, Map<AnyType, Format> formatMap, Indentation _) {
+	String string(StringType valType, String val, Map<AnyType, Format> formatMap, Indentation indent) {
 		Format f = getFormat(valType, formatMap);
 		switch(f.fmt) {
 		case 's':
@@ -793,7 +787,7 @@ public class StringConverter extends Polymorphic<String> {
 		return string(hashType(), val, formatMap, indent);
 	}
 
-	String string(UndefType valType, Object val, Map<AnyType, Format> formatMap, Indentation _) {
+	String string(UndefType valType, Object val, Map<AnyType, Format> formatMap, Indentation indent) {
 		Format f = getFormat(valType, formatMap);
 		String v;
 		switch(f.fmt) {
@@ -843,11 +837,7 @@ public class StringConverter extends Polymorphic<String> {
 			String str = DurationFormat.defaultFormat(val);
 			return applyStringFlags(f, f.isAlt ? puppetQuote(str) : str);
 		case 'p':
-			StringBuilder bld = new StringBuilder();
-			bld.append("TimeSpan('");
-			bld.append(DurationFormat.defaultFormat(val));
-			bld.append("')");
-			return applyStringFlags(f, bld.toString());
+			return applyStringFlags(f, "TimeSpan('" + DurationFormat.defaultFormat(val) + "')");
 		default:
 			throw new StringFormatException("TimeSpan", f.fmt, "sp");
 		}
@@ -860,11 +850,7 @@ public class StringConverter extends Polymorphic<String> {
 			String str = InstantFormat.defaultFormat(val);
 			return applyStringFlags(f, f.isAlt ? puppetQuote(str) : str);
 		case 'p':
-			StringBuilder bld = new StringBuilder();
-			bld.append("Timestamp('");
-			bld.append(InstantFormat.defaultFormat(val));
-			bld.append("')");
-			return applyStringFlags(f, bld.toString());
+			return applyStringFlags(f, "Timestamp('" + InstantFormat.defaultFormat(val) + "')");
 		default:
 			throw new StringFormatException("Timestamp", f.fmt, "sp");
 		}
@@ -881,11 +867,7 @@ public class StringConverter extends Polymorphic<String> {
 			String str = val.toString();
 			return applyStringFlags(f, f.isAlt ? puppetQuote(str) : str);
 		case 'p':
-			StringBuilder bld = new StringBuilder();
-			bld.append("SemVer('");
-			bld.append(val.toString());
-			bld.append("')");
-			return applyStringFlags(f, bld.toString());
+			return applyStringFlags(f, "SemVer('" + val.toString() + "')");
 		default:
 			throw new StringFormatException("SemVer", f.fmt, "sp");
 		}
@@ -898,11 +880,7 @@ public class StringConverter extends Polymorphic<String> {
 			String str = val.toString();
 			return applyStringFlags(f, f.isAlt ? puppetQuote(str) : str);
 		case 'p':
-			StringBuilder bld = new StringBuilder();
-			bld.append("SemVerRange('");
-			bld.append(val.toString());
-			bld.append("')");
-			return applyStringFlags(f, bld.toString());
+			return applyStringFlags(f, "SemVerRange('" + val.toString() + "')");
 		default:
 			throw new StringFormatException("SemVerRange", f.fmt, "sp");
 		}

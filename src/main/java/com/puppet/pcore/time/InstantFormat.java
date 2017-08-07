@@ -142,7 +142,7 @@ public class InstantFormat {
 			}
 		}
 		throw new IllegalArgumentException(String.format(
-				"Unable to parse '%s' using any of the formats %s", timestamp, join(", ", map(formats, (f) -> f.toString()))));
+				"Unable to parse '%s' using any of the formats %s", timestamp, join(", ", map(formats, DateTimeFormatter::toString))));
 	}
 
 	public Instant parse(String instant, DateTimeFormatter formatter) {

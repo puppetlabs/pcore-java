@@ -38,6 +38,7 @@ public class ToFromConverterTest {
 		assertEquals(type, ((AnyType)writeAndRead(type)).resolve());
 	}
 
+	@SuppressWarnings("unchecked")
 	Object writeAndRead(Object value) throws IOException {
 		Object data = singletonList(ToDataConverter.convert(value, asMap()));
 		String json = new ObjectMapper().writeValueAsString(data);

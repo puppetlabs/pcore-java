@@ -1,6 +1,5 @@
 package com.puppet.pcore.serialization;
 
-import java.io.IOException;
 import java.util.List;
 
 /**
@@ -9,5 +8,5 @@ import java.util.List;
  */
 @FunctionalInterface
 public interface FactoryFunction<T> {
-	T createInstance(List<? extends Object> args);
+	T createInstance(List<?> args);
 }

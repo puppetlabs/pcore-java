@@ -11,7 +11,7 @@ public class Options {
 				format("Expected %s value for option '%s', got %s", article(type), key, value == null ? "null" : value.getClass().getName()));
 	}
 
-	private static <T extends Object, D extends T> T assertOption(Map<String, Object> options, String key, D defaultValue, Class<T> optionClass, String type) {
+	private static <T, D extends T> T assertOption(Map<String, Object> options, String key, D defaultValue, Class<T> optionClass, String type) {
 		Object value = options.get(key);
 		if(value == null) {
 			if(!options.containsKey(key))
@@ -19,7 +19,7 @@ public class Options {
 		} else {
 			try {
 				return optionClass.cast(value);
-			} catch(ClassCastException e) {
+			} catch(ClassCastException ignored) {
 			}
 		}
 		throw badValue(key, value, type);

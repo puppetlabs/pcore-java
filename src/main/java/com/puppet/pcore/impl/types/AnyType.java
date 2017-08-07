@@ -25,7 +25,7 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		}
 	}
 
-	public static final AnyType DEFAULT = new AnyType();
+	static final AnyType DEFAULT = new AnyType();
 	private static ObjectType ptype;
 
 	AnyType() {
@@ -68,7 +68,9 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		return DEFAULT;
 	}
 
-	public FactoryDispatcher<? extends Object> factoryDispatcher() {
+	@Override
+	@SuppressWarnings("unchecked")
+	public FactoryDispatcher<?> factoryDispatcher() {
 		throw new PcoreException(format("Creation of new instance of type '%s' is not supported", name()));
 	}
 
@@ -127,11 +129,11 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		return any(factoryDispatcher().constructors(), Constructor::isHashConstructor);
 	}
 
-	public Map<?, ?> assertHashInitializer(Map<?, ?> hash) {
+	public void assertHashInitializer(Map<?, ?> hash) {
 		for(ConstructorImpl<?> ctor : ((FactoryDispatcherImpl<?>)factoryDispatcher()).constructors())
 			if(ctor.isHashConstructor()) {
 				ctor.signature().types.get(0).assertInstanceOf(hash, () -> format("initializer hash for %s", name()));
-				return hash;
+				return;
 			}
 		throw new PcoreException(format("Creation of new instance of type '%s' using an initializer hash is not supported", name()));
 	}
@@ -157,12 +159,10 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		return bld.toString();
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::AnyType", null);
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, anyTypeDispatcher());
 	}

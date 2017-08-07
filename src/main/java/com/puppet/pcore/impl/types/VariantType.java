@@ -12,7 +12,7 @@ import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
 
 public class VariantType extends TypesContainerType {
-	public static final VariantType DEFAULT = new VariantType(Collections.emptyList());
+	static final VariantType DEFAULT = new VariantType(Collections.emptyList());
 
 	private static ObjectType ptype;
 
@@ -40,13 +40,11 @@ public class VariantType extends TypesContainerType {
 				: variantType(distinct(map(types, AnyType::generalize)));
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::VariantType", "Pcore::AnyType",
 				asMap("types", arrayType(typeType())));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, variantTypeDispatcher(),
 				(self) -> new Object[]{self.types});

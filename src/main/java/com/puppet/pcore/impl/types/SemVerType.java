@@ -21,7 +21,7 @@ import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonMap;
 
 public class SemVerType extends ScalarType {
-	public static final SemVerType DEFAULT = new SemVerType(emptyList());
+	static final SemVerType DEFAULT = new SemVerType(emptyList());
 
 	private static ObjectType ptype;
 	public final List<VersionRange> ranges;
@@ -45,6 +45,7 @@ public class SemVerType extends ScalarType {
 		return ranges.hashCode();
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<Version> factoryDispatcher() {
 		AnyType formatType = stringType(2);
@@ -55,11 +56,11 @@ public class SemVerType extends ScalarType {
 		);
 	}
 
+	@Override
 	public boolean roundtripWithString() {
 		return true;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::SemVerType", "Pcore::ScalarType",
 				singletonMap(
@@ -68,7 +69,6 @@ public class SemVerType extends ScalarType {
 								KEY_VALUE, emptyList())));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, semVerTypeDispatcher(),
 				(self) -> new Object[]{self.ranges});

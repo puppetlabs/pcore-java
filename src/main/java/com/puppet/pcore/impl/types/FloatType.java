@@ -18,11 +18,10 @@ import static com.puppet.pcore.impl.ConstructorImpl.constructor;
 import static com.puppet.pcore.impl.FactoryDispatcherImpl.dispatcher;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
-import static com.puppet.pcore.impl.types.TypeFactory.booleanType;
 import static java.lang.String.format;
 
 public class FloatType extends NumericType implements MergableRange<FloatType> {
-	public static final FloatType DEFAULT = new FloatType(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
+	static final FloatType DEFAULT = new FloatType(Double.NEGATIVE_INFINITY, Double.POSITIVE_INFINITY);
 
 	private static ObjectType ptype;
 
@@ -83,6 +82,7 @@ public class FloatType extends NumericType implements MergableRange<FloatType> {
 		return ptype;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<? extends Number> factoryDispatcher() {
 		AnyType convertibleType = variantType(undefType(), numericType(), booleanType(), stringType(), timeSpanType(), timestampType());
@@ -137,12 +137,12 @@ public class FloatType extends NumericType implements MergableRange<FloatType> {
 								KEY_VALUE, Double.POSITIVE_INFINITY)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, floatTypeDispatcher(),
 				(self) -> new Object[]{self.min, self.max});
 	}
 
+	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
 		if(o instanceof FloatType) {
 			FloatType fo = (FloatType)o;

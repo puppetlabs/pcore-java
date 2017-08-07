@@ -16,16 +16,15 @@ import static com.puppet.pcore.impl.ConstructorImpl.constructor;
 import static com.puppet.pcore.impl.FactoryDispatcherImpl.dispatcher;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
-import static com.puppet.pcore.impl.types.TypeFactory.booleanType;
 import static java.lang.String.format;
 
 public class IntegerType extends NumericType implements MergableRange<IntegerType> {
-	public static final IntegerType DEFAULT = new IntegerType(Long.MIN_VALUE, Long.MAX_VALUE);
-	public static final IntegerType POSITIVE = new IntegerType(0, Long.MAX_VALUE);
-	public static final IntegerType ZERO_SIZE = new IntegerType(0, 0);
-	public static final IntegerType ONE = new IntegerType(1, 1);
+	static final IntegerType DEFAULT = new IntegerType(Long.MIN_VALUE, Long.MAX_VALUE);
+	static final IntegerType POSITIVE = new IntegerType(0, Long.MAX_VALUE);
+	static final IntegerType ZERO_SIZE = new IntegerType(0, 0);
+	static final IntegerType ONE = new IntegerType(1, 1);
 
-	public static final int DEFAULT_RADIX = 0;
+	static final int DEFAULT_RADIX = 0;
 
 	private static ObjectType ptype;
 	public final long max;
@@ -148,6 +147,7 @@ public class IntegerType extends NumericType implements MergableRange<IntegerTyp
 		return this;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<Long> factoryDispatcher() {
 		AnyType radixType = variantType(defaultType(), integerType(2, 16));
@@ -215,7 +215,6 @@ public class IntegerType extends NumericType implements MergableRange<IntegerTyp
 								KEY_VALUE, Long.MAX_VALUE)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, integerTypeDispatcher(),
 				(self) -> new Object[]{self.min, self.max});
@@ -230,6 +229,7 @@ public class IntegerType extends NumericType implements MergableRange<IntegerTyp
 		return false;
 	}
 
+	@Override
 	boolean isInstance(Object o, RecursionGuard guard) {
 		if(o instanceof Long || o instanceof Integer || o instanceof Short || o instanceof Byte) {
 			long v = ((Number)o).longValue();

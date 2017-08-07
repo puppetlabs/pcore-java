@@ -1,7 +1,5 @@
 package com.puppet.pcore.impl;
 
-import com.puppet.pcore.impl.types.AnyType;
-
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.function.BiConsumer;
@@ -10,8 +8,6 @@ import java.util.function.Function;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
 
-import static com.puppet.pcore.impl.Assertions.assertInstance;
-import static com.puppet.pcore.impl.types.TypeFactory.booleanType;
 import static java.lang.String.format;
 import static java.util.Collections.*;
 
@@ -399,6 +395,7 @@ public class Helpers {
 		return result;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> List<T> concat(Collection<T> a, Collection<T> b) {
 		Object[] all = new Object[a.size() + b.size()];
 		int idx = 0;
@@ -424,6 +421,7 @@ public class Helpers {
 		return unmodifiableCopy(new LinkedHashSet<>(collection));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static <T> List<T>[] partitionBy(Collection<T> collection, Predicate<? super T> condition) {
 		List<T> trueList = new ArrayList<>();
 		List<T> falseList = new ArrayList<>();
@@ -440,12 +438,7 @@ public class Helpers {
 		Map<G, List<T>> result = new LinkedHashMap<>();
 		for(T elem : collection) {
 			G group = grouper.apply(elem);
-			List<T> groupList = result.get(group);
-			if(groupList == null) {
-				groupList = new ArrayList<>();
-				result.put(group, groupList);
-			}
-			groupList.add(elem);
+			result.computeIfAbsent(group, k -> new ArrayList<>()).add(elem);
 		}
 		return unmodifiableMap(result);
 	}
@@ -464,11 +457,10 @@ public class Helpers {
 				continue;
 			}
 
-			if(ws && pos < indentStrip) {
+			if(ws && pos < indentStrip)
 				ws = Character.isWhitespace(c);
-				continue;
-			}
-			bld.append(c);
+			else
+				bld.append(c);
 		}
 		return bld.toString();
 	}

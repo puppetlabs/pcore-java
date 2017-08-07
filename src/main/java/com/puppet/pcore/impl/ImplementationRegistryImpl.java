@@ -3,7 +3,6 @@ package com.puppet.pcore.impl;
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.types.RuntimeType;
 import com.puppet.pcore.serialization.FactoryDispatcher;
-import com.puppet.pcore.serialization.FactoryFunction;
 
 import java.util.ArrayList;
 import java.util.HashMap;

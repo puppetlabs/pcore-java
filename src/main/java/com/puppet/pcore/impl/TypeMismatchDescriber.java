@@ -3,7 +3,6 @@ package com.puppet.pcore.impl;
 import com.puppet.pcore.TypeAssertionException;
 import com.puppet.pcore.impl.types.*;
 
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 
 import static com.puppet.pcore.impl.Helpers.*;
@@ -218,7 +217,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	private static abstract class ExpectedActualMismatch extends Mismatch {
-		AnyType actual;
+		final AnyType actual;
 		AnyType expected;
 
 		ExpectedActualMismatch(List<PathElement> path, AnyType expected, AnyType actual) {
@@ -465,7 +464,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	}
 
 	private static final DispatchMap dispatchMap = initPolymorphicDispatch(TypeMismatchDescriber.class, "_describe", 2);
-	public static TypeMismatchDescriber SINGLETON = new TypeMismatchDescriber();
+	public static final TypeMismatchDescriber SINGLETON = new TypeMismatchDescriber();
 
 	private TypeMismatchDescriber() {
 	}

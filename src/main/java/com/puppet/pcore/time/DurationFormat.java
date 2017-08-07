@@ -271,12 +271,7 @@ public class DurationFormat {
 		private final Map<String,DurationFormat> formats = new HashMap<>();
 
 		DurationFormat parseFormat(String format) {
-			DurationFormat durationFormat = formats.get(format);
-			if(durationFormat == null) {
-				durationFormat = internalParse(format);
-				formats.put(format, durationFormat);
-			}
-			return durationFormat;
+			return formats.computeIfAbsent(format, this::internalParse);
 		}
 
 		private void appendLiteral(List<Segment> bld, char c) {

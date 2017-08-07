@@ -62,6 +62,7 @@ public class ToDataConverter implements Converter {
 		return bld.toString();
 	}
 
+	@SuppressWarnings("unchecked")
 	private Object toData(Object value) {
 		if(value == null || scalarDataType().isInstance(value))
 			return value;

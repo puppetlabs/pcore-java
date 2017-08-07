@@ -19,7 +19,7 @@ import static com.puppet.pcore.impl.Options.get;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class TimestampType extends TimeDataType<TimestampType,Instant> {
-	public static final TimestampType DEFAULT = new TimestampType(Instant.MIN, Instant.MAX);
+	static final TimestampType DEFAULT = new TimestampType(Instant.MIN, Instant.MAX);
 
 	private static ObjectType ptype;
 
@@ -41,10 +41,12 @@ public class TimestampType extends TimeDataType<TimestampType,Instant> {
 		return min.equals(Instant.MIN) && max.equals(Instant.MAX);
 	}
 
+	@Override
 	public boolean roundtripWithString() {
 		return true;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<Instant> factoryDispatcher() {
 		AnyType formatType = stringType(2);
@@ -82,6 +84,7 @@ public class TimestampType extends TimeDataType<TimestampType,Instant> {
 				: Instant.ofEpochSecond(seconds.longValue());
 	}
 
+	@SuppressWarnings("unchecked")
 	public Instant fromStringHash(Map<String, Object> hash) {
 		String str = get(hash, "string", String.class);
 		String tz = get(hash, "timezone", (String)null);
@@ -107,7 +110,6 @@ public class TimestampType extends TimeDataType<TimestampType,Instant> {
 		return false;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::TimestampType", "Pcore::ScalarType",
 				asMap(
@@ -119,7 +121,6 @@ public class TimestampType extends TimeDataType<TimestampType,Instant> {
 								KEY_VALUE, Instant.MAX)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, timestampTypeDispatcher(),
 				(self) -> new Object[]{self.min, self.max});

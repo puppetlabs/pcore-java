@@ -10,24 +10,20 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class CallableType extends AnyType {
-	public static final CallableType DEFAULT = new CallableType(TupleType.DEFAULT, null, AnyType.DEFAULT);
-	public static final CallableType ALL = new CallableType(TupleType.EXPLICIT_EMPTY, null, AnyType.DEFAULT);
+	static final CallableType DEFAULT = new CallableType(TupleType.DEFAULT, null, AnyType.DEFAULT);
+	static final CallableType ALL = new CallableType(TupleType.EXPLICIT_EMPTY, null, AnyType.DEFAULT);
 
 	private static ObjectType ptype;
+
 	public final CallableType blockType;
 	public final TupleType parametersType;
 	public final AnyType returnType;
 	private boolean resolved;
 
 	CallableType(TupleType parametersType, CallableType blockType, AnyType returnType) {
-		this(assertNotNull(parametersType, () -> "Callable parameters type"),
-				blockType, assertNotNull(returnType, () -> "Callable return type"), false);
-	}
-
-	private CallableType(TupleType parametersType, CallableType blockType, AnyType returnType, boolean resolved) {
-		this.parametersType = parametersType;
+		this.parametersType = assertNotNull(parametersType, () -> "Callable parameters type");
 		this.blockType = blockType;
-		this.returnType = returnType;
+		this.returnType = assertNotNull(returnType, () -> "Callable return type");
 	}
 
 	@Override
@@ -61,9 +57,10 @@ public class CallableType extends AnyType {
 			resolved = true;
 			return this;
 		}
-		return new CallableType(rsParametersType, rsBlockType, rsReturnType, true);
+		return new CallableType(rsParametersType, rsBlockType, rsReturnType);
 	}
 
+	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
 		if(o instanceof CallableType) {
 			CallableType ct = (CallableType)o;
@@ -85,7 +82,6 @@ public class CallableType extends AnyType {
 						KEY_VALUE, anyType())));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, callableTypeDispatcher(),
 				(self) -> new Object[]{self.parametersType, self.blockType, self.returnType}

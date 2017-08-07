@@ -3,7 +3,6 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.TypeResolverException;
-import com.puppet.pcore.impl.Options;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import com.puppet.pcore.parser.Expression;
@@ -48,7 +47,7 @@ public class TypeAliasType extends AnyType {
 		}
 	}
 
-	public static final TypeAliasType DEFAULT = new TypeAliasType("UnresolvedAlias", null, DefaultType.DEFAULT);
+	static final TypeAliasType DEFAULT = new TypeAliasType("UnresolvedAlias", null, DefaultType.DEFAULT);
 
 	private static ObjectType ptype;
 	public final String name;
@@ -56,6 +55,7 @@ public class TypeAliasType extends AnyType {
 	private AnyType resolvedType;
 	private boolean selfRecursion;
 
+	@SuppressWarnings("unchecked")
 	TypeAliasType(ArgumentsAccessor args) throws IOException {
 		args.remember(this);
 		this.typeExpression = null;
@@ -144,7 +144,6 @@ public class TypeAliasType extends AnyType {
 		return resolvedType.resolvedType();
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::TypeAliasType", "Pcore::AnyType",
 				asMap(
@@ -152,7 +151,6 @@ public class TypeAliasType extends AnyType {
 						"resolved_type", anyType()));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, typeAliasTypeDispatcher(),
 				(self) -> new Object[]{self.name, self.resolvedType()});
@@ -192,7 +190,7 @@ public class TypeAliasType extends AnyType {
 			RecursionGuard g = guard == null ? new RecursionGuard() : guard;
 			return g.withThat(
 					o,
-					thatState -> g.withThis(this, state -> state == RecursionGuard.SELF_RECURSION_IN_BOTH ? true : equals(resolvedType, to.resolvedType, g)));
+					thatState -> g.withThis(this, state -> state == RecursionGuard.SELF_RECURSION_IN_BOTH || equals(resolvedType, to.resolvedType, g)));
 		}
 		return equals(resolvedType, to.resolvedType, guard);
 	}

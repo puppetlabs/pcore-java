@@ -18,13 +18,12 @@ import static com.puppet.pcore.impl.Helpers.asList;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.Options.get;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
-import static com.puppet.pcore.impl.types.TypeFactory.arrayType;
-import static com.puppet.pcore.impl.types.TypeFactory.stringType;
 
 public class TimeSpanType extends TimeDataType<TimeSpanType,Duration> {
 	public static final Duration MAX_DURATION = Duration.ofSeconds(Long.MAX_VALUE, 999999999);
 	public static final Duration MIN_DURATION = MAX_DURATION.negated();
-	public static final TimeSpanType DEFAULT = new TimeSpanType(MIN_DURATION, MAX_DURATION);
+
+	static final TimeSpanType DEFAULT = new TimeSpanType(MIN_DURATION, MAX_DURATION);
 
 	private static ObjectType ptype;
 
@@ -46,10 +45,12 @@ public class TimeSpanType extends TimeDataType<TimeSpanType,Duration> {
 		return min.equals(MIN_DURATION) && max.equals(MAX_DURATION);
 	}
 
+	@Override
 	public boolean roundtripWithString() {
 		return true;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<Duration> factoryDispatcher() {
 		AnyType formatType = stringType(2);
@@ -90,6 +91,7 @@ public class TimeSpanType extends TimeDataType<TimeSpanType,Duration> {
 		);
 	}
 
+	@SuppressWarnings("unchecked")
 	public Duration fromStringHash(Map<String, Object> hash) {
 		String str = get(hash, "string", String.class);
 		Object formats = hash.get("format");
@@ -153,7 +155,6 @@ public class TimeSpanType extends TimeDataType<TimeSpanType,Duration> {
 		return false;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::TimeSpanType", "Pcore::ScalarType",
 				asMap(
@@ -165,7 +166,6 @@ public class TimeSpanType extends TimeDataType<TimeSpanType,Duration> {
 								KEY_VALUE, MAX_DURATION)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, timeSpanTypeDispatcher(),
 				(self) -> new Object[]{self.min, self.max});

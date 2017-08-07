@@ -3,7 +3,6 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.DynamicObjectImpl;
-import com.puppet.pcore.impl.ImplementationRegistryImpl;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.parser.Expression;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
@@ -11,8 +10,6 @@ import com.puppet.pcore.serialization.FactoryDispatcher;
 import com.puppet.pcore.serialization.SerializationException;
 
 import java.io.IOException;
-import java.lang.reflect.Constructor;
-import java.lang.reflect.InvocationTargetException;
 import java.util.*;
 import java.util.Map.Entry;
 import java.util.regex.Pattern;
@@ -23,7 +20,6 @@ import static com.puppet.pcore.impl.FactoryDispatcherImpl.dispatcher;
 import static com.puppet.pcore.impl.Helpers.*;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
-import static java.lang.Thread.currentThread;
 import static java.util.Arrays.asList;
 import static java.util.Collections.*;
 
@@ -106,6 +102,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 			}
 		}
 
+		@Override
 		boolean guardedEquals(Object o, RecursionGuard guard) {
 			if(getClass().equals(o.getClass())) {
 				AnnotatedMember om = (AnnotatedMember)o;
@@ -167,6 +164,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 			return unmodifiableCopy(result);
 		}
 
+		@Override
 		boolean guardedEquals(Object o, RecursionGuard guard) {
 			return super.guardedEquals(o, guard) && kind == ((Attribute)o).kind && Objects.equals(value, ((Attribute)o).value);
 		}
@@ -209,7 +207,8 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	private enum MemberType {attribute, function, all}
 
-	public static final ObjectType DEFAULT = new ObjectType();
+	static final ObjectType DEFAULT = new ObjectType();
+
 	private static final AnyType TYPE_ATTRIBUTE_KIND = enumType(map(asList(AttributeKind.values()).subList(0, AttributeKind.values().length - 1), AttributeKind::name));
 	private static final AnyType TYPE_MEMBER_NAME = patternType(regexpType(Pattern.compile("\\A[a-z_]\\w*\\z")));
 	private static final AnyType TYPE_ATTRIBUTE = variantType(typeType(), structType(
@@ -273,11 +272,6 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	ObjectType(String name, Expression initHashExpression) {
 		super(initHashExpression);
-		this.name = TYPE_QUALIFIED_REFERENCE.assertInstanceOf(name, true, () -> "Object name");
-	}
-
-	ObjectType(String name, Map<String,Object> unresolvedInitHash) {
-		super(unresolvedInitHash);
 		this.name = TYPE_QUALIFIED_REFERENCE.assertInstanceOf(name, true, () -> "Object name");
 	}
 
@@ -371,13 +365,15 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 		return member;
 	}
 
-	public FactoryDispatcher<? extends Object> factoryDispatcher() {
+	@Override
+	@SuppressWarnings("unchecked")
+	public FactoryDispatcher<?> factoryDispatcher() {
 		ImplementationRegistry ir = Pcore.implementationRegistry();
 		FactoryDispatcher fd = ir.creatorFor(this);
 		if(fd == null) {
 			FactoryDispatcher<DynamicObjectImpl> dynFd = dispatcher(
 					constructor(args -> new DynamicObjectImpl(this, args.toArray()), parameterInfo().parametersType()));
-			ir.registerImplementation(this, dynFd, self -> self.getAttributes());
+			ir.registerImplementation(this, dynFd, DynamicObjectImpl::getAttributes);
 			fd = dynFd;
 		}
 		return fd;
@@ -429,24 +425,26 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	@Override
 	public String name() {
-		return name;
+		return name == null ? "Object" : name;
 	}
 
+	@Override
 	public Object newInstance(Object... args) {
 		return factoryDispatcher().createInstance(this, args);
 	}
 
+	@Override
 	public Object newInstance(ArgumentsAccessor aa) throws IOException {
 		return aa.remember(factoryDispatcher().createInstance(this, aa));
 	}
 
+	@Override
 	public synchronized ParameterInfo parameterInfo() {
 		if(parameterInfo == null)
 			parameterInfo = createParameterInfo();
 		return parameterInfo;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::ObjectType", "Pcore::AnyType",
 				asMap(
@@ -478,7 +476,6 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 				));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, objectTypeDispatcher(),
 				(self) -> new Object[]{self._pcoreInitHash()});
@@ -746,10 +743,8 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	@Override
 	boolean isInstance(Object o, RecursionGuard guard) {
-		if(o instanceof PuppetObject)
-			return isAssignable((AnyType)((PuppetObject)o)._pcoreType(), guard);
+		return o instanceof PuppetObject && isAssignable((AnyType)((PuppetObject)o)._pcoreType(), guard);
 
-		return false;
 	}
 
 	@Override
@@ -759,7 +754,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 			if(DEFAULT.equals(this) || equals(ot))
 				return true;
 			AnyType parent = ot.parent;
-			return parent == null ? false : isUnsafeAssignable(parent, guard);
+			return parent != null && isUnsafeAssignable(parent, guard);
 		}
 		return false;
 	}

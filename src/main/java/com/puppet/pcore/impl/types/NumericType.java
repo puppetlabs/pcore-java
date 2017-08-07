@@ -17,7 +17,7 @@ import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
 
 public class NumericType extends ScalarDataType {
-	public static final NumericType DEFAULT = new NumericType();
+	static final NumericType DEFAULT = new NumericType();
 
 	private static ObjectType ptype;
 
@@ -82,6 +82,7 @@ public class NumericType extends ScalarDataType {
 		return ptype;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<? extends Number> factoryDispatcher() {
 		AnyType convertible = variantType(undefType(), integerType(), floatType(), booleanType(), stringType(), timeSpanType(), timestampType());
@@ -105,12 +106,10 @@ public class NumericType extends ScalarDataType {
 		return DEFAULT;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::NumericType", "Pcore::ScalarType");
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, numericTypeDispatcher());
 	}

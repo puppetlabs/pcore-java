@@ -2,7 +2,6 @@ package com.puppet.pcore.impl;
 
 import com.puppet.pcore.Type;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
-import com.puppet.pcore.serialization.Constructor;
 
 import java.io.IOException;
 import java.util.List;

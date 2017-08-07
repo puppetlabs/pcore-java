@@ -7,7 +7,7 @@ import com.puppet.pcore.impl.PcoreImpl;
 import static com.puppet.pcore.impl.types.TypeFactory.defaultTypeDispatcher;
 
 public class DefaultType extends AnyType {
-	public static final DefaultType DEFAULT = new DefaultType();
+	static final DefaultType DEFAULT = new DefaultType();
 
 	private static ObjectType ptype;
 
@@ -28,7 +28,6 @@ public class DefaultType extends AnyType {
 		return ptype = pcore.createObjectType("Pcore::DefaultType", "Pcore::AnyType");
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, defaultTypeDispatcher());
 	}

@@ -1,7 +1,6 @@
 package com.puppet.pcore.loader;
 
 import java.net.URI;
-import java.util.Locale;
 
 import static com.puppet.pcore.impl.Constants.RUNTIME_NAME_AUTHORITY;
 import static com.puppet.pcore.impl.Helpers.splitName;

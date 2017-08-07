@@ -13,10 +13,10 @@ import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
 
 public class HashType extends CollectionType {
-	public static final HashType DEFAULT = new HashType(anyType(), anyType(), IntegerType.POSITIVE);
-	public static final HashType EMPTY = new HashType(unitType(), unitType(), integerType(0, 0));
-	public static final IntegerType KEY_PAIR_TUPLE_SIZE = integerType(2, 2);
-	public static final AnyType DEFAULT_KEY_PAIR_TUPLE = tupleType(
+	static final HashType DEFAULT = new HashType(anyType(), anyType(), IntegerType.POSITIVE);
+	static final HashType EMPTY = new HashType(unitType(), unitType(), integerType(0, 0));
+	static final IntegerType KEY_PAIR_TUPLE_SIZE = integerType(2, 2);
+	static final AnyType DEFAULT_KEY_PAIR_TUPLE = tupleType(
 			asList(AnyType.DEFAULT, AnyType.DEFAULT),
 			KEY_PAIR_TUPLE_SIZE);
 
@@ -106,6 +106,7 @@ public class HashType extends CollectionType {
 		return hashType(keyType.common(ht.keyType), type.common(ht.type));
 	}
 
+	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
 		return super.guardedEquals(o, guard) && keyType.guardedEquals(((HashType)o).keyType, guard);
 	}
@@ -122,7 +123,6 @@ public class HashType extends CollectionType {
 				asList("key_type", "value_type", "size_type"));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, hashTypeDispatcher(),
 				(self) -> new Object[]{self.keyType, self.type, self.size});

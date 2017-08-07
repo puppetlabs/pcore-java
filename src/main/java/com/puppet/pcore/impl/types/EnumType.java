@@ -15,7 +15,7 @@ import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class EnumType extends ScalarDataType {
-	public static final EnumType DEFAULT = new EnumType(Collections.emptyList());
+	static final EnumType DEFAULT = new EnumType(Collections.emptyList());
 
 	private static ObjectType ptype;
 	public final List<String> enums;
@@ -40,7 +40,6 @@ public class EnumType extends ScalarDataType {
 				asMap("values", arrayType(StringType.NOT_EMPTY)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, enumTypeDispatcher(), (self) -> new Object[]{self.enums});
 	}

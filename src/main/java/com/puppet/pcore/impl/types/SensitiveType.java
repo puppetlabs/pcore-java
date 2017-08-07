@@ -13,7 +13,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class SensitiveType extends TypeContainerType {
-	public static final SensitiveType DEFAULT = new SensitiveType(AnyType.DEFAULT);
+	static final SensitiveType DEFAULT = new SensitiveType(AnyType.DEFAULT);
 
 	private static ObjectType ptype;
 
@@ -35,6 +35,7 @@ public class SensitiveType extends TypeContainerType {
 		return DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<Sensitive> factoryDispatcher() {
 		return dispatcher(
@@ -49,7 +50,6 @@ public class SensitiveType extends TypeContainerType {
 		return new SensitiveType(type, resolved);
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::SensitiveType", "Pcore::AnyType",
 				asMap(
@@ -58,7 +58,6 @@ public class SensitiveType extends TypeContainerType {
 								KEY_VALUE, anyType())));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, sensitiveTypeDispatcher(),
 				(self) -> new Object[]{self.type});

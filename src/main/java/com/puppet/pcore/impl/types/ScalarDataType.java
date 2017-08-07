@@ -6,7 +6,7 @@ import com.puppet.pcore.impl.PcoreImpl;
 import static com.puppet.pcore.impl.types.TypeFactory.scalarDataTypeDispatcher;
 
 public class ScalarDataType extends ScalarType {
-	public static final ScalarDataType DEFAULT = new ScalarDataType();
+	static final ScalarDataType DEFAULT = new ScalarDataType();
 
 	private static ObjectType ptype;
 
@@ -23,12 +23,10 @@ public class ScalarDataType extends ScalarType {
 		return DEFAULT;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::ScalarDataType", "Pcore::ScalarType");
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, scalarDataTypeDispatcher());
 	}

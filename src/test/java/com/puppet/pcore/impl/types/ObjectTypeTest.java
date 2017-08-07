@@ -14,9 +14,9 @@ import java.time.Duration;
 import java.time.Instant;
 
 import static com.puppet.pcore.TestHelper.assertIncludes;
+import static com.puppet.pcore.impl.Helpers.asList;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
-import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.*;
 

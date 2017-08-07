@@ -11,7 +11,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class ClassType extends CatalogEntryType {
-	public static final ClassType DEFAULT = new ClassType(null);
+	static final ClassType DEFAULT = new ClassType(null);
 
 	private static ObjectType ptype;
 	public final String className;
@@ -41,12 +41,12 @@ public class ClassType extends CatalogEntryType {
 						KEY_VALUE, null)));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, classTypeDispatcher(),
 				(self) -> new Object[]{self.className});
 	}
 
+	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
 		return super.guardedEquals(o, guard) && Objects.equals(className, ((ClassType)o).className);
 	}

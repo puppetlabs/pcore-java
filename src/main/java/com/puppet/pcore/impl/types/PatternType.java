@@ -14,7 +14,7 @@ import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Collections.singletonMap;
 
 public class PatternType extends ScalarType {
-	public static final PatternType DEFAULT = new PatternType(Collections.emptyList());
+	static final PatternType DEFAULT = new PatternType(Collections.emptyList());
 
 	private static ObjectType ptype;
 	public final List<RegexpType> regexps;
@@ -37,14 +37,12 @@ public class PatternType extends ScalarType {
 		return regexps.hashCode();
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::PatternType", "Pcore::ScalarType",
 				singletonMap(
 						"patterns", arrayType(variantType(typeType(regexpType()), regexpType()))));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, patternTypeDispatcher(),
 				(self) -> new Object[]{self.regexps});

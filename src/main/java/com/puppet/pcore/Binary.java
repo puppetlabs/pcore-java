@@ -8,7 +8,6 @@ import java.nio.ByteBuffer;
 import java.nio.charset.CharacterCodingException;
 import java.nio.charset.CharsetDecoder;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Base64;
 import java.util.List;
@@ -29,7 +28,7 @@ public class Binary implements Comparable<Binary> {
 			if (a != b)
 				return a > b ? 1 : -1;
 		}
-		return ll > rl ? 1 : (rl > ll ? -1 : 0);
+		return Integer.compare(ll, rl);
 	}
 
 	public Binary(byte[] buffer) {

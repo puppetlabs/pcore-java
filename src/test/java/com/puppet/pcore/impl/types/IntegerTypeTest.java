@@ -58,73 +58,73 @@ public class IntegerTypeTest {
 		@Test
 		@DisplayName("creates Long from String")
 		public void longFromString() {
-			assertEquals(Long.valueOf(15), integerType().newInstance("15"));
+			assertEquals(15L, integerType().newInstance("15"));
 		}
 
 		@Test
 		@DisplayName("accepts leading +")
 		public void longFromStringWithPlus() {
-			assertEquals(Long.valueOf(15), integerType().newInstance("+15"));
+			assertEquals(15L, integerType().newInstance("+15"));
 		}
 
 		@Test
 		@DisplayName("accepts space between leading sign and number")
 		public void spaceAfterSign() {
-			assertEquals(Long.valueOf(-15), integerType().newInstance("- 15"));
+			assertEquals((long)-15, integerType().newInstance("- 15"));
 		}
 
 		@Test
 		@DisplayName("accepts octal number")
 		public void acceptsOctalNumber() {
-			assertEquals(Long.valueOf(13), integerType().newInstance("015"));
+			assertEquals(13L, integerType().newInstance("015"));
 		}
 
 		@Test
 		@DisplayName("accepts hex number using 0x")
 		public void acceptsHexNumber() {
-			assertEquals(Long.valueOf(21), integerType().newInstance("0x15"));
+			assertEquals(21L, integerType().newInstance("0x15"));
 		}
 
 		@Test
 		@DisplayName("accepts hex number using 0X")
 		public void acceptsHeXNumber() {
-			assertEquals(Long.valueOf(21), integerType().newInstance("0X15"));
+			assertEquals(21L, integerType().newInstance("0X15"));
 		}
 
 		@Test
 		@DisplayName("accepts binary number using 0b")
 		public void acceptsBinaryNumber() {
-			assertEquals(Long.valueOf(21), integerType().newInstance("0b10101"));
+			assertEquals(21L, integerType().newInstance("0b10101"));
 		}
 
 		@Test
 		@DisplayName("accepts binary number using 0B")
 		public void acceptsBinaryNumber2() {
-			assertEquals(Long.valueOf(21), integerType().newInstance("0B10101"));
+			assertEquals(21L, integerType().newInstance("0B10101"));
 		}
 
 		@Test
 		@DisplayName("accepts radix 2")
 		public void acceptsRadix2() {
-			assertEquals(Long.valueOf(21), integerType().newInstance("10101", 2));
+			assertEquals(21L, integerType().newInstance("10101", 2));
 		}
 
 		@Test
 		@DisplayName("accepts radix 8")
 		public void acceptsRadix8() {
-			assertEquals(Long.valueOf(21), integerType().newInstance("25", 8));
+			assertEquals(21L, integerType().newInstance("25", 8));
 		}
 
 		@Test
 		@DisplayName("accepts radix 10")
 		public void acceptsRadix10() {
-			assertEquals(Long.valueOf(21), integerType().newInstance("21", 10));
+			assertEquals(21L, integerType().newInstance("21", 10));
 		}
 
 		@Test
 		@DisplayName("accepts radix 16")
 		public void acceptsRadix16() {
-			assertEquals(Long.valueOf(21), integerType().newInstance("15", 16));
+			assertEquals(21L, integerType().newInstance("15", 16));
 		}
 
 		@Test
@@ -136,69 +136,69 @@ public class IntegerTypeTest {
 		@Test
 		@DisplayName("long from long returns same instance")
 		public void longSameInstance() {
-			Long v = Long.valueOf(21);
+			Long v = 21L;
 			assertSame(v, integerType().newInstance(v));
 		}
 
 		@Test
 		@DisplayName("creates long from byte")
 		public void convertsByteToLong() {
-			assertEquals(Long.valueOf(21), integerType().newInstance((byte)21));
+			assertEquals(21L, integerType().newInstance((byte)21));
 		}
 
 		@Test
 		@DisplayName("creates long from short")
 		public void convertsShortToLong() {
-			assertEquals(Long.valueOf(21), integerType().newInstance((short)21));
+			assertEquals(21L, integerType().newInstance((short)21));
 		}
 
 		@Test
 		@DisplayName("creates long from int")
 		public void convertsIntToLong() {
-			assertEquals(Long.valueOf(21), integerType().newInstance(21));
+			assertEquals(21L, integerType().newInstance(21));
 		}
 
 		@Test
 		@DisplayName("creates long from float")
 		public void convertsFloatToLong() {
-			assertEquals(Long.valueOf(21), integerType().newInstance((float)21.0));
+			assertEquals(21L, integerType().newInstance((float)21.0));
 		}
 
 		@Test
 		@DisplayName("creates long from double")
 		public void convertsDoubleToLong() {
-			assertEquals(Long.valueOf(21), integerType().newInstance(21.0));
+			assertEquals(21L, integerType().newInstance(21.0));
 		}
 
 		@Test
 		@DisplayName("creates long from boolean")
 		public void convertsBooleanToLong() {
-			assertEquals(Long.valueOf(0), integerType().newInstance(false));
-			assertEquals(Long.valueOf(1), integerType().newInstance(true));
+			assertEquals(0L, integerType().newInstance(false));
+			assertEquals(1L, integerType().newInstance(true));
 		}
 
 		@Test
 		@DisplayName("creates long from Map")
 		public void convertsMapValueToLong() {
-			assertEquals(Long.valueOf(21), integerType().newInstance(singletonMap("from", "0x15")));
+			assertEquals(21L, integerType().newInstance(singletonMap("from", "0x15")));
 		}
 
 		@Test
 		@DisplayName("creates long from Duration seconds")
 		public void convertsDurationToLong() {
-			assertEquals(Long.valueOf(21), integerType().newInstance(Duration.ofSeconds(21)));
+			assertEquals(21L, integerType().newInstance(Duration.ofSeconds(21)));
 		}
 
 		@Test
 		@DisplayName("creates long from Instant seconds since epoch")
 		public void convertsInstantToLong() {
-			assertEquals(Long.valueOf(21), integerType().newInstance(Instant.parse("1970-01-01T00:00:21.00Z")));
+			assertEquals(21L, integerType().newInstance(Instant.parse("1970-01-01T00:00:21.00Z")));
 		}
 
 		@Test
 		@DisplayName("creates abs value")
 		public void createsAbsValue() {
-			assertEquals(Long.valueOf(21), integerType().newInstance(-21, Default.SINGLETON, true));
+			assertEquals(21L, integerType().newInstance(-21, Default.SINGLETON, true));
 		}
 
 		@Test

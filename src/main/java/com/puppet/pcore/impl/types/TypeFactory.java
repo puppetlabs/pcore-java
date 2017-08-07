@@ -3,6 +3,7 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.Helpers;
+import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.SelfReferencingFactoryImpl;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import com.puppet.pcore.parser.Expression;
@@ -41,6 +42,7 @@ public class TypeFactory {
 		return AnyType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<AnyType> anyTypeDispatcher() {
 		return dispatcher(constructor(args -> anyType()));
 	}
@@ -48,6 +50,10 @@ public class TypeFactory {
 	// ArrayType
 	public static ArrayType arrayType() {
 		return ArrayType.DEFAULT;
+	}
+
+	public static ArrayType arrayTypeEmpty() {
+		return ArrayType.EMPTY;
 	}
 
 	public static ArrayType arrayType(AnyType elementType) {
@@ -64,6 +70,7 @@ public class TypeFactory {
 				: new ArrayType(elementType, size);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<ArrayType> arrayTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> arrayType()),
@@ -82,6 +89,7 @@ public class TypeFactory {
 		return BinaryType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<BinaryType> binaryTypeDispatcher() {
 		return dispatcher(constructor(args -> binaryType()));
 	}
@@ -91,6 +99,7 @@ public class TypeFactory {
 		return BooleanType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<BooleanType> booleanTypeDispatcher() {
 		return dispatcher(constructor(args -> booleanType()));
 	}
@@ -114,6 +123,7 @@ public class TypeFactory {
 				: new CallableType(parametersType, blockType, returnType);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<CallableType> callableTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> callableType()),
@@ -132,6 +142,7 @@ public class TypeFactory {
 		return CatalogEntryType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<CatalogEntryType> catalogEntryTypeDispatcher() {
 		return dispatcher(constructor(args -> catalogEntryType()));
 	}
@@ -145,6 +156,7 @@ public class TypeFactory {
 		return className == null ? ClassType.DEFAULT : new ClassType(className);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<ClassType> classTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> classType()),
@@ -169,6 +181,7 @@ public class TypeFactory {
 				: new CollectionType(anyType(), sizeType);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<CollectionType> collectionTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> collectionType()),
@@ -193,6 +206,7 @@ public class TypeFactory {
 		return DefaultType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<DefaultType> defaultTypeDispatcher() {
 		return dispatcher(constructor(args -> defaultType()));
 	}
@@ -210,6 +224,7 @@ public class TypeFactory {
 		return enums.isEmpty() ? EnumType.DEFAULT : new EnumType(unmodifiableCopy(enums));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<EnumType> enumTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> enumType()),
@@ -234,6 +249,7 @@ public class TypeFactory {
 				: new FloatType(min, max);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<FloatType> floatTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> floatType()),
@@ -250,6 +266,10 @@ public class TypeFactory {
 		return HashType.DEFAULT;
 	}
 
+	public static HashType hashTypeEmpty() {
+		return HashType.EMPTY;
+	}
+
 	public static HashType hashType(AnyType keyType, AnyType valueType) {
 		return hashType(keyType, valueType, IntegerType.POSITIVE);
 	}
@@ -264,6 +284,7 @@ public class TypeFactory {
 				: new HashType(keyType, valueType, size);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<HashType> hashTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> hashType()),
@@ -298,6 +319,7 @@ public class TypeFactory {
 		return new InitType(type, args, false);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<InitType> initTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> initType()),
@@ -314,6 +336,14 @@ public class TypeFactory {
 		return IntegerType.DEFAULT;
 	}
 
+	public static IntegerType integerTypePositive() {
+		return IntegerType.POSITIVE;
+	}
+
+	public static IntegerType integerTypeZero() {
+		return IntegerType.ZERO_SIZE;
+	}
+
 	public static IntegerType integerType(long min) {
 		return integerType(min, Long.MAX_VALUE);
 	}
@@ -321,11 +351,17 @@ public class TypeFactory {
 	public static IntegerType integerType(long min, long max) {
 		if(min == Long.MIN_VALUE)
 			return max == Long.MAX_VALUE ? IntegerType.DEFAULT : new IntegerType(min, max);
-		if(min == 0 && max == Long.MAX_VALUE)
-			return IntegerType.POSITIVE;
+
+		if(min == 0) {
+			if(max == 0)
+				return IntegerType.ZERO_SIZE;
+			if(max == Long.MAX_VALUE)
+				return IntegerType.POSITIVE;
+		}
 		return new IntegerType(min, max);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<IntegerType> integerTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> integerType()),
@@ -346,6 +382,7 @@ public class TypeFactory {
 		return AnyType.DEFAULT.equals(type) ? IterableType.DEFAULT : new IterableType(type);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<IterableType> iterableTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> iterableType()),
@@ -364,6 +401,7 @@ public class TypeFactory {
 		return AnyType.DEFAULT.equals(type) ? IteratorType.DEFAULT : new IteratorType(type);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<IteratorType> iteratorTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> iteratorType()),
@@ -386,6 +424,7 @@ public class TypeFactory {
 		return new NotUndefType(stringType(string));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<NotUndefType> notUndefTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> notUndefType()),
@@ -402,6 +441,7 @@ public class TypeFactory {
 		return NumericType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<NumericType> numericTypeDispatcher() {
 		return dispatcher(constructor(args -> numericType()));
 	}
@@ -419,6 +459,7 @@ public class TypeFactory {
 		return new ObjectType(name, initExpression);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<ObjectType> objectTypeDispatcher() {
 		return new SelfReferencingFactoryImpl(asList(
 				constructor(args -> objectType()),
@@ -447,6 +488,7 @@ public class TypeFactory {
 		return new OptionalType(stringType(string));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<OptionalType> optionalTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> optionalType()),
@@ -471,6 +513,7 @@ public class TypeFactory {
 		return regexps.isEmpty() ? PatternType.DEFAULT : new PatternType(unmodifiableCopy(regexps));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<PatternType> patternTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> patternType()),
@@ -495,6 +538,7 @@ public class TypeFactory {
 		return pattern == null ? RegexpType.DEFAULT : new RegexpType(pattern);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<RegexpType> regexpTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> regexpType()),
@@ -519,6 +563,7 @@ public class TypeFactory {
 		return typeName == null && title == null ? ResourceType.DEFAULT : new ResourceType(typeName, title);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<ResourceType> resourceTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> resourceType()),
@@ -549,6 +594,7 @@ public class TypeFactory {
 				: new RuntimeType(runtimeName, name, pattern);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<RuntimeType> runtimeTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> runtimeType()),
@@ -567,6 +613,7 @@ public class TypeFactory {
 		return ScalarDataType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<ScalarDataType> scalarDataTypeDispatcher() {
 		return dispatcher(constructor(args -> scalarDataType()));
 	}
@@ -576,6 +623,7 @@ public class TypeFactory {
 		return ScalarType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<ScalarType> scalarTypeDispatcher() {
 		return dispatcher(constructor(args -> scalarType()));
 	}
@@ -585,6 +633,7 @@ public class TypeFactory {
 		return SemVerRangeType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<SemVerRangeType> semVerRangeTypeDispatcher() {
 		return dispatcher(constructor(args -> semVerRangeType()));
 	}
@@ -602,6 +651,7 @@ public class TypeFactory {
 		return ranges.isEmpty() ? SemVerType.DEFAULT : new SemVerType(unmodifiableCopy(ranges));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<SemVerType> semVerTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> semVerType()),
@@ -620,6 +670,7 @@ public class TypeFactory {
 		return AnyType.DEFAULT.equals(type) ? SensitiveType.DEFAULT : new SensitiveType(type);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<SensitiveType> sensitiveTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> sensitiveType()),
@@ -657,6 +708,7 @@ public class TypeFactory {
 		return value == null ? StringType.DEFAULT : new StringType(value);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<StringType> stringTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> stringType()),
@@ -677,6 +729,7 @@ public class TypeFactory {
 		return new StructElement(key, valueType);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<StructElement> structElementDispatcher() {
 		return dispatcher(
 				constructor(args -> structElement((String)args.get(0), (AnyType)args.get(1)),
@@ -707,6 +760,7 @@ public class TypeFactory {
 		return elements.isEmpty() ? StructType.DEFAULT : structType(map(elements.entrySet(), element -> structElement(element.getKey(), element.getValue())));
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<StructType> structTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> structType()),
@@ -733,6 +787,7 @@ public class TypeFactory {
 		return new TimeSpanType(min, max);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<TimeSpanType> timeSpanTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> timeSpanType()),
@@ -757,6 +812,7 @@ public class TypeFactory {
 		return new TimestampType(min, max);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<TimestampType> timestampTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> timestampType()),
@@ -770,6 +826,10 @@ public class TypeFactory {
 
 	public static TupleType tupleType() {
 		return TupleType.DEFAULT;
+	}
+
+	public static TupleType tupleTypeEmpty() {
+		return TupleType.EXPLICIT_EMPTY;
 	}
 
 	public static TupleType tupleType(List<AnyType> types) {
@@ -790,6 +850,7 @@ public class TypeFactory {
 		return new TupleType(unmodifiableCopy(types), size);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<TupleType> tupleTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> tupleType()),
@@ -820,6 +881,7 @@ public class TypeFactory {
 		return new TypeAliasType(name, null, resolvedType);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<TypeAliasType> typeAliasTypeDispatcher() {
 		return new SelfReferencingFactoryImpl(asList(
 				constructor(args -> typeAliasType()),
@@ -845,6 +907,7 @@ public class TypeFactory {
 		return new TypeReferenceType(typeString);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<TypeReferenceType> typeReferenceTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> typeReferenceType()),
@@ -867,6 +930,7 @@ public class TypeFactory {
 		return new TypeSetType(name, nameAuthority, initExpression);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<TypeSetType> typeSetTypeDispatcher() {
 		return new SelfReferencingFactoryImpl(asList(
 				constructor(args -> typeSetType()),
@@ -890,6 +954,7 @@ public class TypeFactory {
 		return AnyType.DEFAULT.equals(type) ? TypeType.DEFAULT : new TypeType(type);
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<TypeType> typeTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> typeType()),
@@ -904,6 +969,7 @@ public class TypeFactory {
 		return UndefType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<UndefType> undefTypeDispatcher() {
 		return dispatcher(constructor(args -> undefType()));
 	}
@@ -913,6 +979,7 @@ public class TypeFactory {
 		return UnitType.DEFAULT;
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<UnitType> unitTypeDispatcher() {
 		return dispatcher(constructor(args -> unitType()));
 	}
@@ -941,6 +1008,7 @@ public class TypeFactory {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	public static FactoryDispatcher<VariantType> variantTypeDispatcher() {
 		FactoryDispatcher<?> fd = dispatcher(
 				constructor(args -> variantType()),
@@ -949,5 +1017,97 @@ public class TypeFactory {
 				constructor((ObjectType)variantType()._pcoreType())
 		);
 		return (FactoryDispatcher<VariantType>)fd;
+	}
+
+	public static AnyType[] registerPcoreTypes(PcoreImpl pcore) {
+		return new AnyType[] {
+			AnyType.registerPcoreType(pcore),
+			ArrayType.registerPcoreType(pcore),
+			BinaryType.registerPcoreType(pcore),
+			BooleanType.registerPcoreType(pcore),
+			CallableType.registerPcoreType(pcore),
+			CatalogEntryType.registerPcoreType(pcore),
+			ClassType.registerPcoreType(pcore),
+			CollectionType.registerPcoreType(pcore),
+			DefaultType.registerPcoreType(pcore),
+			EnumType.registerPcoreType(pcore),
+			FloatType.registerPcoreType(pcore),
+			HashType.registerPcoreType(pcore),
+			InitType.registerPcoreType(pcore),
+			IntegerType.registerPcoreType(pcore),
+			IterableType.registerPcoreType(pcore),
+			IteratorType.registerPcoreType(pcore),
+			NotUndefType.registerPcoreType(pcore),
+			NumericType.registerPcoreType(pcore),
+			ObjectType.registerPcoreType(pcore),
+			OptionalType.registerPcoreType(pcore),
+			PatternType.registerPcoreType(pcore),
+			RegexpType.registerPcoreType(pcore),
+			ResourceType.registerPcoreType(pcore),
+			RuntimeType.registerPcoreType(pcore),
+			ScalarType.registerPcoreType(pcore),
+			ScalarDataType.registerPcoreType(pcore),
+			SemVerType.registerPcoreType(pcore),
+			SemVerRangeType.registerPcoreType(pcore),
+			SensitiveType.registerPcoreType(pcore),
+			StringType.registerPcoreType(pcore),
+			StructElement.registerPcoreType(pcore),
+			StructType.registerPcoreType(pcore),
+			TimeSpanType.registerPcoreType(pcore),
+			TimestampType.registerPcoreType(pcore),
+			TupleType.registerPcoreType(pcore),
+			TypeAliasType.registerPcoreType(pcore),
+			TypeReferenceType.registerPcoreType(pcore),
+			TypeSetType.registerPcoreType(pcore),
+			TypeType.registerPcoreType(pcore),
+			UndefType.registerPcoreType(pcore),
+			UnitType.registerPcoreType(pcore),
+			VariantType.registerPcoreType(pcore),
+		};
+	}
+
+	public static void registerImpls(PcoreImpl pcore) {
+				AnyType.registerImpl(pcore);
+				ArrayType.registerImpl(pcore);
+				BinaryType.registerImpl(pcore);
+				BooleanType.registerImpl(pcore);
+				CallableType.registerImpl(pcore);
+				CatalogEntryType.registerImpl(pcore);
+				ClassType.registerImpl(pcore);
+				CollectionType.registerImpl(pcore);
+				DefaultType.registerImpl(pcore);
+				EnumType.registerImpl(pcore);
+				FloatType.registerImpl(pcore);
+				HashType.registerImpl(pcore);
+				InitType.registerImpl(pcore);
+				IntegerType.registerImpl(pcore);
+				IterableType.registerImpl(pcore);
+				IteratorType.registerImpl(pcore);
+				NotUndefType.registerImpl(pcore);
+				NumericType.registerImpl(pcore);
+				ObjectType.registerImpl(pcore);
+				OptionalType.registerImpl(pcore);
+				PatternType.registerImpl(pcore);
+				RegexpType.registerImpl(pcore);
+				ResourceType.registerImpl(pcore);
+				RuntimeType.registerImpl(pcore);
+				ScalarType.registerImpl(pcore);
+				ScalarDataType.registerImpl(pcore);
+				SemVerType.registerImpl(pcore);
+				SemVerRangeType.registerImpl(pcore);
+				SensitiveType.registerImpl(pcore);
+				StringType.registerImpl(pcore);
+				StructElement.registerImpl(pcore);
+				StructType.registerImpl(pcore);
+				TimeSpanType.registerImpl(pcore);
+				TimestampType.registerImpl(pcore);
+				TupleType.registerImpl(pcore);
+				TypeAliasType.registerImpl(pcore);
+				TypeReferenceType.registerImpl(pcore);
+				TypeSetType.registerImpl(pcore);
+				TypeType.registerImpl(pcore);
+				UndefType.registerImpl(pcore);
+				UnitType.registerImpl(pcore);
+				VariantType.registerImpl(pcore);
 	}
 }

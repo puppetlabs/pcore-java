@@ -5,7 +5,6 @@ import com.puppet.pcore.impl.Polymorphic;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 
-import java.lang.reflect.InvocationTargetException;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.Collection;
@@ -55,7 +54,7 @@ class TypeCalculator extends Polymorphic<AnyType> {
 	}
 
 	AnyType _infer(Class<?> o) {
-		return runtimeType(((Class<?>)o).getName());
+		return runtimeType(o.getName());
 	}
 
 	AnyType _infer(Default o) {

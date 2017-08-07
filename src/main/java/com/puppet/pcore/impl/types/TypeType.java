@@ -9,7 +9,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class TypeType extends TypeContainerType {
-	public static final TypeType DEFAULT = new TypeType(AnyType.DEFAULT);
+	static final TypeType DEFAULT = new TypeType(AnyType.DEFAULT);
 
 	private static ObjectType ptype;
 
@@ -31,7 +31,6 @@ public class TypeType extends TypeContainerType {
 		return DEFAULT;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::TypeType", "Pcore::AnyType",
 				asMap(
@@ -40,7 +39,6 @@ public class TypeType extends TypeContainerType {
 								KEY_VALUE, anyType())));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, typeTypeDispatcher(),
 				(self) -> new Object[]{self.type});
@@ -68,9 +66,7 @@ public class TypeType extends TypeContainerType {
 	boolean isInstance(Object o, RecursionGuard guard) {
 		if(o instanceof AnyType)
 			return type.isAssignable((AnyType)o, guard);
-		if(o instanceof Class<?>)
-			return type.isAssignable(infer(o), guard);
-		return false;
+		return o instanceof Class<?> && type.isAssignable(infer(o), guard);
 	}
 
 	@Override

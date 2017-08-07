@@ -94,14 +94,11 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		return actual;
 	}
 
-	private final Loader loader;
-
 	public final AnyType data;
 	public final AnyType richDataKey;
 	public final AnyType richData;
 
-	public TypeEvaluatorImpl(Loader loader) {
-		this.loader = loader;
+	public TypeEvaluatorImpl() {
 		data = declareType("Data", "Variant[ScalarData,Undef,Array[Data],Hash[String,Data]]");
 		richDataKey = declareType("RichDataKey", "Variant[String,Numeric]");
     richData = declareType("RichData", "Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Undef,Hash[RichDataKey,RichData],Array[RichData]]");
@@ -253,7 +250,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		case "callable": {
 			assertParameterCount(1, Integer.MAX_VALUE, args, te.name);
 			if(args.length == 2 && Objects.equals(args[0], ZERO) && Objects.equals(args[1], ZERO))
-				return callableType(TupleType.EXPLICIT_EMPTY);
+				return callableType(tupleTypeEmpty());
 			Object first = args[0];
 			Object[] params = args;
 			AnyType returnType = anyType();
@@ -263,12 +260,10 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 				returnType = assertType(args, 1, te.name);
 				params = ((List<?>)first).toArray();
 			}
-			if(args.length > 0) {
-				Object last = args[args.length - 1];
-				if(last instanceof CallableType) {
-					blockType = (CallableType)last;
-					params = Arrays.copyOf(args, args.length - 1);
-				}
+			Object last = args[args.length - 1];
+			if(last instanceof CallableType) {
+				blockType = (CallableType)last;
+				params = Arrays.copyOf(args, args.length - 1);
 			}
 			return params.length == 2 && ZERO.equals(params[0]) && ZERO.equals(params[1])
 					? callableType(tupleType(Collections.emptyList()), blockType, returnType)
@@ -536,8 +531,8 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		return assertParameterCount(min, max, args.length, name);
 	}
 
-	private int assertParameterCount(int min, int max, List<?> args, String name) {
-		return assertParameterCount(min, max, args.size(), name);
+	private void assertParameterCount(int min, int max, List<?> args, String name) {
+		assertParameterCount(min, max, args.size(), name);
 	}
 
 	private long assertRange(Object[] args, int paramNo, String name, long dflt) {

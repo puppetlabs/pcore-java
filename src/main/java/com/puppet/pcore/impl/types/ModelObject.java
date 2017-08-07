@@ -1,7 +1,6 @@
 package com.puppet.pcore.impl.types;
 
 import java.util.IdentityHashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
@@ -174,22 +173,21 @@ abstract class ModelObject {
 		if (a.size() != b.size())
 			return false;
 
-		Iterator<Map.Entry<K,V>> i = a.entrySet().iterator();
-		while (i.hasNext()) {
-			Map.Entry<K,V> e = i.next();
+		for(Map.Entry<K,V> e : a.entrySet()) {
 			K key = e.getKey();
 			V value = e.getValue();
-			if (value == null) {
-				if (!(b.get(key) == null && b.containsKey(key)))
+			if(value == null) {
+				if(!(b.get(key) == null && b.containsKey(key)))
 					return false;
 			} else {
-				if (!value.guardedEquals(b.get(key), guard))
+				if(!value.guardedEquals(b.get(key), guard))
 					return false;
 			}
 		}
 		return true;
 	}
 
+	@SuppressWarnings("EqualsWhichDoesntCheckParameterClass")
 	public final boolean equals(Object o) {
 		return guardedEquals(o, null);
 	}

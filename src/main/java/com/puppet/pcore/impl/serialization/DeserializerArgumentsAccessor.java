@@ -1,6 +1,5 @@
 package com.puppet.pcore.impl.serialization;
 
-import com.puppet.pcore.PcoreException;
 import com.puppet.pcore.impl.AbstractArgumentsAccessor;
 import com.puppet.pcore.impl.types.ObjectType;
 import com.puppet.pcore.serialization.Deserializer;

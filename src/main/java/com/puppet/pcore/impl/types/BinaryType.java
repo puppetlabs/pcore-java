@@ -14,7 +14,7 @@ import static com.puppet.pcore.impl.FactoryDispatcherImpl.dispatcher;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class BinaryType extends AnyType {
-	public static final BinaryType DEFAULT = new BinaryType();
+	static final BinaryType DEFAULT = new BinaryType();
 
 	private static ObjectType ptype;
 
@@ -26,6 +26,7 @@ public class BinaryType extends AnyType {
 		return ptype;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
 	public FactoryDispatcher<Binary> factoryDispatcher() {
 		AnyType byteInteger = integerType(0, 266);
@@ -76,6 +77,7 @@ public class BinaryType extends AnyType {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	private Binary fromHash(Map<String,Object> hash) {
 		Object value = hash.get("value");
 		return value instanceof List<?>
@@ -88,16 +90,15 @@ public class BinaryType extends AnyType {
 		return DEFAULT;
 	}
 
+	@Override
 	public boolean roundtripWithString() {
 		return true;
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::BinaryType", "Pcore::AnyType");
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, binaryTypeDispatcher());
 	}

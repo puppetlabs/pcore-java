@@ -1,11 +1,9 @@
 package com.puppet.pcore;
 
-import org.junit.jupiter.api.Test;
-
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.function.Function;
 
+@SuppressWarnings({"ForLoopReplaceableByForEach", "WhileLoopReplaceableByForEach"})
 public class IterationTest {
 	static Integer[] createArray() {
 
@@ -51,12 +49,7 @@ public class IterationTest {
 	static int testForWithBlock(List<Integer> lList, int sum) {
 		final int t = lList.size();
 		int s[] = new int[] { sum };
-		Consumer<Integer> func = new Consumer<Integer>() {
-			@Override
-			public void accept(Integer integer) {
-				s[0] += integer;
-			}
-		};
+		Consumer<Integer> func = integer -> s[0] += integer;
 
 		for(int i = 0; i < t; ++i)
 			func.accept(lList.get(i));

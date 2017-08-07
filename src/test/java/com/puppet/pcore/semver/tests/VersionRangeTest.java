@@ -337,6 +337,7 @@ public class VersionRangeTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeAboveVersion() {
 		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
@@ -411,6 +412,7 @@ public class VersionRangeTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeNotAboveVersion() {
 		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
@@ -500,6 +502,7 @@ public class VersionRangeTest {
 		}
 	}
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeBelowVersion() {
 		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
@@ -571,6 +574,7 @@ public class VersionRangeTest {
 	}
 
 
+	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeNotBelowVersion() {
 		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +

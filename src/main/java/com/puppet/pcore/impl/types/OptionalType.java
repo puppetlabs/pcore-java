@@ -9,7 +9,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class OptionalType extends TypeContainerType {
-	public static final OptionalType DEFAULT = new OptionalType(AnyType.DEFAULT);
+	static final OptionalType DEFAULT = new OptionalType(AnyType.DEFAULT);
 
 	private static ObjectType ptype;
 
@@ -36,7 +36,6 @@ public class OptionalType extends TypeContainerType {
 		return equals(DEFAULT) ? this : new OptionalType(type.generalize());
 	}
 
-	@SuppressWarnings("unused")
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
 		return ptype = pcore.createObjectType("Pcore::OptionalType", "Pcore::AnyType",
 				asMap(
@@ -45,7 +44,6 @@ public class OptionalType extends TypeContainerType {
 								KEY_VALUE, anyType())));
 	}
 
-	@SuppressWarnings("unused")
 	static void registerImpl(PcoreImpl pcore) {
 		pcore.registerImpl(ptype, optionalTypeDispatcher(),
 				(self) -> new Object[]{self.type});
