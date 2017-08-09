@@ -9,6 +9,7 @@ import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.TypeFactory;
 import com.puppet.pcore.parser.Expression;
 import com.puppet.pcore.parser.ExpressionParser;
+import com.puppet.pcore.parser.model.*;
 import com.puppet.pcore.serialization.SerializationException;
 
 import java.util.List;
@@ -62,41 +63,41 @@ public class JsonPath {
 
 		public static final Resolver singleton = new Resolver();
 
-		private final ExpressionParser parser = new DefaultExpressionParser(DefaultExpressionFactory.SINGLETON);
+		private final ExpressionParser parser = new Parser();
 
 		private Resolver() {
 		}
 
 		public Object resolve(RefEntry context, String path) {
-			Expression expr = parser.parse(path);
+			Expression expr = parser.parse(null, path, false, true);
 			Object resolved = dispatch(expr, context, path);
 			return resolved instanceof RefEntry ? ((RefEntry)resolved).getValue() : resolved;
 		}
 
 		Object resolve(AccessExpression ast, RefEntry context, String path) {
-			if(ast.elements.size() != 1)
+			if(ast.keys.size() != 1)
 				throw badJsonPath(path);
 
-			Object receiver = dispatch(ast.expr, context, path);
-			return resolveAccess(receiver, dispatch(ast.elements.get(0), context, path), path);
+			Object receiver = dispatch(ast.operand, context, path);
+			return resolveAccess(receiver, dispatch(ast.keys.get(0), context, path), path);
 		}
 
 		Object resolve(NamedAccessExpression ast, RefEntry context, String path) {
 			return resolveAccess(dispatch(ast.lhs, context, path), dispatch(ast.rhs, context, path), path);
 		}
 
-		Object resolve(TypeNameExpression ast, RefEntry context, String path) {
+		Object resolve(QualifiedReference ast, RefEntry context, String path) {
 			String name = ast.name;
 			return name.equalsIgnoreCase("null") ? null : name;
 		}
 
-		Object resolve(IdentifierExpression ast, RefEntry context, String path) {
+		Object resolve(QualifiedName ast, RefEntry context, String path) {
 			String name = ast.name;
 			return name.equalsIgnoreCase("null") ? null : name;
 		}
 
-		Object resolve(ConstantExpression ast, RefEntry context, String path) {
-			Object v = ast.value;
+		Object resolve(LiteralExpression ast, RefEntry context, String path) {
+			Object v = ast.value();
 			if(v == null)
 				return "undef";
 			if(v == Default.SINGLETON)
@@ -106,7 +107,7 @@ public class JsonPath {
 
 		Object resolve(VariableExpression ast, RefEntry context, String path) {
 	    // A single '$' means root, i.e. the context.
-			if(ast.name.equals(""))
+			if(dispatch(ast.expr, context, path).equals(""))
 				return context;
 			throw badJsonPath(path);
 		}

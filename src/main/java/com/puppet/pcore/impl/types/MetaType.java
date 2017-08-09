@@ -3,8 +3,8 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.Helpers;
-import com.puppet.pcore.impl.parser.HashExpression;
 import com.puppet.pcore.parser.Expression;
+import com.puppet.pcore.parser.model.HashExpression;
 
 import java.util.LinkedHashMap;
 import java.util.List;

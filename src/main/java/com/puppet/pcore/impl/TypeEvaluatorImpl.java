@@ -8,6 +8,7 @@ import com.puppet.pcore.impl.types.*;
 import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.loader.TypedName;
 import com.puppet.pcore.parser.Expression;
+import com.puppet.pcore.parser.model.*;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.time.DurationFormat;
 import com.puppet.pcore.time.InstantFormat;
@@ -137,21 +138,21 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		AnyType createdType = null;
 		if(expr instanceof AccessExpression) {
 			AccessExpression ae = (AccessExpression)expr;
-			Expression receiver = ae.expr;
-			if(receiver instanceof TypeNameExpression) {
-				TypeNameExpression te = (TypeNameExpression)receiver;
+			Expression receiver = ae.operand;
+			if(receiver instanceof QualifiedReference) {
+				QualifiedReference te = (QualifiedReference)receiver;
 				switch(te.downcasedName()) {
 				case "object":
-					assertParameterCount(1, 1, ae.elements, te.name);
-					createdType = objectType(name, ae.elements.get(0));
+					assertParameterCount(1, 1, ae.keys, te.name);
+					createdType = objectType(name, ae.keys.get(0));
 					break;
 				case "typeset":
-					assertParameterCount(1, 1, ae.elements, te.name);
-					HashExpression ha = (HashExpression)ae.elements.get(0);
+					assertParameterCount(1, 1, ae.keys, te.name);
+					HashExpression ha = (HashExpression)ae.keys.get(0);
 					if(nameAuthority == null) {
 						Expression nsExpr = ha.getValue(KEY_NAME_AUTHORITY);
-						if(nsExpr instanceof StringExpression)
-							nameAuthority = URI.create(((StringExpression)nsExpr).getString());
+						if(nsExpr instanceof LiteralString)
+							nameAuthority = URI.create(((LiteralString)nsExpr).value);
 						else
 							nameAuthority = loader.getNameAuthority();
 					}
@@ -195,42 +196,42 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		return dispatchMap;
 	}
 
-	Object eval(ConstantExpression ce) {
-		return ce.value;
+	Object eval(LiteralExpression ce) {
+		return ce.value();
 	}
 
 	Object eval(HashExpression ce) {
-		return asMap(map(ce.elements, this::resolve));
+		LinkedHashMap<Object, Object> result = new LinkedHashMap<>();
+		for(KeyedEntry entry : ce.entries)
+			result.put(resolve(entry.key), resolve(entry.value));
+		return result;
 	}
 
 	Object eval(ArrayExpression ce) {
 		return map(ce.elements, this::resolve);
 	}
 
-	Object eval(AssignmentExpression ce) {
-		if(!(ce.lhs instanceof TypeDeclarationExpression))
-			throw new TypeResolverException("LHS of assignment expression must be a Type definition");
-
-		return declareType(((TypeDeclarationExpression)ce.lhs).getString(), ce.rhs, loader().getNameAuthority()).resolve();
+	Object eval(TypeAlias ce) {
+		return declareType(((TypeAlias)ce).name, ((TypeAlias)ce).type, loader().getNameAuthority()).resolve();
 	}
 
-	Object eval(RegexpExpression ce) {
-		return regexpType((String)ce.value);
+	Object eval(LiteralRegexp ce) {
+		return regexpType(ce.value);
 	}
 
 	Object eval(AccessExpression ae) {
-		if(!(ae.expr instanceof TypeNameExpression))
+		if(!(ae.operand instanceof QualifiedReference))
 			throw new TypeResolverException("LHS of [] expression must be a Type name");
-		TypeNameExpression te = (TypeNameExpression)ae.expr;
+		QualifiedReference te = (QualifiedReference)ae.operand;
 
 		String dcName = te.downcasedName();
 		if("object".equals(dcName) || "typeset".equals(dcName)) {
-			assertParameterCount(1, 1, ae.elements.size(), te.name);
-			HashExpression initExpr = assertOneParam(HashExpression.class, ae.elements.get(0), 0, te.name);
+			assertParameterCount(1, 1, ae.keys.size(), te.name);
+			HashExpression initExpr = assertOneParam(HashExpression.class, ae.keys.get(0), 0, te.name);
 			return "object".equals(dcName) ? objectType(null, initExpr) : typeSetType(null, loader().getNameAuthority(), initExpr);
 		}
 
-		Object[] args = map(ae.elements, this::resolve).toArray();
+		Object[] args = map(ae.keys, this::resolve).toArray();
 		switch(dcName) {
 		case "array":
 			switch(assertParameterCount(1, 3, args, te.name)) {
@@ -458,11 +459,11 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		}
 	}
 
-	Object eval(IdentifierExpression te) {
+	Object eval(QualifiedName te) {
 		return te.name;
 	}
 
-	Object eval(TypeNameExpression te) {
+	Object eval(QualifiedReference te) {
 		String dcName = te.downcasedName();
 		AnyType type = BASIC_TYPES.get(dcName);
 		if(type != null)
@@ -610,7 +611,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 	}
 
 	private Expression parse(String typeString) {
-		return new DefaultExpressionParser(DefaultExpressionFactory.SINGLETON).parse(typeString);
+		return new Parser().parse(null, typeString, false, true);
 	}
 
 	private String valueClassName(Object value) {

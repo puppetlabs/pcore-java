@@ -5,11 +5,10 @@ import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import com.puppet.pcore.impl.loader.TypeSetLoader;
-import com.puppet.pcore.impl.parser.HashExpression;
-import com.puppet.pcore.impl.parser.TypeNameExpression;
 import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.loader.TypedName;
 import com.puppet.pcore.parser.Expression;
+import com.puppet.pcore.parser.model.*;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
@@ -425,22 +424,18 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 		Map<String,Object> result = new LinkedHashMap<>();
 
 		TypeEvaluator evaluator = Pcore.typeEvaluator();
-		List<Expression> elements = i12e.elements;
-		int top = elements.size();
-		for(int idx = 0; idx < top; ) {
-			Object key = evaluator.resolve(elements.get(idx++));
-			Expression value = elements.get(idx++);
+		for(KeyedEntry entry : i12e.entries) {
+			Object key = evaluator.resolve(entry.key);
+			Expression value = entry.value;
 			boolean isTypes = KEY_TYPES.equals(key);
 			if((isTypes || KEY_REFERENCES.equals(key)) && value instanceof HashExpression) {
 				// Skip evaluation and convert qualified references directly to String keys
 				Map<String,Object> hash = new LinkedHashMap<>();
-				List<Expression> vElements = ((HashExpression)value).elements;
-				int vTop = vElements.size();
-				for(int vIdx = 0; vIdx < vTop; ) {
-					Expression kex = vElements.get(vIdx++);
-					Expression vax = vElements.get(vIdx++);
-					String name = kex instanceof TypeNameExpression
-							? ((TypeNameExpression)kex).name
+				for(KeyedEntry vEntry : ((HashExpression)value).entries) {
+					Expression kex = vEntry.key;
+					Expression vax = vEntry.value;
+					String name = kex instanceof QualifiedReference
+							? ((QualifiedReference)kex).name
 							: (String)evaluator.resolve(kex);
 					hash.put(name, isTypes ? vax : evaluator.resolve(vax));
 				}
