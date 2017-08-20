@@ -18,4 +18,11 @@ public interface Location {
 	 * @return the position in line
 	 */
 	int pos();
+
+	/**
+	 * Append this location to the given message
+	 * @param message the message
+	 * @return the given message with this location appended
+	 */
+	String appendLocation(String message);
 }

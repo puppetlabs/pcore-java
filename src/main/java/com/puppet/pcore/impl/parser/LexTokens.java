@@ -95,9 +95,9 @@ public interface LexTokens {
   int TOKEN_TYPE_NAME = 159;
 
   // Keywords
-  int TOKEN_KEYWORD = 200;
-  int TOKEN_AND = 201;
-  int TOKEN_APPLICATION = 202;
+  int TOKEN_AND = 200;
+  int TOKEN_APPLICATION = 201;
+  int TOKEN_ATTR = 202;
   int TOKEN_CASE = 203;
   int TOKEN_CLASS = 204;
   int TOKEN_CONSUMES = 205;
@@ -111,11 +111,12 @@ public interface LexTokens {
   int TOKEN_ELSIF = 213;
   int TOKEN_NODE = 214;
   int TOKEN_OR = 215;
-  int TOKEN_PRODUCES = 216;
-  int TOKEN_SITE = 217;
-  int TOKEN_TYPE = 218;
-  int TOKEN_UNDEF = 219;
-  int TOKEN_UNLESS = 220;
+  int TOKEN_PRIVATE = 216;
+  int TOKEN_PRODUCES = 217;
+  int TOKEN_SITE = 218;
+  int TOKEN_TYPE = 219;
+  int TOKEN_UNDEF = 220;
+  int TOKEN_UNLESS = 221;
 
 	Map<Integer,String> tokenMap = Helpers.asMap(
 			TOKEN_END, "EOF",
@@ -208,9 +209,9 @@ public interface LexTokens {
 			TOKEN_TYPE_NAME, "<type name>",
 
 			// Keywords
-			TOKEN_KEYWORD, "<keyword>",
 			TOKEN_AND, "and",
 			TOKEN_APPLICATION, "application",
+			TOKEN_ATTR, "attr",
 			TOKEN_CASE, "case",
 			TOKEN_CLASS, "class",
 			TOKEN_CONSUMES, "consumes",
@@ -224,6 +225,7 @@ public interface LexTokens {
 			TOKEN_ELSIF, "elsif",
 			TOKEN_NODE, "node",
 			TOKEN_OR, "or",
+			TOKEN_PRIVATE, "private",
 			TOKEN_PRODUCES, "produces",
 			TOKEN_SITE, "site",
 			TOKEN_TYPE, "type",
@@ -234,7 +236,7 @@ public interface LexTokens {
 	Map<String,Integer> keywords = Helpers.asMap(
 		  tokenMap.get(TOKEN_APPLICATION), TOKEN_APPLICATION,
 		  tokenMap.get(TOKEN_AND), TOKEN_AND,
-		  "attr", TOKEN_KEYWORD,
+			tokenMap.get(TOKEN_ATTR), TOKEN_ATTR,
 		  tokenMap.get(TOKEN_CASE), TOKEN_CASE,
 		  tokenMap.get(TOKEN_CLASS), TOKEN_CLASS,
 		  tokenMap.get(TOKEN_CONSUMES), TOKEN_CONSUMES,
@@ -249,7 +251,7 @@ public interface LexTokens {
 		  tokenMap.get(TOKEN_INHERITS), TOKEN_INHERITS,
 		  tokenMap.get(TOKEN_NODE), TOKEN_NODE,
 		  tokenMap.get(TOKEN_OR), TOKEN_OR,
-		  "private", TOKEN_KEYWORD,
+			tokenMap.get(TOKEN_PRIVATE), TOKEN_PRIVATE,
 		  tokenMap.get(TOKEN_PRODUCES), TOKEN_PRODUCES,
 		  tokenMap.get(TOKEN_SITE), TOKEN_SITE,
 		  "true", TOKEN_BOOLEAN,

@@ -20,7 +20,6 @@ import java.util.*;
 
 import static com.puppet.pcore.Pcore.loader;
 import static com.puppet.pcore.impl.Constants.KEY_NAME_AUTHORITY;
-import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.impl.Helpers.mapRange;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
@@ -200,6 +199,17 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		return ce.value();
 	}
 
+	Object eval(ConcatenatedString ce) {
+		// A Concatenated string is permitted in a type provided it does not
+		// contain any interpolations.
+		if(ce.segments.size() == 1) {
+			Expression seg = ce.segments.get(0);
+			if(seg instanceof LiteralString)
+				return ((LiteralString)seg).value();
+		}
+		throw new IllegalArgumentException("Strings with interpolations are not allowed here");
+	}
+
 	Object eval(HashExpression ce) {
 		LinkedHashMap<Object, Object> result = new LinkedHashMap<>();
 		for(KeyedEntry entry : ce.entries)
@@ -212,7 +222,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 	}
 
 	Object eval(TypeAlias ce) {
-		return declareType(((TypeAlias)ce).name, ((TypeAlias)ce).type, loader().getNameAuthority()).resolve();
+		return declareType(ce.name, ce.type, loader().getNameAuthority()).resolve();
 	}
 
 	Object eval(LiteralRegexp ce) {

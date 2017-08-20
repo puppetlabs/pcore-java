@@ -1,13 +1,29 @@
 package com.puppet.pcore;
 
+import java.util.List;
+
+import static com.puppet.pcore.impl.Helpers.asList;
+
 public class IssueException extends PcoreException {
-	private final Object[] args;
+	public final Issue issue;
 
-	private final Location location;
+	public final List<Object> args;
 
-	public IssueException(String issueCode, Object[] args, Location location) {
-		super(issueCode);
-		this.args = args;
+	public final Location location;
+
+	public IssueException(Issue issue, Object[] args, Location location) {
+		super(issue.name());
+		this.issue = issue;
+		this.args = asList(args);
 		this.location = location;
+	}
+
+	public ReportedIssue reportedIssue() {
+		return new ReportedIssue(issue, Severity.ERROR, args, location);
+	}
+
+	@Override
+	public String getMessage() {
+		return reportedIssue().toString();
 	}
 }

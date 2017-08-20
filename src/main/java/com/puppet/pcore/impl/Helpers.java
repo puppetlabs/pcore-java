@@ -61,7 +61,7 @@ public class Helpers {
 		return new MapEntry<>(key, value);
 	}
 
-	@SuppressWarnings("unchecked")
+	@SafeVarargs
 	public static <K, V> Map<K,V> asMap(Entry<K, V>... entries) {
 		if(entries.length == 0)
 			return Collections.emptyMap();
@@ -110,6 +110,7 @@ public class Helpers {
 		return map(map.entrySet(), (e) -> asList(e.getKey(), e.getValue()));
 	}
 
+	@SafeVarargs
 	public static <K, V> Map<K, V> merge(Map<K, V> ...maps) {
 		Map<K,V> result = new LinkedHashMap<>();
 		for(Map<K, V> map : maps)
@@ -149,6 +150,66 @@ public class Helpers {
 		while(--idx >= 0)
 			segments[idx] =  capitalizeSegment(segments[idx]);
 		return join("::", Arrays.asList(segments));
+	}
+
+	/**
+	 * Emit string within double quotes and escape tab, newline, carriage return, double qoute,
+	 * and the backslash (the escape character).
+	 * Other nonprintable characters (below the 0x20 range) are escaped using unicode escapes
+	 *
+	 * @param s the string to escape
+	 * @param escapeDollar If true, the '$' character will be escaped.
+	 * @return the quoted string
+	 */
+	public static String doubleQuote(String s, boolean escapeDollar) {
+		StringBuilder bld = new StringBuilder(s.length() + 4);
+		doubleQuote(s, bld, escapeDollar);
+		return bld.toString();
+	}
+
+	/**
+	 * Emit string within double quotes and escape tab, newline, carriage return, double qoute,
+	 * and the backslash (the escape character).
+	 * Other nonprintable characters (below the 0x20 range) are escaped using unicode escapes
+	 *
+	 * @param s the string to escape
+	 * @param bld the receiver of the escaped string
+	 * @param escapeDollar If true, the '$' character will be escaped.
+	 */
+	public static void doubleQuote(String s, StringBuilder bld, boolean escapeDollar) {
+		int top = s.length();
+		bld.append('"');
+		for(int idx = 0; idx < top; ++idx) {
+			char c = s.charAt(idx);
+			switch(c) {
+			case '\t':
+				bld.append("\\t");
+				break;
+			case '\n':
+				bld.append("\\n");
+				break;
+			case '\r':
+				bld.append("\\r");
+				break;
+			case '"':
+				bld.append("\\\"");
+				break;
+			case '$':
+				if(escapeDollar)
+					bld.append('\\');
+				bld.append(c);
+				break;
+			case '\\':
+				bld.append("\\\\");
+				break;
+			default:
+				if(c < 0x20) {
+					bld.append(String.format("\\u{%X}", (int)c));
+				} else
+					bld.append(c);
+			}
+		}
+		bld.append('"');
 	}
 
 	public static String join(String delimiter, Iterable<? extends CharSequence> strings) {

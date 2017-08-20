@@ -3,15 +3,22 @@ package com.puppet.pcore.impl.parser;
 import com.puppet.pcore.Default;
 import com.puppet.pcore.IssueException;
 import com.puppet.pcore.parser.Expression;
+import com.puppet.pcore.parser.ParseIssue;
 import com.puppet.pcore.parser.model.*;
 
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.puppet.pcore.Issues.*;
+import static com.puppet.pcore.parser.ParseIssue.*;
 import static com.puppet.pcore.impl.parser.LexTokens.*;
 
 public class Lexer extends StringReader {
+
+	private final boolean handleBacktickStrings;
+
+	public Lexer(boolean handleBacktickStrings) {
+		this.handleBacktickStrings = handleBacktickStrings;
+	}
 
 	@FunctionalInterface
 	private interface EscapeHandler {
@@ -44,7 +51,7 @@ public class Lexer extends StringReader {
 		this.eppMode = eppMode;
 	}
 
-	final IssueException parseIssue(String issueCode, Object...args) {
+	final IssueException parseIssue(ParseIssue issueCode, Object...args) {
 		return new IssueException(issueCode, args, new ParseLocation(locator, pos()));
 	}
 
@@ -98,7 +105,7 @@ public class Lexer extends StringReader {
 				advance();
 				consumeFloat(start, c);
 			} else {
-				if(isLetter(c))
+				if(Character.isLetter(c))
 					throw parseIssue(LEX_DIGIT_EXPECTED);
 				setToken(TOKEN_INTEGER, Long.parseLong(from(start), 10));
 				radix = 10;
@@ -411,7 +418,7 @@ public class Lexer extends StringReader {
 	      advance();
         skipDecimalDigits();
         tokenValue = from(start + 1);
-      } else if(isLetter(c)) {
+      } else if(Character.isLetter(c)) {
 	      setPos(start);
 	      throw parseIssue(LEX_INVALID_VARIABLE_NAME);
       } else
@@ -459,7 +466,7 @@ public class Lexer extends StringReader {
 		      advance();
 		      c = peek();
 	      }
-	      if(isLetterOrDigit(c))
+	      if(isDigit(c) || Character.isLetter(c))
 		      throw parseIssue(LEX_OCTALDIGIT_EXPECTED);
 	      if(pos() > octalStart) {
 		      radix = 8;
@@ -472,6 +479,12 @@ public class Lexer extends StringReader {
       }
       break;
 
+		case '`':
+			if(handleBacktickStrings) {
+				consumeBacktickedString();
+				break;
+			}
+			// Fall through
     default:
       setPos(start);
       throw parseIssue(LEX_UNEXPECTED_TOKEN, new String(new char[] {c}));
@@ -491,7 +504,7 @@ public class Lexer extends StringReader {
 	private int skipDecimalDigits() {
 		int digitCount = 0;
 		char c = peek();
-		if(c == '-') {
+		if(c == '-' || c == '+') {
 			advance();
 			c = peek();
 		}
@@ -959,13 +972,14 @@ public class Lexer extends StringReader {
 				c = peek();
 			}
 		}
-		if(isLetter(c))
+		if(Character.isLetter(c))
 			throw parseIssue(LEX_DIGIT_EXPECTED);
 
 		setToken(TOKEN_FLOAT, Double.valueOf(from(start)));
 	}
 
 	private void consumeQualifiedName(int start, int token) {
+		boolean lastStartsWithUnderscore = false;
 		for(;;) {
 			char c = peek();
 			while(isLetterOrDigit(c)) {
@@ -990,12 +1004,15 @@ public class Lexer extends StringReader {
 			c = peek();
 			if(token == TOKEN_TYPE_NAME && isUppercaseLetter(c) ||
 					token != TOKEN_TYPE_NAME && (isLowercaseLetter(c) || token == TOKEN_VARIABLE && c == '_')) {
-				advance();
-				continue;
+				if(!lastStartsWithUnderscore) {
+					advance();
+					lastStartsWithUnderscore = c == '_';
+					continue;
+				}
 			}
 
 			setPos(start);
-			String issueCode;
+			ParseIssue issueCode;
 			if(token == TOKEN_TYPE_NAME)
 				issueCode = LEX_INVALID_TYPE_NAME;
 			else if(token == TOKEN_VARIABLE)
@@ -1061,6 +1078,19 @@ public class Lexer extends StringReader {
 				buf.append(ec);
 			}
 		});
+
+		if(segments.size() > 0) {
+			if(currentToken == TOKEN_STRING) {
+				String tail = tokenString();
+				if(!tail.isEmpty()) {
+					segments.add(new LiteralString(tail, locator, tokenStartPos, pos() - tokenStartPos));
+				}
+			}
+		} else
+			segments.add(new LiteralString(tokenString(), locator, tokenStartPos, pos() - tokenStartPos));
+
+		int firstPos = segments.get(0).offset();
+		setToken(TOKEN_CONCATENATED_STRING, new ConcatenatedString(segments, locator, firstPos, pos() - firstPos));
 	}
 
 	private void appendUnicode(StringBuilder buf) {
@@ -1114,6 +1144,14 @@ public class Lexer extends StringReader {
 		}
 		setPos(start);
 		return false;
+	}
+
+	private void consumeBacktickedString() {
+		int start = pos();
+		if(!find('`'))
+			throw parseIssue(LEX_UNTERMINATED_STRING, "backtick");
+		setToken(TOKEN_STRING, from(start));
+		advance(); // skip backtick
 	}
 
 	private void consumeSingleQuotedString() {
@@ -1175,10 +1213,13 @@ public class Lexer extends StringReader {
 						commentStartPos = start;
 						break;
 					}
+					return c;
 				}
-				return c;
+				break;
 
 			case '*':
+				if(commentStart == '#')
+					continue;
 				if(commentStart == '*' && peek() == '/') {
 					advance();
 					commentStart = 0;
@@ -1198,7 +1239,7 @@ public class Lexer extends StringReader {
 		}
 	}
 
-	private void consumeEPP() {
+	void consumeEPP() {
 		StringBuilder buf = new StringBuilder();
 		int lastNonWS = 0;
 		int start = pos();

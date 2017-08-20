@@ -925,7 +925,7 @@ public class StringConverter extends Polymorphic<String> {
 			char c = s.charAt(idx);
 			if(c < 0x20) {
 				bld.setLength(start);
-				puppetDoubleQuote(s, bld);
+				doubleQuote(s, bld, true);
 				return;
 			}
 
@@ -944,40 +944,5 @@ public class StringConverter extends Polymorphic<String> {
 		if(escaped)
 			bld.append('\\');
 		bld.append('\'');
-	}
-
-	private static void puppetDoubleQuote(String s, StringBuilder bld) {
-		int top = s.length();
-		bld.append('"');
-		for(int idx = 0; idx < top; ++idx) {
-			char c = s.charAt(idx);
-			switch(c) {
-			case '\t':
-				bld.append("\\t");
-				break;
-			case '\n':
-				bld.append("\\n");
-				break;
-			case '\r':
-				bld.append("\\r");
-				break;
-			case '"':
-				bld.append("\\\"");
-				break;
-			case '\\':
-				bld.append("\\\\");
-				break;
-			case '$':
-				bld.append("\\");
-				bld.append(c);
-				break;
-			default:
-				if(c < 0x20) {
-					bld.append(format("\\u{%X}", (int)c));
-				} else
-					bld.append(c);
-			}
-		}
-		bld.append('"');
 	}
 }

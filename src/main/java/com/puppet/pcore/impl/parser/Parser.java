@@ -7,29 +7,95 @@ import com.puppet.pcore.parser.model.*;
 import java.util.*;
 import java.util.function.Supplier;
 
-import static com.puppet.pcore.Issues.*;
+import static com.puppet.pcore.parser.ParseIssue.*;
 import static com.puppet.pcore.impl.Helpers.asList;
+import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
 import static com.puppet.pcore.impl.parser.LexTokens.*;
+import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
 
 public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionParser {
 
+	private static class CommaSeparatedList extends ArrayExpression {
+		public CommaSeparatedList(List<Expression> elements, Locator locator, int offset, int length) {
+			super(elements, locator, offset, length);
+		}
+	}
+
 	private final Stack<String> nameStack = new Stack<>();
+	private final List<Definition> definitions = new ArrayList<>();
+
+	public Parser() {
+		super(false);
+	}
+
+	public Parser(boolean handleBacktickStrings) {
+		super(handleBacktickStrings);
+	}
 
 	@Override
-	public synchronized Expression parse(String exprString) {
+	public Expression parse(String exprString) {
 		return parse(null, exprString);
 	}
 
 	@Override
-	public synchronized Expression parse(String file, String exprString) {
+	public Expression parse(String file, String exprString) {
 		return parse(null, exprString, file != null && file.endsWith(".epp"), false);
 	}
 
 	@Override
 	public synchronized Expression parse(String file, String exprString, boolean eppMode, boolean singleExpression) {
+		definitions.clear();
+		nameStack.clear();
 		init(file, exprString, eppMode);
+		Expression expr = parseTopBlock(file, exprString, eppMode, singleExpression);
+		return singleExpression ? expr : new Program(expr, unmodifiableCopy(definitions), locator, 0, pos());
+	}
+
+	private Expression parseTopBlock(String file, String exprString, boolean eppMode, boolean singleExpression) {
+		if(eppMode) {
+			consumeEPP();
+
+			String text = null;
+			if(currentToken == TOKEN_RENDER_STRING) {
+				text = tokenString();
+				nextToken();
+			}
+
+			if(currentToken == TOKEN_END) {
+				// No EPP in the source
+				RenderString te = new RenderString(text, locator, 0, pos());
+				return new BlockExpression(singletonList(te), locator, 0, pos());
+			}
+
+			if(currentToken == TOKEN_PIPE) {
+				if(text != null && !text.isEmpty())
+					throw parseIssue(PARSE_ILLEGAL_EPP_PARAMETERS);
+				List<Parameter> eppParams = lambdaParameterList();
+				return new BlockExpression(
+						singletonList(new LambdaExpression(
+								eppParams,
+								null,
+								new EppExpression(
+										!eppParams.isEmpty(),
+										parse(TOKEN_END, false),
+										locator, 0, pos()),
+								locator, 0, pos())),
+						locator, 0, pos());
+			}
+
+			List<Expression> expressions = new ArrayList<>();
+			if(text != null)
+				expressions.add(new RenderString(text, locator, 0, pos()));
+
+			for(;;) {
+				if(currentToken == TOKEN_END) {
+					return new BlockExpression(transformCalls(expressions, 0), locator, 0, pos());
+				}
+			}
+		}
+
 		nextToken();
 		return parse(TOKEN_END, singleExpression);
 	}
@@ -40,14 +106,17 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		if(singleExpression) {
 			if(currentToken == expectedEnd)
 				return new LiteralUndef(locator, start, pos() - start);
-			Expression expr = expression();
+			Expression expr = assignment();
 			assertToken(expectedEnd);
 			return expr;
 		}
 
 		List<Expression> expressions = new ArrayList<>();
-		while(currentToken != expectedEnd)
-			expressions.add(expression());
+		while(currentToken != expectedEnd) {
+			expressions.add(syntacticStatement());
+			if(currentToken == TOKEN_SEMICOLON)
+				nextToken();
+		}
 		return new BlockExpression(transformCalls(expressions, start), locator, start, pos() - start);
 	}
 
@@ -74,16 +143,27 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 	private List<Expression> transformCalls(List<Expression> exprs, int start) {
 		int top = exprs.size();
 		if(top == 0)
-			return singletonList(new LiteralUndef(locator, start, pos() - start));
+			return exprs;
 
 		Expression memo = exprs.get(0);
 		List<Expression> result = new ArrayList<>(top);
 		for(int idx = 1; idx < top; ++idx) {
 			Expression expr = exprs.get(idx);
 			if(memo instanceof QualifiedName && statementCalls.contains(((QualifiedName)memo).name)) {
-				if(expr instanceof CallNamedFunctionExpression)
-					expr = ((CallNamedFunctionExpression)expr).withRvalRequired(true);
-				Expression cn = new CallNamedFunctionExpression(memo, singletonList(expr), null, false, locator, memo.offset(), (expr.offset()+expr.length())-memo.offset());
+				List<Expression> args;
+				if(expr instanceof CommaSeparatedList)
+					args = new ArrayList<>(((CommaSeparatedList)expr).elements);
+				else {
+					args = new ArrayList<>();
+					args.add(expr);
+				}
+
+				for(int ax = args.size() - 1; ax >= 0; --ax) {
+					Expression arg = args.get(ax);
+					if(arg instanceof CallNamedFunctionExpression)
+						args.set(ax, ((CallNamedFunctionExpression)arg).withRvalRequired(true));
+				}
+				Expression cn = new CallNamedFunctionExpression(memo, args, null, false, locator, memo.offset(), (expr.offset()+expr.length())-memo.offset());
 				result.add(cn);
 				if(++idx == top) {
 					return result;
@@ -105,7 +185,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 	private void assertToken(int token) {
 		if(currentToken != token) {
 			setPos(tokenStartPos);
-			throw parseIssue(PARSE_EXPECTED_TOKEN, tokenMap.get(token));
+			throw parseIssue(PARSE_EXPECTED_TOKEN, tokenMap.get(token), tokenMap.get(currentToken));
 		}
 	}
 
@@ -119,7 +199,10 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			result.add(supplier.get());
 
 			if(currentToken != TOKEN_COMMA) {
-				assertToken(endToken);
+				if(currentToken != endToken) {
+					setPos(tokenStartPos);
+					throw parseIssue(PARSE_EXPECTED_ONE_OF_TOKENS, format("'%s' or '%s'", tokenMap.get(TOKEN_COMMA), tokenMap.get(endToken)), tokenMap.get(currentToken));
+				}
 				nextToken();
 				return result;
 			}
@@ -127,8 +210,33 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		}
 	}
 
-	private Expression expression() {
-		return assignment();
+	private Expression syntacticStatement() {
+		List<Expression> args = null;
+		Expression expr = assignment();
+		while(currentToken == TOKEN_COMMA) {
+			nextToken();
+			if(args == null) {
+				args = new ArrayList<>();
+				args.add(expr);
+			}
+			args.add(assignment());
+		}
+		if(args != null)
+			expr = new CommaSeparatedList(args, locator, expr.offset(), pos() - expr.offset());
+		return expr;
+	}
+
+	private Expression collectionEntry() {
+		Expression expr;
+		switch(currentToken) {
+		case TOKEN_TYPE: case TOKEN_FUNCTION: case TOKEN_APPLICATION: case TOKEN_CONSUMES: case TOKEN_PRODUCES: case TOKEN_SITE:
+			expr = new QualifiedName(tokenString(), locator, tokenStartPos, pos() - tokenStartPos);
+			nextToken();
+			break;
+		default:
+			expr = assignment();
+		}
+		return expr;
 	}
 
 	private Expression assignment() {
@@ -148,13 +256,13 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 	}
 
 	private Expression relationship() {
-		Expression expr = lowPrioExpression();
+		Expression expr = resource();
 		for(;;) {
 			switch(currentToken) {
 			case TOKEN_IN_EDGE: case TOKEN_IN_EDGE_SUB: case TOKEN_OUT_EDGE: case TOKEN_OUT_EDGE_SUB:
 				String op = tokenString();
 				nextToken();
-				expr = new RelationshipExpression(op, expr, lowPrioExpression(), locator, expr.offset(), pos() - expr.offset());
+				expr = new RelationshipExpression(op, expr, resource(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -163,13 +271,16 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		}
 	}
 
-	private Expression lowPrioExpression() {
+	private Expression resource() {
+		Expression expr = expression();
+		if(currentToken == TOKEN_LC)
+			expr = resourceExpression(expr.offset(), expr, "regular");
+		return expr;
+	}
+
+	private Expression expression() {
 		Expression expr = orExpression();
 		switch(currentToken) {
-		case TOKEN_LC:
-			expr = resourceExpression(expr.offset(), expr, "regular");
-			break;
-
 		case TOKEN_PRODUCES: case TOKEN_CONSUMES:
 			// Must be preceded by name of class
 			if(expr instanceof  QualifiedName || expr instanceof QualifiedReference || expr instanceof ReservedWord || expr instanceof AccessExpression)
@@ -421,11 +532,12 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 
 	private Expression atomExpression() {
 		Expression expr;
+		String name;
 		int atomStart = tokenStartPos;
 		switch(currentToken) {
 		case TOKEN_LP: case TOKEN_WSLP:
 				nextToken();
-				expr = expression();
+				expr = new ParenthesizedExpression(assignment(), locator, atomStart, pos() - atomStart);
 				assertToken(TOKEN_RP);
 				nextToken();
 				break;
@@ -460,7 +572,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 				nextToken();
 				break;
 
-			case TOKEN_KEYWORD:
+			case TOKEN_ATTR: case TOKEN_PRIVATE:
 				expr = new ReservedWord(tokenString(), false, locator, atomStart, pos() - atomStart);
 				nextToken();
 				break;
@@ -508,12 +620,19 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 				break;
 
 			case TOKEN_CLASS:
-				expr = classExpression();
+				name = tokenString();
+				nextToken();
+				if(currentToken == TOKEN_LC) {
+					// Class resource
+					expr = new QualifiedName(name, locator, atomStart, pos() - atomStart);
+				} else {
+					expr = classExpression(atomStart);
+				}
 				break;
 
 			case TOKEN_TYPE:
 				// look ahead for '(' in which case this is a named function call
-				String name = tokenString();
+				name = tokenString();
 				nextToken();
 				if(currentToken == TOKEN_TYPE_NAME)
 					expr = typeAliasOrDefinition();
@@ -556,7 +675,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 	}
 
 	private List<Expression> arrayExpression() {
-		return expressions(TOKEN_RB, this::expression);
+		return expressions(TOKEN_RB, this::collectionEntry);
 	}
 
 	private Expression capabilityMapping(Expression component, String kind) {
@@ -568,8 +687,11 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		List<Expression> mappings = attributeOperations();
 		assertToken(TOKEN_RC);
 		nextToken();
-		if(component instanceof NameExpression) {
-			component = new QualifiedName(qualifiedName(((NameExpression)component).name()), locator, component.offset(), component.length());
+		if(component instanceof QualifiedName || component instanceof QualifiedReference) {
+			// No action
+		} else if(component instanceof ReservedWord) {
+			// All reserved words are lowercase only
+			component = new QualifiedName(qualifiedName(((ReservedWord)component).name()), locator, component.offset(), component.length());
 		}
 		return new CapabilityMapping(kind, qualifiedName(capName), component, mappings, locator, start, pos() - start);
 	}
@@ -670,7 +792,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 				names.add(tokenValue.toString());
 				break;
 			case TOKEN_FLOAT:
-				names.add(String.format("%g", (Double)tokenValue));
+				names.add(format("%g", (Double)tokenValue));
 				break;
 			default:
 				throw parseIssue(PARSE_EXPECTED_NAME_OR_NUMBER_AFTER_DOT);
@@ -688,7 +810,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		nextToken();
 		String name;
 		switch(currentToken) {
-		case TOKEN_IDENTIFIER: case TOKEN_TYPE_NAME: case TOKEN_KEYWORD:
+		case TOKEN_IDENTIFIER: case TOKEN_TYPE_NAME:
 			name = tokenString();
 			break;
 		default:
@@ -748,9 +870,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 				defaultExpression, typeExpr, capturesRest, locator, start, pos() - start);
 	}
 
-	private Expression classExpression() {
-		int start = tokenStartPos;
-		nextToken();
+	private Expression classExpression(int start) {
 		String name = className();
 		if(name.startsWith("::"))
 			name = name.substring(2);
@@ -813,7 +933,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 	private Expression caseExpression() {
 		int start = tokenStartPos;
 		nextToken();
-		Expression test = orExpression();
+		Expression test = expression();
 		assertToken(TOKEN_LC);
 		nextToken();
 		List<CaseOption> caseOptions = caseOptions();
@@ -1036,15 +1156,16 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		Expression typeExpr = parameterType();
 		String parent = null;
 
-		if(typeExpr == null)
-			throw parseIssue(PARSE_EXPECTED_TYPE_NAME_AFTER_TYPE);
-
 		switch(currentToken) {
 		case TOKEN_ASSIGN:
 			if(typeExpr instanceof QualifiedReference) {
 				nextToken();
 				Expression body = expression();
 				return new TypeAlias(((QualifiedReference)typeExpr).name, body, locator, start, pos() - start);
+			} else if(typeExpr instanceof AccessExpression) {
+				nextToken();
+				Expression mapping = expression();
+				return new TypeMapping(typeExpr, mapping, locator, start, pos() - start);
 			}
 			throw parseIssue(PARSE_EXPECTED_TYPE_NAME_AFTER_TYPE);
 
@@ -1110,11 +1231,16 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 
 	private String attributeName() {
 		switch(currentToken) {
-		case TOKEN_IDENTIFIER: case TOKEN_KEYWORD: case TOKEN_TYPE:
+		case TOKEN_IDENTIFIER:
 			String name = tokenString();
 			nextToken();
 			return name;
 		default:
+			String word = keyword();
+			if(word != null) {
+				nextToken();
+				return word;
+			}
 			setPos(tokenStartPos);
 			throw parseIssue(PARSE_EXPECTED_ATTRIBUTE_NAME);
 		}
@@ -1124,7 +1250,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		int start = tokenStartPos;
 		Expression typeName = typeName();
 		if(typeName == null)
-			return null;
+			throw parseIssue(PARSE_EXPECTED_TYPE_NAME);
 
 		if(currentToken == TOKEN_LB) {
 			nextToken();
@@ -1136,7 +1262,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 
 	private String className() {
 		switch(currentToken) {
-		case TOKEN_TYPE_NAME: case TOKEN_IDENTIFIER: case TOKEN_KEYWORD:
+		case TOKEN_TYPE_NAME: case TOKEN_IDENTIFIER:
 				String name = tokenString();
 				nextToken();
 				return name;
@@ -1150,6 +1276,15 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			setPos(tokenStartPos);
 			throw parseIssue(PARSE_EXPECTED_CLASS_NAME);
 		}
+	}
+
+	private String keyword() {
+		if(currentToken != TOKEN_BOOLEAN) {
+			String str = tokenMap.get(currentToken);
+			if(keywords.containsKey(str))
+				return str;
+		}
+		return null;
 	}
 
 	private QualifiedReference typeName() {
@@ -1174,12 +1309,12 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 	}
 
 	private KeyedEntry hashEntry() {
-		Expression key = expression();
+		Expression key = collectionEntry();
 		if(currentToken != TOKEN_FARROW)
 			throw parseIssue(PARSE_EXPECTED_FARROW_AFTER_KEY);
 
 		nextToken();
-		Expression value = expression();
+		Expression value = collectionEntry();
 		return new KeyedEntry(key, value, locator, key.offset(), pos() - key.offset());
 	}
 
