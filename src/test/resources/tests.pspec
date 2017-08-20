@@ -1,6 +1,6 @@
 Example('Operator + on two integers produces an Integer',
   Given(Source('1 + 1')),
-  Parses_to('(block [(+ 1 1)])'))
+  Parses_to('(+ 1 1)'))
 
 Example('Variable name segment cannot start with underscore unless last',
   Given(Source(`$x::_y::z`)),

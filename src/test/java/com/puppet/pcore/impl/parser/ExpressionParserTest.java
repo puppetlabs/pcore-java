@@ -83,30 +83,6 @@ public class ExpressionParserTest {
 		}
 
 		@Test
-		@DisplayName("number with exponent")
-		public void floatWithExponent() {
-			assertEquals("3.2E8", parse("32e7"));
-		}
-
-		@Test
-		@DisplayName("number with negative exponent")
-		public void floatWithNegativeExponent() {
-			assertEquals("3.2E-6", parse("32e-7"));
-		}
-
-		@Test
-		@DisplayName("negative number with fragment and exponent")
-		public void negativeFloatWithExponentFragment() {
-			assertEquals("-3.23E8", parse("-32.3e7"));
-		}
-
-		@Test
-		@DisplayName("number with fragment and negative exponent")
-		public void floatWithNegativeExponentFragment() {
-			assertEquals("3.23E-6", parse("32.3e-7"));
-		}
-
-		@Test
 		@DisplayName("negative identifier")
 		public void negativeIdentifier() {
 			assertEquals("(- (qn \"my::type\"))", parse("-my::type"));
