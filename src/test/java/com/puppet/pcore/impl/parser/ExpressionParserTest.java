@@ -1,184 +1,212 @@
 package com.puppet.pcore.impl.parser;
 
-import com.puppet.pcore.Default;
 import com.puppet.pcore.IssueException;
-import com.puppet.pcore.parser.Expression;
-import com.puppet.pcore.parser.model.*;
-import org.junit.jupiter.api.BeforeEach;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import com.puppet.pcore.pspec.SpecEvaluator;
+import com.puppet.pcore.test.PSpecAssertions;
+import org.junit.jupiter.api.*;
 
-import java.util.Collections;
 import java.util.List;
 
-import static com.puppet.pcore.TestHelper.multiline;
-import static java.lang.String.format;
-import static java.util.Arrays.asList;
+import static com.puppet.pcore.test.TestHelper.dynamicPSpecTest;
+import static com.puppet.pcore.test.TestHelper.multiline;
+import static com.puppet.pcore.impl.Helpers.doubleQuote;
+import static com.puppet.pcore.test.TestHelper.readResource;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
-import static org.junit.jupiter.api.Assertions.fail;
 
 @SuppressWarnings("SameParameterValue")
 @DisplayName("The Parser")
 public class ExpressionParserTest {
+	private static SpecEvaluator evaluator;
+
+	@BeforeAll
+	static void init() {
+		evaluator = new SpecEvaluator(PSpecAssertions.SINGLETON);
+	}
+
+	@TestFactory
+	@DisplayName("primitives.pspec")
+	public List<DynamicTest> testPrimitives() {
+		return dynamicPSpecTest(
+				evaluator.createTests("primitives.pspec",
+						readResource(getClass(), "primitives.pspec")));
+	}
+
+	@TestFactory
+	@DisplayName("arithmetic.pspec")
+	public List<DynamicTest> testArithmetic() {
+		return dynamicPSpecTest(
+				evaluator.createTests("arithmetic.pspec",
+						readResource(getClass(), "arithmetic.pspec")));
+	}
+
 	@Nested
 	@DisplayName("can parse primitive")
 	class Primitives {
 		@Test
 		@DisplayName("boolean false")
 		public void booleanFalse() {
-			assertEquals(constant(false), parse("false"));
+			assertEquals("false", parse("false"));
 		}
 
 		@Test
 		@DisplayName("boolean true")
 		public void booleanTrue() {
-			assertEquals(constant(true), parse("true"));
+			assertEquals("true", parse("true"));
 		}
 
 		@Test
 		public void doubleQuotedStringWithControlChars() {
-			assertEquals(constant("string\nwith\t\\t, \\s, \\r, and \\n\r\n"), parse
+			assertEquals("(concat [\"string\\nwith\\t\\\\t, \\\\s, \\\\r, and \\\\n\\r\\n\"])", parse
 					("\"string\\nwith\\t\\\\t,\\s\\\\s, \\\\r, and \\\\n\\r\\n\""));
 		}
 
 		@Test
 		public void doubleQuotedStringWithDoubleQuotes() {
-			assertEquals(constant("string\"with\"quotes"), parse("\"string\\\"with\\\"quotes\""));
+			assertEquals("(concat [\"string\\\"with\\\"quotes\"])", parse("\"string\\\"with\\\"quotes\""));
 		}
 
 		@Test
 		public void doubleQuotedStringWithSingleQoutes() {
-			assertEquals(constant("string'with'quotes"), parse("\"string'with'quotes\""));
+			assertEquals("(concat [\"string'with'quotes\"])", parse("\"string'with'quotes\""));
 		}
 
 		@Test
 		public void doubleQuotedStringWithSupplimentaryUnicodeChars() {
-			assertEquals(constant("x" + new String(Character.toChars(0x1f452)) + "y"), parse
+			assertEquals("(concat [\"x" + new String(Character.toChars(0x1f452)) + "y\"])", parse
 					("\"x\\u{1f452}y\""));
 		}
 
 		@Test
 		public void doubleQuotedStringWithUnicodeChars() {
-			assertEquals(constant("x\u2713y"), parse("\"x\\u2713y\""));
+			assertEquals("(concat [\"x✓y\"])", parse("\"x\\u2713y\""));
 		}
 
 		@Test
 		@DisplayName("number with exponent")
 		public void floatWithExponent() {
-			assertEquals(constant(32e7), parse("32e7"));
+			assertEquals("3.2E8", parse("32e7"));
 		}
 
 		@Test
 		@DisplayName("number with negative exponent")
 		public void floatWithNegativeExponent() {
-			assertEquals(constant(32e-7), parse("32e-7"));
+			assertEquals("3.2E-6", parse("32e-7"));
 		}
 
 		@Test
 		@DisplayName("negative number with fragment and exponent")
 		public void negativeFloatWithExponentFragment() {
-			assertEquals(constant(-32.3e7), parse("-32.3e7"));
+			assertEquals("-3.23E8", parse("-32.3e7"));
 		}
 
 		@Test
 		@DisplayName("number with fragment and negative exponent")
 		public void floatWithNegativeExponentFragment() {
-			assertEquals(constant(32.3e-7), parse("32.3e-7"));
+			assertEquals("3.23E-6", parse("32.3e-7"));
 		}
 
 		@Test
 		@DisplayName("negative identifier")
 		public void negativeIdentifier() {
-			assertEquals(negate(identifier("my::type")), parse("-my::type"));
+			assertEquals("(- (qn \"my::type\"))", parse("-my::type"));
 		}
 
 		@Test
 		@DisplayName("negative integer")
 		public void negativeInteger() {
-			assertEquals(constant(-123), parse("-123"));
+			assertEquals("-123", parse("-123"));
 		}
 
 		@Test
 		@DisplayName("positive integer")
 		public void positiveInteger() {
-			assertEquals(constant(123), parse("123"));
+			assertEquals("123", parse("123"));
 		}
 
 		@Test
 		@DisplayName("qualified identifier")
 		public void qualifiedIdentifier() {
-			assertEquals(identifier("my::type"), parse("my::type"));
+			assertEquals("(qn \"my::type\")", parse("my::type"));
 		}
 
 		@Test
 		@DisplayName("qualified type name")
 		public void qualifiedTypeName() {
-			assertEquals(typeName("My::Type"), parse("My::Type"));
+			assertEquals("(qr \"My::Type\")", parse("My::Type"));
 		}
 
 		@Test
 		public void regexp1() {
-			assertEquals(regexp("pattern/with/slash"), parse("/pattern\\/with\\/slash/"));
+			assertEquals("(regexp \"pattern/with/slash\")", parse("/pattern\\/with\\/slash/"));
 		}
 
 		@Test
 		@DisplayName("simple identifier")
 		public void simpleIdentifier() {
-			assertEquals(identifier("mytype"), parse("mytype"));
+			assertEquals("(qn \"mytype\")", parse("mytype"));
 		}
 
 		@Test
 		@DisplayName("simple type name")
 		public void simpleTypeName() {
-			assertEquals(typeName("MyType"), parse("MyType"));
+			assertEquals("(qr \"MyType\")", parse("MyType"));
 		}
 
 		@Test
 		public void singleQuotedStringWithDoubleQuotes() {
-			assertEquals(constant("string\"with\"quotes"), parse("'string\"with\"quotes'"));
+			assertEquals("\"string\\\"with\\\"quotes\"", parse("'string\"with\"quotes'"));
 		}
 
 		@Test
 		public void singleQuotedStringWithSingleQuotes() {
-			assertEquals(constant("string'with'quotes"), parse("'string\\'with\\'quotes'"));
+			assertEquals("\"string'with'quotes\"", parse("'string\\'with\\'quotes'"));
 		}
 
 		@Test
 		public void singleQuotedStringWithSingleUnrecognizedEscapes() {
-			assertEquals(constant("string'with'\\unregognized\\escapes"), parse
+			assertEquals("\"string'with'\\\\unregognized\\\\escapes\"", parse
 					("'string\\'with\\'\\unregognized\\escapes'"));
 		}
 
 		@Test
 		@DisplayName("undef")
 		public void undef() {
-			assertEquals(constant(null), parse("undef"));
+			assertEquals("null", parse("undef"));
 		}
 
 		@Test
 		@DisplayName("zero")
 		public void zero() {
-			assertEquals(constant(0), parse("0"));
+			assertEquals("0", parse("0"));
 		}
 
 		@Test
 		@DisplayName("zero with zero fragment")
 		public void zeroFloat() {
-			assertEquals(constant(0.0), parse("0.0"));
+			assertEquals("0.0", parse("0.0"));
 		}
 
 		@Test
 		@DisplayName("zero with fragment and exponent")
 		public void zeroFloatWithFragmentAndExponent() {
-			assertEquals(constant(0.3e7), parse("0.3e7"));
+			assertEquals("3000000.0", parse("0.3e7"));
 		}
 
 		@Test
 		@DisplayName("zero hex")
 		public void zeroHex() {
-			assertEquals(integer(0x0, 16), parse("0x0"));
+			assertEquals("0", parse("0x0"));
+		}
+	}
+
+	@Nested
+	@DisplayName("parses calls")
+	class Calls {
+		@Test
+		@DisplayName("transforms statement calls")
+		void typeAliasT() {
+			assertEquals("(block [(invoke {:functor (qn \"notice\") :args [(call {:functor (qn \"hello\") :args []}) \"world\"]})])", parse("notice hello(), 'world'", true));
 		}
 	}
 
@@ -188,7 +216,7 @@ public class ExpressionParserTest {
 		@Test
 		@DisplayName("type alias")
 		void typeAliasT() {
-			assertEquals(typeAlias("MyType", access(typeName("Variant"), asList(typeName("Integer"), typeName("String")))),
+			assertEquals("(type-alias \"MyType\" ([] [(qr \"Variant\") (qr \"Integer\") (qr \"String\")]))",
 					parse("type MyType = Variant[Integer,String]"));
 		}
 	}
@@ -300,7 +328,7 @@ public class ExpressionParserTest {
 		@DisplayName("syntax and escape specification")
 		void syntaxAndEscape() {
 			assertEquals(
-					heredoc("Tex\tt\\n", "syntax"),
+					"(heredoc {:text \"Tex\\tt\\\\n\" :syntax \"syntax\"})",
 					parse(multiline(
 							"@(END:syntax/t)",
 							"Tex\\tt\\n",
@@ -334,7 +362,7 @@ public class ExpressionParserTest {
 		@Test
 		@DisplayName("multiple heredocs on the same line")
 		void multipleOnSameLine() {
-			assertEquals(hash(asList(entry(heredoc("hello"), heredoc("world")))), parse(multiline(
+			assertEquals("(hash [(=> (heredoc {:text \"hello\"}) (heredoc {:text \"world\"}))])", parse(multiline(
 					"{ @(foo) => @(bar) }",
 					"hello",
 					"-foo",
@@ -504,110 +532,24 @@ public class ExpressionParserTest {
 
 	private Parser parser;
 
-	@Test
-	public void access1() {
-		assertEquals(access(typeName("A"), asList(constant(1), constant("b"))), parse("A[1, 'b']"));
-	}
-
-	@Test
-	public void array1() {
-		assertEquals(array(asList(constant(1), constant(2.3), constant(8))),
-				parse("[1, 2.3, 8]"));
-	}
-
 	@BeforeEach
 	public void createParser() {
 		parser = new Parser();
 	}
 
-	@Test
-	public void emptyArray() {
-		assertEquals(array(Collections.emptyList()), parse("[]"));
+	String parse(String str) {
+		return parse(str, false);
 	}
 
-	@Test
-	public void emptyHash() {
-		assertEquals(hash(Collections.emptyList()), parse("{}"));
+	String parse(String str, boolean program) {
+		return parser.parse(null, str, false, !program).toPN().toString();
 	}
 
-	@Test
-	public void hash1() {
-		assertEquals(hash(asList(entry(constant("a"), constant(1)), entry(constant("b"), constant(8)))), parse("{'a' => 1, 'b' =>" +
-				" 8}"));
+	String heredoc(String str) {
+		return String.format("(heredoc {:text %s})", doubleQuote(str, false));
 	}
 
-	Expression parse(String str) {
-		return parser.parse(null, str, false, true);
-	}
-
-	private Locator locator = new Locator(null, "dummy source");
-
-	Expression access(Expression expr, List<Expression> parameters) {
-		return new AccessExpression(expr, parameters, locator, 0, 0);
-	}
-
-	Expression array(List<Expression> expressions) {
-		return new ArrayExpression(expressions, locator, 0, 0);
-	}
-
-	Expression assignment(Expression a, Expression b) {
-		return new AssignmentExpression("=", a, b, locator, 0, 0);
-	}
-
-	Expression constant(Object value) {
-		if(value == null)
-			return new LiteralUndef(locator, 0, 0);
-		if(value instanceof String)
-			return new LiteralString((String)value, locator, 0, 0);
-		if(value instanceof Boolean)
-			return new LiteralBoolean((Boolean)value, locator, 0, 0);
-		if(value instanceof Double || value instanceof Float)
-			return new LiteralFloat(((Number)value).doubleValue(), locator, 0, 0);
-		if(value instanceof Number)
-			return new LiteralInteger(((Number)value).longValue(), 10, locator, 0, 0);
-		if(value instanceof Default)
-			return new LiteralDefault(locator, 0, 0);
-		fail(format("cannot make constant of a %s", value.getClass().getName()));
-		return null;
-	}
-
-	KeyedEntry entry(Expression key, Expression value) {
-		return new KeyedEntry(key, value, locator, 0, 0);
-	}
-
-	Expression heredoc(String value) {
-		return new HeredocExpression(new LiteralString(value, locator, 0, 0), null, locator, 0, 0);
-	}
-
-	Expression heredoc(String value, String syntax) {
-		return new HeredocExpression(new LiteralString(value, locator, 0, 0), syntax, locator, 0, 0);
-	}
-
-	Expression hash(List<KeyedEntry> entries) {
-		return new HashExpression(entries, locator, 0, 0);
-	}
-
-	Expression identifier(String value) {
-		return new QualifiedName(value, locator, 0, 0);
-	}
-
-	Expression integer(long value, int radix) {
-		return new LiteralInteger(value, radix, locator, 0, 0);
-	}
-
-	Expression negate(Expression expr) {
-		return new UnaryMinusExpression(expr, locator, 0, 0);
-	}
-
-	Expression regexp(String value) {
-		return new LiteralRegexp(value, locator, 0, 0);
-	}
-
-	Expression typeName(String value) {
-		return new QualifiedReference(value, locator, 0, 0);
-	}
-
-	Expression typeAlias(String name, Expression type) {
-		return new TypeAlias(name, type, locator, 0, 0);
+	String heredoc(String str, String syntax) {
+		return String.format("(heredoc {:str \"%s\" :syntax \"%s\"})", str, syntax);
 	}
 }

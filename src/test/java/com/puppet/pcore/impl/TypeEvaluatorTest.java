@@ -13,7 +13,7 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.regex.Pattern;
 
-import static com.puppet.pcore.TestHelper.multiline;
+import static com.puppet.pcore.test.TestHelper.multiline;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
@@ -289,8 +289,8 @@ public class TypeEvaluatorTest {
 			@Test
 			@DisplayName("Struct[{'a' => String, 'b' => Integer[1,0775]}]")
 			public void structType1() {
+				//noinspection OctalInteger
 				Assertions.assertEquals(
-						//noinspection OctalInteger
 						structType(structElement("a", stringType()), structElement
 								("b", integerType(1, 0775))),
 						resolveType("Struct[{'a' => String, 'b' => Integer[1,0775]}]"));

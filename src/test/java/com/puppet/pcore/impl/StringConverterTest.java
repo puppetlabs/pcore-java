@@ -13,8 +13,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.regex.Pattern;
 
-import static com.puppet.pcore.TestHelper.assertMatches;
-import static com.puppet.pcore.TestHelper.dynamicMapTest;
+import static com.puppet.pcore.test.TestHelper.assertMatches;
+import static com.puppet.pcore.test.TestHelper.dynamicMapTest;
 import static com.puppet.pcore.impl.Helpers.asList;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;

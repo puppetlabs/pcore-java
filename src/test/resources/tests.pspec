@@ -1,0 +1,11 @@
+Example('Operator + on two integers produces an Integer',
+  Given(Source('1 + 1')),
+  Parses_to('(block [(+ 1 1)])'))
+
+Example('Variable name segment cannot start with underscore unless last',
+  Given(Source(`$x::_y::z`)),
+  Validates_with(Error(LEX_INVALID_VARIABLE_NAME)))
+
+Example('Variable name segment can start with underscore when last',
+  Given(Source(`$x::y::_z`)),
+  Validates_with())

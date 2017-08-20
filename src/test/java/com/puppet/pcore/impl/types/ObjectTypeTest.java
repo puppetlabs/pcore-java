@@ -13,7 +13,7 @@ import java.io.IOException;
 import java.time.Duration;
 import java.time.Instant;
 
-import static com.puppet.pcore.TestHelper.assertIncludes;
+import static com.puppet.pcore.test.TestHelper.assertIncludes;
 import static com.puppet.pcore.impl.Helpers.asList;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;

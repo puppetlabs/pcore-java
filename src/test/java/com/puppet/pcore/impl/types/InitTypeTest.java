@@ -9,7 +9,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 
-import static com.puppet.pcore.TestHelper.assertMatches;
+import static com.puppet.pcore.test.TestHelper.assertMatches;
 import static com.puppet.pcore.impl.Helpers.asList;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;

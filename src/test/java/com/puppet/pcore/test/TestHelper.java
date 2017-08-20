@@ -1,7 +1,12 @@
-package com.puppet.pcore;
+package com.puppet.pcore.test;
 
+import com.puppet.pcore.pspec.SpecEvaluator;
 import org.junit.jupiter.api.DynamicTest;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
 import java.util.function.BiConsumer;
@@ -10,6 +15,7 @@ import java.util.function.Supplier;
 import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Helpers.map;
+import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.fail;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
@@ -24,7 +30,7 @@ public class TestHelper {
 
 	public static void assertIncludes(String expected, String actual, Supplier<String> messageSupplier) {
 		if(actual == null || !actual.contains(expected))
-			fail(String.format("%sexpected '%s' to contain '%s'", buildPrefix(messageSupplier.get()), expected, actual));
+			fail(format("%sexpected '%s' to contain '%s'", buildPrefix(messageSupplier.get()), expected, actual));
 	}
 
 	public static void assertMatches(String expected, String actual) {
@@ -37,7 +43,7 @@ public class TestHelper {
 
 	public static void assertMatches(String expected, String actual, Supplier<String> messageSupplier) {
 		if(actual == null || !Pattern.compile(expected).matcher(actual).find())
-			fail(String.format("%sexpected '%s' to match pattern /%s/", buildPrefix(messageSupplier.get()), actual, expected));
+			fail(format("%sexpected '%s' to match pattern /%s/", buildPrefix(messageSupplier.get()), actual, expected));
 	}
 
 	public static <K, V> List<DynamicTest> dynamicMapTest(Map<K, V> map, BiFunction<K, V, String> title, BiConsumer<K, V> test) {
@@ -45,6 +51,10 @@ public class TestHelper {
 				(entry) -> dynamicTest(
 						title.apply(entry.getKey(), entry.getValue()),
 						() -> test.accept(entry.getKey(), entry.getValue())));
+	}
+
+	public static List<DynamicTest> dynamicPSpecTest(List<SpecEvaluator.Test> tests) {
+		return map(tests, t -> dynamicTest(t.name, t.test::execute));
 	}
 
 	private static String buildPrefix(String message) {
@@ -68,5 +78,23 @@ public class TestHelper {
 		if(trailingNL)
 			bld.append('\n');
 		return bld.toString();
+	}
+
+	public static String readResource(Class<?> origin, String resourceName) {
+		try(InputStream stream = origin.getResourceAsStream(resourceName)) {
+			if(stream == null)
+				fail(format("Could not find resource '%s'", resourceName));
+
+			ByteArrayOutputStream out = new ByteArrayOutputStream();
+			int cnt;
+			byte[] buf = new byte[0x800];
+			while((cnt = stream.read(buf)) > 0)
+				out.write(buf, 0, cnt);
+
+			return new String(out.toByteArray(), StandardCharsets.UTF_8);
+		} catch(IOException e) {
+			fail(e.getMessage());
+			return null; // not reached
+		}
 	}
 }

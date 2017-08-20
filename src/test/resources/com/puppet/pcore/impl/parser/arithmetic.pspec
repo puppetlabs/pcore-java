@@ -1,0 +1,4 @@
+Example('Operator + on two integers produces an Integer',
+  Given(Source('1 + 2 * 3')),
+  Parses_to('(+ 1 (* 2 3))')
+)

@@ -10,8 +10,8 @@ import org.junit.jupiter.api.Test;
 
 import java.net.URI;
 
-import static com.puppet.pcore.TestHelper.assertIncludes;
-import static com.puppet.pcore.TestHelper.assertMatches;
+import static com.puppet.pcore.test.TestHelper.assertIncludes;
+import static com.puppet.pcore.test.TestHelper.assertMatches;
 import static com.puppet.pcore.impl.Constants.RUNTIME_NAME_AUTHORITY;
 import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.*;

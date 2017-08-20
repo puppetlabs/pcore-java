@@ -1,0 +1,111 @@
+Example('undef',
+  Given(Source('undef')),
+  Parses_to('null')
+)
+Example('default',
+  Given(Source('default')),
+  Parses_to('(default)')
+)
+
+# Booleans
+Example('boolean false',
+  Given(Source('false')),
+  Parses_to('false')
+)
+Example('boolean true',
+  Given(Source('true')),
+  Parses_to('true')
+)
+
+# Integers
+Example('zero',
+  Given(Source('0')),
+  Parses_to('0')
+)
+Example('negative zero',
+  Given(Source('-0')),
+  Parses_to('0')
+)
+Example('negative integer',
+  Given(Source('-123')),
+  Parses_to('-123')
+)
+Example('positive integer',
+  Given(Source('123')),
+  Parses_to('123')
+)
+Example('positive integer with sign',
+  Given(Source('+123')),
+  Parses_to('123')
+)
+Example('zero hex',
+  Given(Source('0x0')),
+  Parses_to('0')
+)
+Example('positive hex',
+  Given(Source('0xa2')),
+  Parses_to('162')
+)
+Example('negative hex',
+  Given(Source('-0xa')),
+  Parses_to('-10')
+)
+Example('negative octal',
+  Given(Source('0123')),
+  Parses_to('83')
+)
+Example('positive octal',
+  Given(Source('-0123')),
+  Parses_to('-83')
+)
+
+# Floats
+Example('number with exponent',
+  Given(Source('32e7')),
+  Parses_to('320000000.0')
+)
+Example('number with negative exponent below e-range',
+  Given(Source('123456789012345.0')),
+  Parses_to('123456789012345.0')
+)
+Example('number with negative exponent above e-range',
+  Given(Source('1234567890123456.0')),
+  Parses_to('1.234567890123456e+15')
+)
+Example('number with negative exponent rounded e-range',
+  Given(Source('12345678901234567.0')),
+  Parses_to('1.234567890123457e+16')
+)
+Example('negative number with fragment and exponent',
+  Given(Source('-32.3e2')),
+  Parses_to('-3230.0')
+)
+Example('number with fragment and negative exponent',
+  Given(Source('32.3e-2')),
+  Parses_to('0.323')
+)
+
+# Single Quoted Strings
+Example('single quoted string',
+  Given(Source(`'the string'`)),
+  Parses_to(`"the string"`)
+)
+Example('single quoted string with escaped quote',
+  Given(Source(`'the \'string\''`)),
+  Parses_to(`"the 'string'"`)
+)
+Example('single quoted string with escaped escape',
+  Given(Source(`'the \\string\\'`)),
+  Parses_to(`"the \\string\\"`)
+)
+Example('single quoted string with unrecognized escaped',
+  Given(Source(`'the \tstring\t'`)),
+  Parses_to(`"the \\tstring\\t"`)
+)
+Example('single quoted string with line breaks',
+  Given(Source(`'the \tstring
+\t'`)),
+  Validates_with(Error(LEX_UNTERMINATED_STRING))
+)
+
+# Double Quoted Strings

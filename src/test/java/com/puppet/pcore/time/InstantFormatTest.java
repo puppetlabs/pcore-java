@@ -7,8 +7,8 @@ import java.time.Instant;
 import java.time.ZoneId;
 import java.util.*;
 
-import static com.puppet.pcore.TestHelper.assertMatches;
-import static com.puppet.pcore.TestHelper.dynamicMapTest;
+import static com.puppet.pcore.test.TestHelper.assertMatches;
+import static com.puppet.pcore.test.TestHelper.dynamicMapTest;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.Helpers.entry;
 import static java.lang.String.format;
