@@ -1,10 +1,8 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.CallPN;
 import com.puppet.pcore.parser.Expression;
-
-import java.util.List;
-
-import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
 
 public class SelectorEntry extends Positioned {
 	public final Expression matching;
@@ -21,5 +19,10 @@ public class SelectorEntry extends Positioned {
 			return false;
 		SelectorEntry co = (SelectorEntry)o;
 		return matching.equals(co.matching) && value.equals(co.value);
+	}
+
+	@Override
+	public PN toPN() {
+		return new CallPN("=>", matching.toPN(), value.toPN());
 	}
 }

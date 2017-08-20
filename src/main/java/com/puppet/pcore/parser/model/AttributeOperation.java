@@ -1,5 +1,8 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.CallPN;
+import com.puppet.pcore.impl.pn.LiteralPN;
 import com.puppet.pcore.parser.Expression;
 
 public class AttributeOperation extends Positioned {
@@ -19,5 +22,10 @@ public class AttributeOperation extends Positioned {
 			return false;
 		AttributeOperation co = (AttributeOperation)o;
 		return operator.equals(co.operator) && name.equals(co.name) && value.equals(co.value);
+	}
+
+	@Override
+	public PN toPN() {
+		return new CallPN(operator, new LiteralPN(name), value.toPN());
 	}
 }

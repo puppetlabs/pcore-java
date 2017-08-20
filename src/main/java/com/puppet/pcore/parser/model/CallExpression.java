@@ -1,8 +1,12 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.MapPN;
 import com.puppet.pcore.parser.Expression;
 
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 
 import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
@@ -30,5 +34,14 @@ public abstract class CallExpression extends Positioned {
 			return false;
 		CallExpression co = (CallExpression)o;
 		return functor.equals(co.functor) && rvalRequired == co.rvalRequired && arguments.equals(co.arguments) && Objects.equals(lambda, co.lambda);
+	}
+
+	PN callPN(String rvalReq, String rvalOpt) {
+		List<Map.Entry<String,? extends PN>> entries = new ArrayList<>();
+		entries.add(functor.toPN().withName("functor"));
+		entries.add(pnList(arguments).withName("args"));
+		if(lambda != null)
+			entries.add(lambda.toPN().withName("block"));
+		return new MapPN(entries).asCall(rvalRequired ? rvalReq : rvalOpt);
 	}
 }

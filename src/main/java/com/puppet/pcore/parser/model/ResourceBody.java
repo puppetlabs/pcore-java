@@ -1,5 +1,7 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.MapPN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -22,5 +24,13 @@ public class ResourceBody extends Positioned {
 			return false;
 		ResourceBody co = (ResourceBody)o;
 		return title.equals(co.title) && operations.equals(co.operations);
+	}
+
+	@Override
+	public PN toPN() {
+		return new MapPN(
+			title.toPN().withName("title"),
+			pnList(operations).withName("ops")
+		);
 	}
 }

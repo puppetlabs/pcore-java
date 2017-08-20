@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -14,5 +15,10 @@ public class CallNamedFunctionExpression extends CallExpression {
 	public CallNamedFunctionExpression withRvalRequired(boolean rvalRequired) {
 		return this.rvalRequired == rvalRequired ? this : new CallNamedFunctionExpression(
 				this.functor, this.arguments, this.lambda, rvalRequired, this.locator, this.offset, this.length);
+	}
+
+	@Override
+	public PN toPN() {
+		return callPN("call", "invoke");
 	}
 }

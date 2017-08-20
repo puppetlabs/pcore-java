@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -21,5 +22,10 @@ public class CaseExpression extends Positioned {
 			return false;
 		CaseExpression co = (CaseExpression)o;
 		return test.equals(co.test) && options.equals(co.options);
+	}
+
+	@Override
+	public PN toPN() {
+		return pnList(options).asCall("switch");
 	}
 }

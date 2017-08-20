@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -15,5 +16,10 @@ public class HostClassDefinition extends NamedDefinition {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && Objects.equals(parentClass, ((HostClassDefinition)o).parentClass);
+	}
+
+	@Override
+	public PN toPN() {
+		return definitionPN("class");
 	}
 }

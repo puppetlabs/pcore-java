@@ -1,9 +1,12 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.*;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
 
+import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
 
 public abstract class NamedDefinition extends Definition {
@@ -25,5 +28,12 @@ public abstract class NamedDefinition extends Definition {
 			return false;
 		NamedDefinition co = (NamedDefinition)o;
 		return name.equals(co.name) && parameters.equals(co.parameters) && body.equals(co.body);
+	}
+
+	PN definitionPN(String typeName) {
+		return new MapPN(
+				new LiteralPN(name).withName("name"),
+				new ListPN(map(parameters, Expression::toPN)).withName("params"),
+				body.toPN().withName("body")).asCall(typeName);
 	}
 }

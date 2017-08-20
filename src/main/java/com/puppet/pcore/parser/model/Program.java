@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -19,5 +20,10 @@ public class Program extends Positioned {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && body.equals(((Program)o).body);
+	}
+
+	@Override
+	public PN toPN() {
+		return body.toPN();
 	}
 }

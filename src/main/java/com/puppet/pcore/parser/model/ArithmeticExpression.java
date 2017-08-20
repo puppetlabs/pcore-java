@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 public class ArithmeticExpression extends BooleanExpression {
@@ -12,5 +13,10 @@ public class ArithmeticExpression extends BooleanExpression {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && operator.equals(((ArithmeticExpression)o).operator);
+	}
+
+	@Override
+	public PN toPN() {
+		return binaryPN(operator);
 	}
 }

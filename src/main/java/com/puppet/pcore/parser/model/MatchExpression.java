@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 public class MatchExpression extends BinaryExpression {
@@ -12,5 +13,10 @@ public class MatchExpression extends BinaryExpression {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && operator.equals(((MatchExpression)o).operator);
+	}
+
+	@Override
+	public PN toPN() {
+		return binaryPN(operator);
 	}
 }

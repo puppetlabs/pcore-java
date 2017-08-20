@@ -1,5 +1,7 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.CallPN;
 import com.puppet.pcore.parser.Expression;
 
 public class TypeMapping extends Definition {
@@ -17,5 +19,10 @@ public class TypeMapping extends Definition {
 			return false;
 		TypeMapping co = (TypeMapping)o;
 		return type.equals(co.type) && mapping.equals(co.mapping);
+	}
+
+	@Override
+	public PN toPN() {
+		return new CallPN("type-mapping", type.toPN(), mapping.toPN());
 	}
 }

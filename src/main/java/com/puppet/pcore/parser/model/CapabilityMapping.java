@@ -1,12 +1,14 @@
 package com.puppet.pcore.parser.model;
 
-import com.puppet.pcore.impl.Helpers;
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.CallPN;
+import com.puppet.pcore.impl.pn.ListPN;
+import com.puppet.pcore.impl.pn.LiteralPN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
-import java.util.Objects;
 
-import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
+import static com.puppet.pcore.impl.Helpers.*;
 
 public class CapabilityMapping extends Definition {
 	public final String kind;
@@ -30,5 +32,10 @@ public class CapabilityMapping extends Definition {
 			return false;
 		CapabilityMapping co = (CapabilityMapping)o;
 		return kind.equals(co.kind) && capability.equals(co.capability) && component.equals(co.component) && mappings.equals(co.mappings);
+	}
+
+	@Override
+	public PN toPN() {
+		return new CallPN(kind, component.toPN(), new ListPN(concat(asList(new LiteralPN(capability)), map(mappings, Expression::toPN))));
 	}
 }

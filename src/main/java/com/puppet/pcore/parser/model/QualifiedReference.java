@@ -1,5 +1,8 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.LiteralPN;
+
 public class QualifiedReference extends Positioned implements NameExpression {
 	public final String name;
 
@@ -23,5 +26,10 @@ public class QualifiedReference extends Positioned implements NameExpression {
 	@Override
 	public String name() {
 		return name;
+	}
+
+	@Override
+	public PN toPN() {
+		return new LiteralPN(name).asCall("qr");
 	}
 }

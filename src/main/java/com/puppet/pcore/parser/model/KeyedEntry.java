@@ -1,8 +1,8 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.CallPN;
 import com.puppet.pcore.parser.Expression;
-
-import java.util.Objects;
 
 public class KeyedEntry extends Positioned {
 	public final Expression key;
@@ -19,5 +19,10 @@ public class KeyedEntry extends Positioned {
 			return false;
 		KeyedEntry co = (KeyedEntry)o;
 		return key.equals(co.key) && value.equals(co.value);
+	}
+
+	@Override
+	public PN toPN() {
+		return new CallPN("=>", key.toPN(), value.toPN());
 	}
 }

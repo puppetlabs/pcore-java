@@ -1,5 +1,7 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.CallPN;
 import com.puppet.pcore.parser.Expression;
 
 public abstract class UnaryExpression extends Positioned {
@@ -12,5 +14,9 @@ public abstract class UnaryExpression extends Positioned {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && expr.equals(((UnaryExpression)o).expr);
+	}
+
+	PN unaryPN(String name) {
+		return new CallPN(name, expr.toPN());
 	}
 }

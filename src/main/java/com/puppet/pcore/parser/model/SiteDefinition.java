@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 public class SiteDefinition extends Definition {
@@ -12,5 +13,10 @@ public class SiteDefinition extends Definition {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && body.equals(((SiteDefinition)o).body);
+	}
+
+	@Override
+	public PN toPN() {
+		return body.toPN().asCall("site");
 	}
 }

@@ -1,5 +1,7 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.MapPN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -18,5 +20,10 @@ public class CaseOption extends Positioned {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && values.equals(((CaseOption)o).values) && then.equals(((CaseOption)o).then);
+	}
+
+	@Override
+	public PN toPN() {
+		return new MapPN(pnList(values).withName("when"), then.toPN().withName("then")).asCall("case");
 	}
 }

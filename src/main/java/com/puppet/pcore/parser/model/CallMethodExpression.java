@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -8,5 +9,10 @@ public class CallMethodExpression extends CallExpression {
 	public CallMethodExpression(Expression functor, List<Expression> arguments, Expression lambda, boolean rvalRequired,
 			Locator locator, int offset, int length) {
 		super(functor, arguments, lambda, rvalRequired, locator, offset, length);
+	}
+
+	@Override
+	public PN toPN() {
+		return callPN("call_method", "invoke_method");
 	}
 }

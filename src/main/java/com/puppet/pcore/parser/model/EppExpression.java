@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 public class EppExpression extends Positioned {
@@ -15,5 +16,10 @@ public class EppExpression extends Positioned {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && parametersSpecified == ((EppExpression)o).parametersSpecified && body.equals(((EppExpression)o).body);
+	}
+
+	@Override
+	public PN toPN() {
+		return body.toPN().asCall("epp");
 	}
 }

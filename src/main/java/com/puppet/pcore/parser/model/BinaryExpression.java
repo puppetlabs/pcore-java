@@ -1,5 +1,7 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.CallPN;
 import com.puppet.pcore.parser.Expression;
 
 public abstract class BinaryExpression extends Positioned {
@@ -18,5 +20,9 @@ public abstract class BinaryExpression extends Positioned {
 			return false;
 		BinaryExpression co = (BinaryExpression)o;
 		return lhs.equals(co.lhs) && rhs.equals(co.rhs);
+	}
+
+	PN binaryPN(String name) {
+		return new CallPN(name, lhs.toPN(), rhs.toPN());
 	}
 }

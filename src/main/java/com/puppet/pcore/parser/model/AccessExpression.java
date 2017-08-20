@@ -1,10 +1,12 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.ListPN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
 
-import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
+import static com.puppet.pcore.impl.Helpers.*;
 
 public class AccessExpression extends Positioned {
 	public final Expression operand;
@@ -19,5 +21,10 @@ public class AccessExpression extends Positioned {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && operand.equals(((AccessExpression)o).operand) && keys.equals(((AccessExpression)o).keys);
+	}
+
+	@Override
+	public PN toPN() {
+		return new ListPN(concat(asList(operand.toPN()), map(keys, Expression::toPN))).asCall("[]");
 	}
 }

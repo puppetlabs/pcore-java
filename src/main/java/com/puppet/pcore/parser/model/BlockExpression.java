@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -16,5 +17,10 @@ public class BlockExpression extends Positioned {
 
 	public boolean equals(Object o) {
 		return super.equals(o) && statements.equals(((BlockExpression)o).statements);
+	}
+
+	@Override
+	public PN toPN() {
+		return pnList(statements).asCall("block");
 	}
 }

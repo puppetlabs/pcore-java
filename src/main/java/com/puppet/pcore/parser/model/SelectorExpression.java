@@ -1,5 +1,7 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.CallPN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -21,5 +23,10 @@ public class SelectorExpression extends Positioned {
 			return false;
 		SelectorExpression co = (SelectorExpression)o;
 		return lhs.equals(co.lhs) && options.equals(co.options);
+	}
+
+	@Override
+	public PN toPN() {
+		return new CallPN("?", lhs.toPN(), pnList(options));
 	}
 }

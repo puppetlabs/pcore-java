@@ -1,5 +1,6 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
 import com.puppet.pcore.parser.Expression;
 
 import java.util.List;
@@ -29,5 +30,10 @@ public class HashExpression extends Positioned {
 			if(entry.key instanceof NameExpression && ((NameExpression)entry.key).name().equals(key))
 				return entry.value;
 		return null;
+	}
+
+	@Override
+	public PN toPN() {
+		return pnList(entries).asCall("hash");
 	}
 }

@@ -1,11 +1,5 @@
 package com.puppet.pcore.parser.model;
 
-import com.puppet.pcore.parser.Expression;
-
-import java.util.List;
-
-import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
-
 public abstract class QRefDefinition extends Definition {
 	public final String name;
 

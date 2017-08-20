@@ -1,7 +1,5 @@
 package com.puppet.pcore.parser.model;
 
-import com.puppet.pcore.parser.Expression;
-
 public class LiteralBoolean extends LiteralExpression {
 	public final boolean value;
 
