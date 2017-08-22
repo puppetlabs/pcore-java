@@ -17,6 +17,6 @@ public class AttributesOperation extends Positioned {
 
 	@Override
 	public PN toPN() {
-		return expr.toPN().asCall("*=>");
+		return expr.toPN().asCall("splat_hash");
 	}
 }

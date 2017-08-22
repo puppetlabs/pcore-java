@@ -2,8 +2,7 @@ package com.puppet.pcore.pspec;
 
 import com.puppet.pcore.Issue;
 import com.puppet.pcore.IssueException;
-import com.puppet.pcore.ReportedIssue;
-import com.puppet.pcore.Severity;
+import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.Polymorphic;
 import com.puppet.pcore.impl.parser.ParseLocation;
 import com.puppet.pcore.impl.parser.Parser;
@@ -11,17 +10,12 @@ import com.puppet.pcore.parser.Expression;
 import com.puppet.pcore.parser.ParseIssue;
 import com.puppet.pcore.parser.model.*;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Stack;
+import java.util.*;
 
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.Helpers.entry;
 import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.pspec.SpecIssue.*;
-import static java.util.Collections.emptyList;
-import static java.util.Collections.singletonList;
 
 public class SpecEvaluator extends Polymorphic<Object> {
 	// A parser that will handle back-ticked strings
@@ -32,13 +26,15 @@ public class SpecEvaluator extends Polymorphic<Object> {
 	private static final DispatchMap dispatchMap = initPolymorphicDispatch(SpecEvaluator.class, "eval");
 
 	private final Map<String, SpecFunction> functions = asMap(
+		entry("Examples", this::examples),
 		entry("Example", this::example),
 		entry("Parses_to", this::parses_to),
 		entry("Given", this::given),
 		entry("Source", this::source),
 		entry("Validates_with", this::validates_with),
 		entry("Error", this::error),
-		entry("Warning", this::warning)
+		entry("Warning", this::warning),
+		entry("Unindent", this::unindent)
 	);
 
 	private final Assertions assertions;
@@ -61,173 +57,6 @@ public class SpecEvaluator extends Polymorphic<Object> {
 		throw specError(SPEC_ILLEGAL_ARGUMENT_TYPE, semantic, name, index + 1, expectedClass.getName(), v.getClass().getName());
 	}
 
-	public static class Test {
-		public final String name;
-
-		public final Executable test;
-
-		public Test(String name, Executable test) {
-			this.name = name;
-			this.test = test;
-		}
-	}
-
-	@FunctionalInterface
-	public interface Executable {
-		void execute() throws Throwable;
-	}
-
-	public interface Assertions {
-		void assertEquals(Object a, Object b);
-
-		void fail(String message);
-	}
-
-	public interface Result<T> {
-		Executable createTest(T actual);
-	}
-
-	public interface Input {
-		List<Executable> createOkTests(Result<Expression> expected);
-
-		List<Executable> createIssuesTests(Result<List<ReportedIssue>> expected);
-	}
-
-	public static class ValidationResult {
-		public final Issue issue;
-
-		public final Severity severity;
-
-		public static ValidationResult warning(Issue issue) {
-			return new ValidationResult(Severity.WARNING, issue);
-		}
-
-		public static ValidationResult error(Issue issue) {
-			return new ValidationResult(Severity.ERROR, issue);
-		}
-
-		private ValidationResult(Severity severity, Issue issue) {
-			this.severity = severity;
-			this.issue = issue;
-		}
-	}
-
-	public class ValidatesWith implements Result<List<ReportedIssue>> {
-		public final List<ValidationResult> expectedIssues;
-
-		public ValidatesWith(List<ValidationResult> expectedIssues) {
-			this.expectedIssues = expectedIssues;
-		}
-
-		@Override
-		public Executable createTest(List<ReportedIssue> actual) {
-			return () -> {
-				StringBuilder bld = new StringBuilder();
-				nextExpected: for(ValidationResult result : expectedIssues) {
-					for(ReportedIssue issue : actual) {
-						if(result.issue == issue.issue && result.severity == issue.severity)
-							continue nextExpected;
-					}
-					bld.append("Expected ").append(result.severity).append(" issue ").append(result.issue).append(" but it was not produced");
-				}
-
-				nextIssue: for(ReportedIssue issue : actual) {
-					for(ValidationResult result : expectedIssues) {
-						if(result.issue == issue.issue && result.severity == issue.severity)
-							continue nextIssue;
-					}
-					bld.append("Unexpected ").append(issue.severity).append(" issue ").append(issue.toString());
-				}
-				if(bld.length() > 0)
-					assertions.fail(bld.toString());
-			};
-		}
-	}
-
-	public class ParseResult implements Result<Expression> {
-		public final String result;
-
-		public ParseResult(String result) {
-			this.result = result;
-		}
-
-		@Override
-		public Executable createTest(Expression actual) {
-			return () -> assertions.assertEquals(result, actual.toPN().toString());
-		}
-	}
-
-	public static class Given {
-		public final List<Input> inputs;
-
-		public Given(List<Input> inputs) {
-			this.inputs = inputs;
-		}
-	}
-
-	public static class Source implements Input {
-		public final Parser parser = new Parser();
-
-		public final List<String> sources;
-
-		public Source(List<String> sources) {
-			this.sources = sources;
-		}
-
-		@Override
-		public List<Executable> createOkTests(Result<Expression> expected) {
-			return map(sources, source -> createOkTest(source, expected));
-		}
-
-		@Override
-		public List<Executable> createIssuesTests(Result<List<ReportedIssue>> expected) {
-			return map(sources, source -> createIssueTest(source, expected));
-		}
-
-		protected Executable createOkTest(String source, Result<Expression> expected) {
-			Expression parsed = parser.parse(null, source, false, true);
-			return expected.createTest(parsed);
-		}
-
-		protected Executable createIssueTest(String source, Result<List<ReportedIssue>> expected) {
-			try {
-				parser.parse(null, source);
-				return expected.createTest(emptyList());
-			} catch(IssueException e) {
-				return expected.createTest(singletonList(e.reportedIssue()));
-			}
-		}
-	}
-
-	public static class Example {
-		public final String description;
-		public final Given given;
-		public final Result result;
-
-		public Example(String description, Given given, Result<?> result) {
-			this.description = description;
-			this.given = given;
-			this.result = result;
-		}
-
-		Test createTest() {
-			List<Executable> tests = new ArrayList<>();
-			if(result instanceof ValidatesWith) {
-				ValidatesWith vw = (ValidatesWith)result;
-				for(Input input : given.inputs)
-					tests.addAll(input.createIssuesTests(vw));
-			} else {
-				ParseResult pr = (ParseResult)result;
-				for(Input input : given.inputs)
-					tests.addAll(input.createOkTests(pr));
-			}
-			return new Test(description, () -> {
-				for(Executable test : tests)
-					test.execute();
-			});
-		}
-	}
-
 	@FunctionalInterface
 	public interface SpecFunction {
 		Object apply(Expression semantic, List<Object> args);
@@ -237,9 +66,25 @@ public class SpecEvaluator extends Polymorphic<Object> {
 		this.assertions = assertions;
 	}
 
+	protected boolean atTop() {
+		return path.size() == 3 && path.get(0) instanceof Program && path.get(1) instanceof BlockExpression;
+	}
+
+	public Object examples(Expression s, List<Object> args) {
+		if(!atTop())
+			assertVariableOrParameterTo("Examples", "Examples");
+
+		String description = argument("Examples", s, String.class, 0, args);
+		int top = args.size();
+		List<Node> nodes = new ArrayList<>(top - 1);
+		for(int idx = 1; idx < top; ++idx)
+			nodes.add(argument("Examples", s, Node.class, idx, args));
+		return new Examples(description, nodes);
+	}
+
 	public Object example(Expression s, List<Object> args) {
-		if(path.size() != 3 || !(path.get(0) instanceof Program && path.get(1) instanceof BlockExpression))
-			throw specError(SPEC_NOT_TOP_EXPRESSION, s, "Example");
+		if(!atTop())
+			assertVariableOrParameterTo("Example", "Examples");
 
 		if(args.size() != 3)
 			throw specError(SPEC_ILLEGAL_NUMBER_OF_ARGUMENTS, s, "Example", 3, args.size());
@@ -254,8 +99,13 @@ public class SpecEvaluator extends Polymorphic<Object> {
 		assertVariableOrParameterTo("Given", "Example");
 		int top = args.size();
 		List<Input> inputs = new ArrayList<>(top);
-		for(int idx = 0; idx < top; ++idx)
-			inputs.add(argument("Given", s, Input.class, idx, args));
+		for(int idx = 0; idx < top; ++idx) {
+			Object arg = args.get(idx);
+			inputs.add(
+					arg instanceof String
+							? new Source(Collections.singletonList((String)arg))
+							: argument("Given", s, Input.class, idx, args));
+		}
 		return new Given(inputs);
 	}
 
@@ -272,7 +122,7 @@ public class SpecEvaluator extends Polymorphic<Object> {
 		assertVariableOrParameterTo("Parses_to", "Example");
 		if(args.size() != 1)
 			throw specError(SPEC_ILLEGAL_NUMBER_OF_ARGUMENTS, s, "Parses_to", 1, args.size());
-		return new ParseResult(argument("Parses_to", s, String.class, 0, args));
+		return new ParseResult(assertions, argument("Parses_to", s, String.class, 0, args));
 	}
 
 	public Object validates_with(Expression s, List<Object> args) {
@@ -281,7 +131,7 @@ public class SpecEvaluator extends Polymorphic<Object> {
 		List<ValidationResult> results = new ArrayList<>(top);
 		for(int idx = 0; idx < top; ++idx)
 			results.add(argument("ValidationResult", s, ValidationResult.class, idx, args));
-		return new ValidatesWith(results);
+		return new ValidatesWith(assertions, results);
 	}
 
 	public Object error(Expression s, List<Object> args) {
@@ -296,6 +146,12 @@ public class SpecEvaluator extends Polymorphic<Object> {
 		if(args.size() != 1)
 			throw specError(SPEC_ILLEGAL_NUMBER_OF_ARGUMENTS, s, "Warning", 1, args.size());
 		return ValidationResult.warning(argument("Warning", s, Issue.class, 0, args));
+	}
+
+	public Object unindent(Expression s, List<Object> args) {
+		if(args.size() != 1)
+			throw specError(SPEC_ILLEGAL_NUMBER_OF_ARGUMENTS, s, "Unindent", 1, args.size());
+		return Helpers.unindent(argument("Unindent", s, String.class, 0, args));
 	}
 
 	private void assertVariableOrParameterTo(String exprName, String callName) {
@@ -337,8 +193,8 @@ public class SpecEvaluator extends Polymorphic<Object> {
 		List<Test> tests = new ArrayList<>();
 		if(evalResult instanceof List<?>) {
 			for(Object v : ((List<?>)evalResult)) {
-				if(v instanceof Example)
-					tests.add(((Example)v).createTest());
+				if(v instanceof Node)
+					tests.add(((Node)v).createTest());
 			}
 		}
 		return tests;

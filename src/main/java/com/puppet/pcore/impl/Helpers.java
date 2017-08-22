@@ -511,25 +511,79 @@ public class Helpers {
 		return unmodifiableMap(result);
 	}
 
-	public static String unindent(String heredoc, int indentStrip) {
+	public static String unindent(String str) {
+		return unindent(str, computeIndent(str));
+	}
+	public static String unindent(String str, int indentStrip) {
+		if(indentStrip == 0)
+			return str;
+
 		StringBuilder bld = new StringBuilder();
-		int top = heredoc.length();
-		int pos = 0;
-		boolean ws = true;
-		for(int idx = 0; idx < top; ++idx, ++pos) {
-			char c = heredoc.charAt(idx);
-			if(c == '\n') {
-				pos = -1;
+		int top = str.length();
+		int sol = 0;
+		boolean first = true;
+		boolean strip = true;
+		for(int idx = 0;; ++idx) {
+			char c = idx < top ? str.charAt(idx) : 0;
+			if(c == 0 || c == '\n') {
+				if(first) {
+					first = false;
+					if(idx == 0) {
+						// Empty first line is always skipped
+						if(c == 0)
+							return "";
+						continue;
+					}
+				}
+
+				if(strip) {
+					if(idx > sol + indentStrip)
+						bld.append(str.substring(sol + indentStrip, idx));
+				} else {
+					bld.append(str.substring(sol, idx));
+				}
+				if(c == 0)
+					return bld.toString();
+				sol = idx + 1;
 				bld.append(c);
-				ws = true;
 				continue;
 			}
 
-			if(ws && pos < indentStrip)
-				ws = Character.isWhitespace(c);
-			else
-				bld.append(c);
+			if(strip && idx < indentStrip)
+				strip = Character.isWhitespace(c);
 		}
-		return bld.toString();
+	}
+
+	public static int computeIndent(String str) {
+		int minIndent = Integer.MAX_VALUE;
+		int top = str.length();
+		int idx = 0;
+		while(minIndent > 0) {
+			int sol = idx;
+			char c = 0;
+			for(;;) {
+				c = idx < top ? str.charAt(idx) : 0;
+				if(c == 0 || c == '\n' || !(c == '\t' || c == ' '))
+					break;
+				++idx;
+			}
+
+			int wsCount = idx - sol;
+			while(c != 0 && c != '\n') {
+				++idx;
+				c = idx < top ? str.charAt(idx) : 0;
+			}
+
+			// Unless entire line is whitespace and wsCount is less than minIndent
+			if(idx > sol + wsCount && wsCount < minIndent)
+				minIndent = wsCount;
+
+			if(c == 0)
+				break;
+			++idx;
+		}
+		if(minIndent == Integer.MAX_VALUE)
+			minIndent = 0;
+		return minIndent;
 	}
 }

@@ -26,7 +26,7 @@ public class ExpressionParserTest {
 
 	@TestFactory
 	@DisplayName("primitives.pspec")
-	public List<DynamicTest> testPrimitives() {
+	public List<DynamicNode> testPrimitives() {
 		return dynamicPSpecTest(
 				evaluator.createTests("primitives.pspec",
 						readResource(getClass(), "primitives.pspec")));
@@ -34,7 +34,7 @@ public class ExpressionParserTest {
 
 	@TestFactory
 	@DisplayName("arithmetic.pspec")
-	public List<DynamicTest> testArithmetic() {
+	public List<DynamicNode> testArithmetic() {
 		return dynamicPSpecTest(
 				evaluator.createTests("arithmetic.pspec",
 						readResource(getClass(), "arithmetic.pspec")));
@@ -192,7 +192,7 @@ public class ExpressionParserTest {
 		@Test
 		@DisplayName("type alias")
 		void typeAliasT() {
-			assertEquals("(type-alias \"MyType\" ([] [(qr \"Variant\") (qr \"Integer\") (qr \"String\")]))",
+			assertEquals("(type-alias \"MyType\" (access [(qr \"Variant\") (qr \"Integer\") (qr \"String\")]))",
 					parse("type MyType = Variant[Integer,String]"));
 		}
 	}

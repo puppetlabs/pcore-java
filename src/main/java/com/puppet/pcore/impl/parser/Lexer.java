@@ -836,7 +836,7 @@ public class Lexer extends StringReader {
 			}
 
 			boolean escaped = false;
-			int fi = flags.length;
+			int fi = flags == null ? 0 : flags.length;
 			while(--fi >= 0) {
 				if(flags[fi] == c) {
 					escaped = true;

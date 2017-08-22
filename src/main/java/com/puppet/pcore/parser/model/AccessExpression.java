@@ -25,6 +25,6 @@ public class AccessExpression extends Positioned {
 
 	@Override
 	public PN toPN() {
-		return new ListPN(concat(asList(operand.toPN()), map(keys, Expression::toPN))).asCall("[]");
+		return new ListPN(concat(asList(operand.toPN()), map(keys, Expression::toPN))).asCall("access");
 	}
 }

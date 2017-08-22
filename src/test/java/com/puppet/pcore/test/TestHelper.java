@@ -1,6 +1,9 @@
 package com.puppet.pcore.test;
 
-import com.puppet.pcore.pspec.SpecEvaluator;
+import com.puppet.pcore.pspec.Test;
+import com.puppet.pcore.pspec.TestExecutable;
+import com.puppet.pcore.pspec.TestGroup;
+import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
 
 import java.io.ByteArrayOutputStream;
@@ -17,6 +20,7 @@ import java.util.regex.Pattern;
 import static com.puppet.pcore.impl.Helpers.map;
 import static java.lang.String.format;
 import static org.junit.jupiter.api.Assertions.fail;
+import static org.junit.jupiter.api.DynamicContainer.dynamicContainer;
 import static org.junit.jupiter.api.DynamicTest.dynamicTest;
 
 public class TestHelper {
@@ -53,8 +57,11 @@ public class TestHelper {
 						() -> test.accept(entry.getKey(), entry.getValue())));
 	}
 
-	public static List<DynamicTest> dynamicPSpecTest(List<SpecEvaluator.Test> tests) {
-		return map(tests, t -> dynamicTest(t.name, t.test::execute));
+	public static List<DynamicNode> dynamicPSpecTest(List<? extends Test> tests) {
+		return map(tests, t ->
+			t instanceof TestExecutable
+					? dynamicTest(t.name, ((TestExecutable)t).test::execute)
+					: dynamicContainer(t.name, dynamicPSpecTest(((TestGroup)t).tests)));
 	}
 
 	private static String buildPrefix(String message) {

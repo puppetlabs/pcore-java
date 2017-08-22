@@ -1,10 +1,9 @@
 package com.puppet.pcore.test;
 
 
-import com.puppet.pcore.pspec.SpecEvaluator;
 import org.junit.jupiter.api.Assertions;
 
-public class PSpecAssertions implements SpecEvaluator.Assertions {
+public class PSpecAssertions implements com.puppet.pcore.pspec.Assertions {
 	public static final PSpecAssertions SINGLETON = new PSpecAssertions();
 
 	@Override

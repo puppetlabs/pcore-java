@@ -19,7 +19,7 @@ public class SpecEvaluatorTest {
 
 	@TestFactory
 	@DisplayName("tests.pspec")
-	public List<DynamicTest> testFileSpec() {
+	public List<DynamicNode> testFileSpec() {
 		return dynamicPSpecTest(
 				evaluator.createTests("tests.pspec",
 						readResource(getClass(), "/tests.pspec")));
