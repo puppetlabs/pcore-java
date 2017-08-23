@@ -1,15 +1,19 @@
 package com.puppet.pcore.impl.types;
 
+import com.puppet.pcore.impl.StringConverter;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.*;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
+import java.util.stream.Stream;
 
 import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
+import static com.puppet.pcore.test.TestHelper.dynamicMapTest;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("unused")
@@ -36,10 +40,13 @@ public class AnyTypeTest {
 			assertTrue(all(TypeEvaluatorImpl.BASIC_TYPES.values(), type -> !type.isAssignable(null)));
 		}
 
-		@Test
-		@DisplayName("all types are assignable to their normalized type")
-		public void normalizeTooSelf() {
-			assertTrue(all(TypeEvaluatorImpl.BASIC_TYPES.values(), type -> type.normalize().isAssignable(type)));
+		@TestFactory
+		@DisplayName("normalized type is assignable from")
+		public List<DynamicTest> assignableToNormalized() {
+			return dynamicMapTest(
+					TypeEvaluatorImpl.BASIC_TYPES,
+					(key, type) -> type.toString(),
+					(key, type) -> assertTrue(type.normalize().isAssignable(type)));
 		}
 	}
 
