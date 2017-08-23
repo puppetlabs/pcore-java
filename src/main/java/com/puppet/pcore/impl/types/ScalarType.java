@@ -60,7 +60,6 @@ public class ScalarType extends AnyType {
 				|| semVerType().isAssignable(t, guard)
 				|| semVerRangeType().isAssignable(t, guard)
 				|| timeSpanType().isAssignable(t, guard)
-				|| timestampType().isAssignable(t, guard)
-				|| defaultType().isAssignable(t, guard);
+				|| timestampType().isAssignable(t, guard);
 	}
 }
