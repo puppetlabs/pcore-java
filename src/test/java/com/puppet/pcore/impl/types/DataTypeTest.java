@@ -59,5 +59,11 @@ public class DataTypeTest {
 		public void optionalStringToData() {
 			assertTrue(dataType().isAssignable(optionalType(stringType())));
 		}
+
+		@Test
+		@DisplayName("Optional[Data] is assignable to Data")
+		public void optionalDataToData() {
+			assertTrue(dataType().isAssignable(optionalType(dataType())));
+		}
 	}
 }

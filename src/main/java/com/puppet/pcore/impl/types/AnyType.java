@@ -230,6 +230,14 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 			return Helpers.all(((VariantType)t).types, variant -> isAssignable(variant, guard));
 		}
 
+		if(t instanceof OptionalType) {
+			if(isAssignable(undefType())) {
+				AnyType ot = ((OptionalType)t).type;
+				return ot == null || isAssignable(ot);
+			}
+			return false;
+		}
+
 		if(t instanceof NotUndefType) {
 			NotUndefType nut = (NotUndefType)t;
 			if(!nut.type.isAssignable(UndefType.DEFAULT, guard))

@@ -101,7 +101,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 	public TypeEvaluatorImpl() {
 		data = declareType("Data", "Variant[ScalarData,Undef,Array[Data],Hash[String,Data]]");
 		richDataKey = declareType("RichDataKey", "Variant[String,Numeric]");
-    richData = declareType("RichData", "Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Undef,Hash[RichDataKey,RichData],Array[RichData]]");
+    richData = declareType("RichData", "Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Default,Undef,Hash[RichDataKey,RichData],Array[RichData]]");
 	}
 
 	public void resolveAliases() {

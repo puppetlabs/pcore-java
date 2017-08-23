@@ -78,13 +78,6 @@ public class VariantType extends TypesContainerType {
 
 	@Override
 	boolean isUnsafeAssignable(AnyType type, RecursionGuard guard) {
-		if (type instanceof OptionalType) {
-			//  Basically the same as a Variant[Undef,<type of optional>]
-			AnyType other = ((OptionalType)type).type;
-			return isAssignable(undefType(), guard) && (other instanceof VariantType
-				? isAssignable(other, guard)
-				: any(types, variant -> variant.isAssignable(other, guard)));
-		}
 		return any(types, variant -> variant.isAssignable(type, guard));
 	}
 

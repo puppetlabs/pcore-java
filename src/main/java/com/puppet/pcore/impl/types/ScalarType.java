@@ -8,7 +8,8 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.regex.Pattern;
 
-import static com.puppet.pcore.impl.types.TypeFactory.scalarTypeDispatcher;
+import static com.puppet.pcore.impl.types.TypeFactory.*;
+import static com.puppet.pcore.impl.types.TypeFactory.floatType;
 
 public class ScalarType extends AnyType {
 	static final ScalarType DEFAULT = new ScalarType();
@@ -50,6 +51,16 @@ public class ScalarType extends AnyType {
 
 	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
-		return t instanceof ScalarType;
+		return t instanceof  ScalarType
+				|| stringType().isAssignable(t, guard)
+				|| numericType().isAssignable(t, guard)
+				|| booleanType().isAssignable(t, guard)
+				|| floatType().isAssignable(t, guard)
+				|| regexpType().isAssignable(t, guard)
+				|| semVerType().isAssignable(t, guard)
+				|| semVerRangeType().isAssignable(t, guard)
+				|| timeSpanType().isAssignable(t, guard)
+				|| timestampType().isAssignable(t, guard)
+				|| defaultType().isAssignable(t, guard);
 	}
 }
