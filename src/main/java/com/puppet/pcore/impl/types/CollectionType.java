@@ -14,7 +14,7 @@ import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Collections.singletonMap;
 
 public class CollectionType extends TypeContainerType {
-	static final CollectionType DEFAULT = new CollectionType(AnyType.DEFAULT, IntegerType.POSITIVE);
+	static final CollectionType DEFAULT = new CollectionType(anyType(), integerType());
 
 	private static ObjectType ptype;
 	public final IntegerType size;

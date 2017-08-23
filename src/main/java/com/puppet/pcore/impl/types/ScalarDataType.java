@@ -3,7 +3,7 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
 
-import static com.puppet.pcore.impl.types.TypeFactory.scalarDataTypeDispatcher;
+import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class ScalarDataType extends ScalarType {
 	static final ScalarDataType DEFAULT = new ScalarDataType();
@@ -38,6 +38,9 @@ public class ScalarDataType extends ScalarType {
 
 	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
-		return t instanceof ScalarDataType;
+		return stringType().isAssignable(t, guard)
+				|| integerType().isAssignable(t, guard)
+				|| booleanType().isAssignable(t, guard)
+				|| floatType().isAssignable(t, guard);
 	}
 }

@@ -30,8 +30,8 @@ public class PcoreImpl {
 	private TypeEvaluatorImpl typeEvaluator;
 
 	public void initBaseTypeSystem() {
-		implementationRegistry = new ImplementationRegistryImpl();
 		loader.set(new BasicLoader());
+		implementationRegistry = new ImplementationRegistryImpl();
 		typeEvaluator = new TypeEvaluatorImpl();
 		typeEvaluator.resolveAliases();
 		for(AnyType metaType : TypeFactory.registerPcoreTypes(this))

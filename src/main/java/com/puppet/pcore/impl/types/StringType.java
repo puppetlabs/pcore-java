@@ -21,7 +21,7 @@ import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class StringType extends ScalarDataType {
-	static final StringType DEFAULT = new StringType(IntegerType.POSITIVE);
+	static final StringType DEFAULT = new StringType(integerType(0));
 	static final IterableType ITERABLE_TYPE = new IterableType(new StringType(integerType(1, 1)));
 	static final AnyType NOT_EMPTY = new StringType(integerType(1));
 
@@ -137,6 +137,14 @@ public class StringType extends ScalarDataType {
 			if(value == null)
 				return size.equals(IntegerType.POSITIVE) || all(et.enums, e -> size.isInstance(e.length()));
 			return et.enums.size() == 1 && value.equals(et.enums.get(0));
+		}
+
+		if(t instanceof PatternType) {
+			if(value != null)
+				// It's impossible to assert that no other values value matches the pattern
+				return false;
+			// true if size constraint is at least 0 to +Infinity
+			return size.isAssignable(integerTypePositive());
 		}
 		return false;
 	}

@@ -11,48 +11,54 @@ import java.util.function.Supplier;
  * Provides access to relevant parts of the Pcore Type system.
  */
 public class Pcore {
-	private static final PcoreImpl INSTANCE = new PcoreImpl();
+	private static final ThreadLocal<PcoreImpl> INSTANCE = new ThreadLocal<>();
 
-	static {
-		reset();
+	private static PcoreImpl getPcoreImpl() {
+		PcoreImpl instance = INSTANCE.get();
+		if(instance == null) {
+			instance = new PcoreImpl();
+			INSTANCE.set(instance);
+			instance.initBaseTypeSystem();
+		}
+		return instance;
 	}
 
 	public static Loader loader() {
-		return INSTANCE.loader();
+		return getPcoreImpl().loader();
 	}
 
 	/**
 	 * For test purposes only
 	 */
 	public static void reset() {
-		INSTANCE.initBaseTypeSystem();
+		getPcoreImpl().initBaseTypeSystem();
 	}
 
 	public static <T> T withTypeSetScope(TypeSetType typeSetType, Supplier<T> function) {
-		return INSTANCE.withTypeSetScope(typeSetType, function);
+		return getPcoreImpl().withTypeSetScope(typeSetType, function);
 	}
 
 	public static <T> T withLocalScope(Supplier<T> function) {
-		return INSTANCE.withLocalScope(function);
+		return getPcoreImpl().withLocalScope(function);
 	}
 
 	public static ImplementationRegistry implementationRegistry() {
-		return INSTANCE.implementationRegistry();
+		return getPcoreImpl().implementationRegistry();
 	}
 
 	public static Type infer(Object value) {
-		return INSTANCE.infer(value);
+		return getPcoreImpl().infer(value);
 	}
 
 	public static Type inferSet(Object value) {
-		return INSTANCE.inferSet(value);
+		return getPcoreImpl().inferSet(value);
 	}
 
 	public static SerializationFactory serializationFactory(String serializationFormat) {
-		return INSTANCE.serializationFactory(serializationFormat);
+		return getPcoreImpl().serializationFactory(serializationFormat);
 	}
 
 	public static TypeEvaluator typeEvaluator() {
-		return INSTANCE.typeEvaluator();
+		return getPcoreImpl().typeEvaluator();
 	}
 }
