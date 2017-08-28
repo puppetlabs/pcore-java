@@ -30,6 +30,7 @@ public class PcoreImpl extends Pcore {
 	public final AnyType data;
 	public final AnyType richDataKey;
 	public final AnyType richData;
+	public final boolean failWhenUnresolved;
 
 	private static PcoreImpl staticPcoreInstance = null;
 
@@ -59,11 +60,14 @@ public class PcoreImpl extends Pcore {
 		for(AnyType metaType : TypeFactory.registerPcoreTypes(this))
 			metaType.resolve(this);
 		TypeFactory.registerImpls(this);
+		failWhenUnresolved = true;
 		freeze(); // Static Pcore is always frozen
 	}
 
-	public PcoreImpl(Loader loader) {
+	public PcoreImpl(Loader loader, boolean failWhenUnresolved) {
 		this.loader = loader;
+		this.failWhenUnresolved = failWhenUnresolved;
+
 		implementationRegistry = new ImplementationRegistryImpl(staticPcoreInstance.implementationRegistry);
 		typeEvaluator = new TypeEvaluatorImpl(this);
 		data = staticPcoreInstance.data;
@@ -74,6 +78,11 @@ public class PcoreImpl extends Pcore {
 	public ObjectType createObjectType(
 			String typeName, String parentName) {
 		return createObjectType(typeName, parentName, emptyMap());
+	}
+
+	@Override
+	public boolean failWhenUnresolved() {
+		return failWhenUnresolved;
 	}
 
 	@Override
@@ -133,7 +142,7 @@ public class PcoreImpl extends Pcore {
 
 	@Override
 	public Pcore withLocalScope() {
-		return new PcoreImpl(new ParentedLoader(loader));
+		return new PcoreImpl(new ParentedLoader(loader), failWhenUnresolved);
 	}
 
 	/**
@@ -145,7 +154,7 @@ public class PcoreImpl extends Pcore {
 	 */
 	@Override
 	public Pcore withTypeSetScope(TypeSetType typeSet) {
-		return new PcoreImpl(new TypeSetLoader(loader, typeSet));
+		return new PcoreImpl(new TypeSetLoader(loader, typeSet), failWhenUnresolved);
 	}
 
 	@Override

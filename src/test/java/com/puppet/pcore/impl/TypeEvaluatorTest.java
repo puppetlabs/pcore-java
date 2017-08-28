@@ -3,6 +3,7 @@ package com.puppet.pcore.impl;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeAssertionException;
 import com.puppet.pcore.TypeEvaluator;
+import com.puppet.pcore.TypeResolverException;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.PcoreTestBase;
 import com.puppet.pcore.semver.VersionRange;
@@ -34,6 +35,12 @@ public class TypeEvaluatorTest extends PcoreTestBase {
 			for(AnyType type : TypeEvaluatorImpl.BASIC_TYPES.values())
 				assertEquals(type, resolveType(type.toString()));
 		}
+
+		@Test
+		@DisplayName("NoSuchType")
+		public void noSuchTypeIsTypeRef() {
+			assertEquals(typeReferenceType("NoSuchType"), resolveType("NoSuchType"));
+		}
 	}
 
 	@Nested
@@ -53,11 +60,23 @@ public class TypeEvaluatorTest extends PcoreTestBase {
 			public void negativeRange2() {
 				assertThrows(TypeAssertionException.class, () -> resolveType("Integer[2,-4]"));
 			}
+
+			@Test
+			@DisplayName("NoSuchType")
+			public void noSuchTypeFail() {
+				assertThrows(TypeResolverException.class, () -> Pcore.create(true).typeEvaluator().resolveType("NoSuchType[A,B]"));
+			}
 		}
 
 		@Nested
 		@DisplayName("succeeds with")
 		class Succeeds {
+			@Test
+			@DisplayName("NoSuchType")
+			public void noSuchTypeIsTypeRef() {
+				assertEquals(typeReferenceType("NoSuchType[Integer]"), resolveType("NoSuchType[Integer]"));
+			}
+
 			@Test
 			@DisplayName("Array[Integer]")
 			public void arrayType1() {

@@ -15,12 +15,18 @@ import java.util.function.Supplier;
  */
 public abstract class Pcore {
 	public static Pcore create() {
-		return new PcoreImpl(new ParentedLoader(staticPcore().loader()));
+		return create(false);
+	}
+
+	public static Pcore create(boolean failWhenUnresolved) {
+		return new PcoreImpl(new ParentedLoader(staticPcore().loader()), failWhenUnresolved);
 	}
 
 	public static Pcore staticPcore() {
 		return PcoreImpl.staticInstance();
 	}
+
+	public abstract boolean failWhenUnresolved();
 
 	/**
 	 * Prevent further modifications to this pcore instance

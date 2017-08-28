@@ -178,9 +178,25 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 	public AnyType resolveType(Expression expression) {
 		Object t = resolve(expression);
 
-		if(t instanceof AnyType)
-			return (AnyType)t;
+		if(t instanceof AnyType) {
+			AnyType at = (AnyType)t;
+			if(!(at instanceof TypeReferenceType && pcore.failWhenUnresolved()))
+				return at;
 
+			QualifiedReference qn = null;
+			if(expression instanceof QualifiedReference)
+				qn = (QualifiedReference)expression;
+			else if(expression instanceof AccessExpression) {
+				Expression operand = ((AccessExpression)expression).operand;
+				if(operand instanceof QualifiedReference)
+					qn = (QualifiedReference)operand;
+			}
+			if("typereference".equals(qn.downcasedName()))
+				// Explicit TypeReference resolves to TypeReference
+				return at;
+
+			// Others indicate unresolved types
+		}
 		throw new TypeResolverException(format("'%s' did not resolve to a Pcore type", expression));
 	}
 
