@@ -28,6 +28,11 @@ public interface Loader {
 	void bind(TypedName typedName, Object toBeBound) throws TypeRedefinedException;
 
 	/**
+	 * Prevent that new objects are registered in this loader
+	 */
+	void freeze();
+
+	/**
 	 * @return the default name authority for this loader.
 	 */
 	URI getNameAuthority();

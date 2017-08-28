@@ -4,7 +4,6 @@ import com.puppet.pcore.*;
 import com.puppet.pcore.impl.GivenArgumentsAccessor;
 import com.puppet.pcore.impl.types.ObjectType.Attribute;
 import com.puppet.pcore.semver.VersionRange;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -22,12 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("unused")
 @DisplayName("A Pcore Object Type")
-public class ObjectTypeTest extends DeclaredTypeTestBase {
-	@BeforeEach
-	public void init() {
-		Pcore.reset();
-	}
-
+public class ObjectTypeTest extends PcoreTestBase {
 	@Nested
 	@DisplayName("when dealing with attributes")
 	class Attributes {
@@ -648,7 +642,7 @@ public class ObjectTypeTest extends DeclaredTypeTestBase {
 		@DisplayName("that are Pcore Types, creates")
 		class PcoreTypes {
 			ObjectType resolveType(String typeName) {
-				Type t = Pcore.typeEvaluator().resolveType(typeName);
+				Type t = pcore().typeEvaluator().resolveType(typeName);
 				if(t instanceof ObjectType)
 					return (ObjectType)t;
 				fail("resolveType did not result in an ObjectType");
@@ -754,7 +748,7 @@ public class ObjectTypeTest extends DeclaredTypeTestBase {
 			@DisplayName("Object[{name => 'MyObj', attributes => {'a' => Integer}}]")
 			public void pObjectType() {
 				Object result = resolveType("Pcore::ObjectType").newInstance(asMap("name", "MyObj", "attributes", asMap("a", integerType())));
-				assertEquals("Object[{name => 'MyObj', attributes => {'a' => Integer}}]", ((ObjectType)result).resolve().toExpandedString());
+				assertEquals("Object[{name => 'MyObj', attributes => {'a' => Integer}}]", ((ObjectType)result).resolve(pcore()).toExpandedString());
 			}
 
 			@Test

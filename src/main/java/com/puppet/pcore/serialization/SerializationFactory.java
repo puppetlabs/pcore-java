@@ -1,5 +1,7 @@
 package com.puppet.pcore.serialization;
 
+import com.puppet.pcore.Pcore;
+
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
@@ -14,7 +16,7 @@ public interface SerializationFactory {
 
 	String MSGPACK = "MessagePack";
 
-	Deserializer forInput(InputStream in) throws IOException;
+	Deserializer forInput(Pcore pcore, InputStream in) throws IOException;
 
 	/**
 	 * Returns a deserializer that can be initialize with input data that has already been
@@ -24,7 +26,7 @@ public interface SerializationFactory {
 	 *
 	 * @return A deserializer that must be initialized with list data before a read can take place
 	 */
-	Deserializer forInputChunks();
+	Deserializer forInputChunks(Pcore pcore);
 
-	Serializer forOutput(Map<String,Object> options, OutputStream out) throws IOException;
+	Serializer forOutput(Pcore pcore, Map<String,Object> options, OutputStream out) throws IOException;
 }

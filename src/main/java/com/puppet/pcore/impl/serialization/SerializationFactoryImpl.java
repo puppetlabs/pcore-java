@@ -1,5 +1,6 @@
 package com.puppet.pcore.impl.serialization;
 
+import com.puppet.pcore.Pcore;
 import com.puppet.pcore.serialization.Reader;
 import com.puppet.pcore.serialization.SerializationFactory;
 import com.puppet.pcore.serialization.Writer;
@@ -11,18 +12,18 @@ import java.util.Map;
 
 public abstract class SerializationFactoryImpl implements SerializationFactory {
 	@Override
-	public DeserializerImpl forInputChunks() {
-		return new DeserializerImpl(reader());
+	public DeserializerImpl forInputChunks(Pcore pcore) {
+		return new DeserializerImpl(pcore, reader());
 	}
 
 	@Override
-	public DeserializerImpl forInput(InputStream in) throws IOException {
-		return new DeserializerImpl(readerOn(in));
+	public DeserializerImpl forInput(Pcore pcore, InputStream in) throws IOException {
+		return new DeserializerImpl(pcore, readerOn(in));
 	}
 
 	@Override
-	public SerializerImpl forOutput(Map<String,Object> options, OutputStream out) throws IOException {
-		return new SerializerImpl(writerOn(options, out));
+	public SerializerImpl forOutput(Pcore pcore, Map<String,Object> options, OutputStream out) throws IOException {
+		return new SerializerImpl(pcore, writerOn(options, out));
 	}
 
 	protected abstract Reader reader();

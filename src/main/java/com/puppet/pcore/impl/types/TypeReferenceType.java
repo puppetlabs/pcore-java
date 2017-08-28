@@ -32,8 +32,8 @@ public class TypeReferenceType extends AnyType {
 	}
 
 	@Override
-	public AnyType resolve() {
-		return typeString.equals(DEFAULT.typeString) ? this : (AnyType)Pcore.typeEvaluator().resolveType(typeString);
+	public AnyType resolve(Pcore pcore) {
+		return typeString.equals(DEFAULT.typeString) ? this : (AnyType)pcore.typeEvaluator().resolveType(typeString);
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {

@@ -15,7 +15,6 @@ import com.puppet.pcore.serialization.SerializationFactory;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 import static com.puppet.pcore.impl.Constants.*;
 import static com.puppet.pcore.impl.types.TypeFactory.objectType;
@@ -24,24 +23,63 @@ import static java.lang.String.format;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.emptyMap;
 
-public class PcoreImpl {
-	private ImplementationRegistry implementationRegistry;
-	private final ThreadLocal<Loader> loader = new ThreadLocal<>();
-	private TypeEvaluatorImpl typeEvaluator;
+public class PcoreImpl extends Pcore {
+	public final ImplementationRegistryImpl implementationRegistry;
+	public final Loader loader;
+	public final TypeEvaluatorImpl typeEvaluator;
+	public final AnyType data;
+	public final AnyType richDataKey;
+	public final AnyType richData;
 
-	public void initBaseTypeSystem() {
-		loader.set(new BasicLoader());
-		implementationRegistry = new ImplementationRegistryImpl();
-		typeEvaluator = new TypeEvaluatorImpl();
-		typeEvaluator.resolveAliases();
-		for(AnyType metaType : TypeFactory.registerPcoreTypes(this))
-			metaType.resolve();
-		TypeFactory.registerImpls(this);
+	private static PcoreImpl staticPcoreInstance = null;
+
+	static {
+		new PcoreImpl();
 	}
 
-	public <C> ObjectType createObjectType(
+	public static PcoreImpl staticInstance() {
+		return staticPcoreInstance;
+	}
+
+	// Private constructor. Only used when staticPcore is initialized
+	private PcoreImpl() {
+		staticPcoreInstance = this;
+		loader = new BasicLoader();
+		implementationRegistry = new ImplementationRegistryImpl(null);
+		typeEvaluator = new TypeEvaluatorImpl(this);
+
+		data = typeEvaluator.declareType("Data", "Variant[ScalarData,Undef,Array[Data],Hash[String,Data]]");
+		richDataKey = typeEvaluator.declareType("RichDataKey", "Variant[String,Numeric]");
+		richData = typeEvaluator.declareType("RichData", "Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Default,Undef,Hash[RichDataKey,RichData],Array[RichData]]");
+
+		data.resolve(this);
+		richDataKey.resolve(this);
+		richData.resolve(this);
+
+		for(AnyType metaType : TypeFactory.registerPcoreTypes(this))
+			metaType.resolve(this);
+		TypeFactory.registerImpls(this);
+		freeze(); // Static Pcore is always frozen
+	}
+
+	public PcoreImpl(Loader loader) {
+		this.loader = loader;
+		implementationRegistry = new ImplementationRegistryImpl(staticPcoreInstance.implementationRegistry);
+		typeEvaluator = new TypeEvaluatorImpl(this);
+		data = staticPcoreInstance.data;
+		richDataKey = staticPcoreInstance.richDataKey;
+		richData = staticPcoreInstance.richData;
+	}
+
+	public ObjectType createObjectType(
 			String typeName, String parentName) {
 		return createObjectType(typeName, parentName, emptyMap());
+	}
+
+	@Override
+	public void freeze() {
+		implementationRegistry.freeze(); // Static Pcore is always frozen
+		loader.freeze();
 	}
 
 	public <T> void registerImpl(ObjectType type, FactoryDispatcher<T> creator, Function<T,Object[]> attributeSupplier) {
@@ -83,39 +121,44 @@ public class PcoreImpl {
 		return type;
 	}
 
+	@Override
+	public Loader loader() {
+		return loader;
+	}
+
+	@Override
 	public ImplementationRegistry implementationRegistry() {
 		return implementationRegistry;
 	}
 
-	public <T> T withLocalScope(Supplier<T> function) {
-		return withLoader(new ParentedLoader(loader()), function);
+	@Override
+	public Pcore withLocalScope() {
+		return new PcoreImpl(new ParentedLoader(loader));
 	}
 
 	/**
-	 * Execute function using a loader that is parented by the current loader and capable of finding things
-	 * in the given type set.
+	 * Create a Pcore instance that uses a loader that is parented by the current loader and capable of
+	 * finding things in the given type set.
 	 *
 	 * @param typeSet the type set to add on top of the current scope
-	 * @param function the function to execute with the new scope
-	 * @param <T> the return type
-	 * @return the return value of the given function
+	 * @return the new Pcore instance
 	 */
-	public <T> T withTypeSetScope(TypeSetType typeSet, Supplier<T> function) {
-		return withLoader(new TypeSetLoader(loader(), typeSet), function);
+	@Override
+	public Pcore withTypeSetScope(TypeSetType typeSet) {
+		return new PcoreImpl(new TypeSetLoader(loader, typeSet));
 	}
 
-	public Loader loader() {
-		return loader.get();
-	}
-
+	@Override
 	public Type infer(Object value) {
 		return TypeFactory.infer(value);
 	}
 
+	@Override
 	public Type inferSet(Object value) {
 		return TypeFactory.inferSet(value);
 	}
 
+	@Override
 	public SerializationFactory serializationFactory(String serializationFormat) {
 		switch(serializationFormat) {
 		case SerializationFactory.MSGPACK:
@@ -127,19 +170,8 @@ public class PcoreImpl {
 		}
 	}
 
+	@Override
 	public TypeEvaluator typeEvaluator() {
-		if(typeEvaluator == null)
-			throw new IllegalStateException("base type system is not yet initialized");
 		return typeEvaluator;
-	}
-
-	private <T> T withLoader(Loader localLoader, Supplier<T> function) {
-		Loader current = loader.get();
-		loader.set(localLoader);
-		try {
-			return function.get();
-		} finally {
-			loader.set(current);
-		}
 	}
 }

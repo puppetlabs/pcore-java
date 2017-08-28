@@ -54,6 +54,7 @@ public class TypeAliasType extends AnyType {
 	private final Object typeExpression;
 	private AnyType resolvedType;
 	private boolean selfRecursion;
+	private Pcore pcore;
 
 	@SuppressWarnings("unchecked")
 	TypeAliasType(ArgumentsAccessor args) throws IOException {
@@ -98,16 +99,23 @@ public class TypeAliasType extends AnyType {
 	}
 
 	@Override
-	public AnyType resolve() {
+	public Pcore pcore() {
+		return pcore;
+	}
+
+	@Override
+	public AnyType resolve(Pcore pcore) {
+		if(this.pcore == null)
+			this.pcore = pcore;
 		if(resolvedType == null) {
 			// resolved to TypeReferenceType.DEFAULT during resolve to avoid endless recursion
 			resolvedType = TypeReferenceType.DEFAULT;
 			selfRecursion = true; // assumed while it's being found out below
 			try {
 				if(typeExpression instanceof TypeReferenceType)
-					resolvedType = ((TypeReferenceType)typeExpression).resolve();
+					resolvedType = ((TypeReferenceType)typeExpression).resolve(pcore);
 				else
-					resolvedType = ((TypeEvaluatorImpl)Pcore.typeEvaluator()).resolveType((Expression)typeExpression);
+					resolvedType = ((TypeEvaluatorImpl)pcore.typeEvaluator()).resolveType((Expression)typeExpression);
 
 				// Find out if this type is recursive. A recursive type has performance implications
 				// on several methods and this knowledge is used to avoid that for non-recursive
@@ -132,7 +140,7 @@ public class TypeAliasType extends AnyType {
 			// An alias may appoint an Object type that isn't resolved yet. The default type
 			// reference is used to prevent endless recursion and should not be resolved here.
 			if(!resolvedType.equals(TypeReferenceType.DEFAULT))
-				resolvedType.resolve();
+				resolvedType.resolve(pcore);
 
 		return this;
 	}

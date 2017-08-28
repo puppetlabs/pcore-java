@@ -24,8 +24,10 @@ import static java.lang.String.format;
 public class SerializerImpl implements Serializer {
 	private final Map<Object,Integer> objectsWritten = new IdentityHashMap<>();
 	private final Writer writer;
+	private final Pcore pcore;
 
-	public SerializerImpl(Writer writer) {
+	public SerializerImpl(Pcore pcore, Writer writer) {
+		this.pcore = pcore;
 		this.writer = writer;
 	}
 
@@ -58,7 +60,7 @@ public class SerializerImpl implements Serializer {
 	@SuppressWarnings("unchecked")
 	private <T> void writeObject(T value) throws IOException {
 		Function<T,Object[]> attributeProvider;
-		Type type = value instanceof PuppetObject ? ((PuppetObject)value)._pcoreType() : Pcore.infer(value);
+		Type type = value instanceof PuppetObject ? ((PuppetObject)value)._pcoreType() : pcore.infer(value);
 		if(!(type instanceof ObjectType))
 			throw new SerializationException(format("No Puppet Type found for %s", value.getClass().getName()));
 

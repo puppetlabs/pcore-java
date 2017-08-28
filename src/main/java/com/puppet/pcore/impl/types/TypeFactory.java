@@ -193,12 +193,12 @@ public class TypeFactory {
 
 	// Data (this is an alias), not a specialization of AnyType
 	public static AnyType dataType() {
-		return ((TypeEvaluatorImpl)Pcore.typeEvaluator()).data;
+		return ((PcoreImpl)Pcore.staticPcore()).data;
 	}
 
 	// RichData (this is an alias), not a specialization of AnyType
 	public static AnyType richDataType() {
-		return ((TypeEvaluatorImpl)Pcore.typeEvaluator()).richData;
+		return ((PcoreImpl)Pcore.staticPcore()).richData;
 	}
 
 	// DefaultType

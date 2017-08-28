@@ -13,6 +13,8 @@ import java.util.regex.Pattern;
 
 public class ImplementationRegistryImpl implements ImplementationRegistry {
 
+	private boolean frozen = false;
+	private final ImplementationRegistryImpl parent;
 	private final Map<String,Function<?,?>> attributeProviderPerType = new HashMap<>();
 	private final Map<String,FactoryDispatcher<?>> creatorPerType = new HashMap<>();
 	private final List<PatternSubstitution> implNameSubstitutions = new ArrayList<>();
@@ -20,16 +22,30 @@ public class ImplementationRegistryImpl implements ImplementationRegistry {
 	private final List<PatternSubstitution> typeNameSubstitutions = new ArrayList<>();
 	private final Map<String,String> typeNamesPerImpl = new HashMap<>();
 
+	ImplementationRegistryImpl(ImplementationRegistryImpl parent) {
+		this.parent = parent;
+	}
+
+	public void freeze() {
+		frozen = true;
+	}
+
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> Function<T,Object[]> attributeProviderFor(Type type) {
-		return (Function<T,Object[]>)attributeProviderPerType.get(type.name());
+		Function<T,Object[]> provider = null;
+		if(parent != null)
+			provider = parent.attributeProviderFor(type);
+		return provider == null ? (Function<T,Object[]>)attributeProviderPerType.get(type.name()) : provider;
 	}
 
 	@SuppressWarnings("unchecked")
 	@Override
 	public <T> FactoryDispatcherImpl<T> creatorFor(Type type) {
-		return (FactoryDispatcherImpl<T>)creatorPerType.get(type.name());
+		FactoryDispatcherImpl<T> creator = null;
+		if(parent != null)
+			creator = parent.creatorFor(type);
+		return creator == null ? (FactoryDispatcherImpl<T>)creatorPerType.get(type.name()) : creator;
 	}
 
 	@Override
@@ -39,6 +55,7 @@ public class ImplementationRegistryImpl implements ImplementationRegistry {
 
 	@Override
 	public <T> void registerImplementation(String typeName, FactoryDispatcher<T> creator, Function<T, Object[]> attributeProvider) {
+		assertModifiable();
 		creatorPerType.put(typeName, creator);
 		attributeProviderPerType.put(typeName, attributeProvider);
 	}
@@ -52,6 +69,7 @@ public class ImplementationRegistryImpl implements ImplementationRegistry {
 
 	@Override
 	public void registerPatternMapping(PatternSubstitution typeNameSubst, PatternSubstitution implNameSubst) {
+		assertModifiable();
 		typeNameSubstitutions.add(typeNameSubst);
 		implNameSubstitutions.add(implNameSubst);
 	}
@@ -83,5 +101,10 @@ public class ImplementationRegistryImpl implements ImplementationRegistry {
 			names.put(name, null);
 			return null;
 		}
+	}
+
+	private void assertModifiable() {
+		if(frozen)
+			throw new IllegalStateException("Attempt to modify frozen implementation registry");
 	}
 }

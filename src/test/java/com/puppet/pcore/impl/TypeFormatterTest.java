@@ -4,6 +4,7 @@ import com.puppet.pcore.Binary;
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.impl.types.AnyType;
+import com.puppet.pcore.impl.types.PcoreTestBase;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.Test;
@@ -24,7 +25,7 @@ import static java.util.Collections.singletonList;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
-public class TypeFormatterTest {
+public class TypeFormatterTest extends PcoreTestBase {
 
 	@Test
 	public void anyTypeS() {
@@ -323,10 +324,10 @@ public class TypeFormatterTest {
 
 	@Test
 	public void objectTypeWithName() {
-		TypeEvaluator typeEvaluator = Pcore.typeEvaluator();
+		TypeEvaluator typeEvaluator = pcore().typeEvaluator();
 		Map<String,Object> initHash = new HashMap<>();
 		initHash.put(Constants.KEY_NAME, "TestObj");
-		assertEquals("TestObj", objectType(initHash).resolve().toString());
+		assertEquals("TestObj", objectType(initHash).resolve(pcore()).toString());
 	}
 
 	@Test
@@ -356,7 +357,7 @@ public class TypeFormatterTest {
 						"attributes => {'a' => Integer, 'n' => Integer, 'b' => {type => Integer, kind => constant, value => 32}}, " +
 						"functions => {'f' => Callable}, " +
 						"equality => ['a', 'n']}]",
-				objectType(initHash).resolve().toExpandedString());
+				objectType(initHash).resolve(pcore()).toExpandedString());
 	}
 
 	@Test
@@ -582,8 +583,8 @@ public class TypeFormatterTest {
 
 	@Test
 	public void typeAlias() {
-		TypeEvaluator typeEvaluator = Pcore.typeEvaluator();
-		AnyType alias = typeAliasType("MyAlias", typeReferenceType("String[1,20]")).resolve();
+		TypeEvaluator typeEvaluator = typeEvaluator();
+		AnyType alias = typeAliasType("MyAlias", typeReferenceType("String[1,20]")).resolve(pcore());
 		assertEquals("MyAlias", alias.toString());
 		assertEquals("MyAlias = String[1, 20]", alias.toExpandedString());
 	}
