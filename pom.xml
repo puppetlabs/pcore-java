@@ -16,6 +16,19 @@
         <junit.jupiter.version>5.0.0-RC2</junit.jupiter.version>
     </properties>
 
+    <distributionManagement>
+        <repository>
+            <id>puppet.nexus.releases</id>
+            <name>Puppet Nexus Release Repository</name>
+            <url>http://nexus.delivery.puppetlabs.net/content/repositories/releases</url>
+        </repository>
+        <snapshotRepository>
+            <id>puppet.nexus.snapshots</id>
+            <name>Puppet Nexus Snapshot Repository</name>
+            <url>http://nexus.delivery.puppetlabs.net/content/repositories/snapshots</url>
+        </snapshotRepository>
+    </distributionManagement>
+
     <dependencies>
         <dependency>
             <groupId>org.msgpack</groupId>
