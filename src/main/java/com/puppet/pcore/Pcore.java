@@ -1,64 +1,51 @@
 package com.puppet.pcore;
 
 import com.puppet.pcore.impl.PcoreImpl;
+import com.puppet.pcore.impl.loader.ParentedLoader;
+import com.puppet.pcore.impl.loader.TypeSetLoader;
 import com.puppet.pcore.impl.types.TypeSetType;
 import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.serialization.SerializationFactory;
 
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
  * Provides access to relevant parts of the Pcore Type system.
  */
-public class Pcore {
-	private static final ThreadLocal<PcoreImpl> INSTANCE = new ThreadLocal<>();
-
-	private static PcoreImpl getPcoreImpl() {
-		PcoreImpl instance = INSTANCE.get();
-		if(instance == null) {
-			instance = new PcoreImpl();
-			INSTANCE.set(instance);
-			instance.initBaseTypeSystem();
-		}
-		return instance;
+public abstract class Pcore {
+	public static Pcore create() {
+		return create(false);
 	}
 
-	public static Loader loader() {
-		return getPcoreImpl().loader();
+	public static Pcore create(boolean failWhenUnresolved) {
+		return new PcoreImpl(new ParentedLoader(staticPcore().loader()), failWhenUnresolved);
 	}
+
+	public static Pcore staticPcore() {
+		return PcoreImpl.staticInstance();
+	}
+
+	public abstract boolean failWhenUnresolved();
 
 	/**
-	 * For test purposes only
+	 * Prevent further modifications to this pcore instance
 	 */
-	public static void reset() {
-		getPcoreImpl().initBaseTypeSystem();
-	}
+	public abstract void freeze();
 
-	public static <T> T withTypeSetScope(TypeSetType typeSetType, Supplier<T> function) {
-		return getPcoreImpl().withTypeSetScope(typeSetType, function);
-	}
+	public abstract Loader loader();
 
-	public static <T> T withLocalScope(Supplier<T> function) {
-		return getPcoreImpl().withLocalScope(function);
-	}
+	public abstract ImplementationRegistry implementationRegistry();
 
-	public static ImplementationRegistry implementationRegistry() {
-		return getPcoreImpl().implementationRegistry();
-	}
+	public abstract Type infer(Object value);
 
-	public static Type infer(Object value) {
-		return getPcoreImpl().infer(value);
-	}
+	public abstract Type inferSet(Object value);
 
-	public static Type inferSet(Object value) {
-		return getPcoreImpl().inferSet(value);
-	}
+	public abstract SerializationFactory serializationFactory(String serializationFormat);
 
-	public static SerializationFactory serializationFactory(String serializationFormat) {
-		return getPcoreImpl().serializationFactory(serializationFormat);
-	}
+	public abstract TypeEvaluator typeEvaluator();
 
-	public static TypeEvaluator typeEvaluator() {
-		return getPcoreImpl().typeEvaluator();
-	}
+	public abstract Pcore withLocalScope();
+
+	public abstract Pcore withTypeSetScope(TypeSetType typeSet);
 }

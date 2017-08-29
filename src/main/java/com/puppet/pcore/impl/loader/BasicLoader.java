@@ -13,6 +13,7 @@ import static com.puppet.pcore.impl.Constants.RUNTIME_NAME_AUTHORITY;
 
 public class BasicLoader implements Loader {
 	private final Map<TypedName,Object> boundObjects = new HashMap<>();
+	private boolean frozen = false;
 
 	@Override
 	public void bind(String type, String name, Object toBeBound) throws TypeRedefinedException {
@@ -23,7 +24,13 @@ public class BasicLoader implements Loader {
 	public synchronized void bind(TypedName name, Object type) throws TypeRedefinedException {
 		if(loadOrNull(name) != null)
 			throw new TypeRedefinedException(name.toString());
+		assertModifiable();
 		boundObjects.put(name, type);
+	}
+
+	@Override
+	public void freeze() {
+		frozen = true;
 	}
 
 	@Override
@@ -42,5 +49,10 @@ public class BasicLoader implements Loader {
 	@Override
 	public synchronized Object loadOrNull(TypedName name) throws NoSuchTypeException {
 		return boundObjects.get(name);
+	}
+
+	private void assertModifiable() {
+		if(frozen)
+			throw new IllegalStateException("Attempt to modify frozen loader");
 	}
 }

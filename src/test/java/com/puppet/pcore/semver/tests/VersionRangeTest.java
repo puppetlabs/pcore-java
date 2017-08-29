@@ -11,6 +11,7 @@
 package com.puppet.pcore.semver.tests;
 
 import com.puppet.pcore.Pcore;
+import com.puppet.pcore.impl.types.PcoreTestBase;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.Test;
@@ -23,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 /**
  * Unit tests for VersionRange.
  */
-public class VersionRangeTest {
+public class VersionRangeTest extends PcoreTestBase {
 
 	@Test
 	public void dashRange() {
@@ -340,7 +341,7 @@ public class VersionRangeTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeAboveVersion() {
-		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
+		List<List<String>> pairs = (List<List<String>>)pcore().typeEvaluator().resolve("[\n" +
 				"['~1.2.2', '1.2.1'],\n" +
 				"['~0.6.1-1', '0.6.1-0'],\n" +
 				"['1.0.0 - 2.0.0', '0.0.1'],\n" +
@@ -415,7 +416,7 @@ public class VersionRangeTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeNotAboveVersion() {
-		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
+		List<List<String>> pairs = (List<List<String>>)pcore().typeEvaluator().resolve("[\n" +
 				"['~ 1.0', '1.1.0'],\n" +
 				"['~0.6.1-1', '0.6.1-1'],\n" +
 				"['1.0.0 - 2.0.0', '1.2.3'],\n" +
@@ -505,7 +506,7 @@ public class VersionRangeTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeBelowVersion() {
-		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
+		List<List<String>> pairs = (List<List<String>>)pcore().typeEvaluator().resolve("[\n" +
 				"['~1.2.2', '1.3.0'],\n" +
 				"['~0.6.1-1', '0.7.1-1'],\n" +
 				"['1.0.0 - 2.0.0', '2.0.1'],\n" +
@@ -577,7 +578,7 @@ public class VersionRangeTest {
 	@SuppressWarnings("unchecked")
 	@Test
 	public void rangeNotBelowVersion() {
-		List<List<String>> pairs = (List<List<String>>)Pcore.typeEvaluator().resolve("[\n" +
+		List<List<String>> pairs = (List<List<String>>)pcore().typeEvaluator().resolve("[\n" +
 				"['~0.6.1-1', '0.6.1-1'],\n" +
 				"['1.0.0 - 2.0.0', '1.2.3'],\n" +
 				"['1.0.0 - 2.0.0', '0.9.9'],\n" +

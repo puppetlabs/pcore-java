@@ -294,7 +294,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 			args = ((DynamicObjectImpl)value).getAttributes();
 		else {
 			Class<?> implClass = value.getClass();
-			java.util.function.Function<Object,Object[]> attributeProvider = Pcore.implementationRegistry().attributeProviderFor(this);
+			java.util.function.Function<Object,Object[]> attributeProvider = pcore().implementationRegistry().attributeProviderFor(this);
 			if(attributeProvider == null)
 				throw new SerializationException(format("No attribute provider found for %s", implClass.getName()));
 
@@ -368,7 +368,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 	@Override
 	@SuppressWarnings("unchecked")
 	public FactoryDispatcher<?> factoryDispatcher() {
-		ImplementationRegistry ir = Pcore.implementationRegistry();
+		ImplementationRegistry ir = pcore().implementationRegistry();
 		FactoryDispatcher fd = ir.creatorFor(this);
 		if(fd == null) {
 			FactoryDispatcher<DynamicObjectImpl> dynFd = dispatcher(

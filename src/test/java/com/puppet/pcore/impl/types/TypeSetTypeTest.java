@@ -18,13 +18,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("unused")
 @DisplayName("A TypeSetType")
-public class TypeSetTypeTest extends DeclaredTypeTestBase {
-
-	@BeforeEach
-	public void init() {
-		Pcore.reset();
-	}
-
+public class TypeSetTypeTest extends PcoreTestBase {
 	@Nested
 	@DisplayName("when validating the initialization hash")
 	public class ValidatingInit {

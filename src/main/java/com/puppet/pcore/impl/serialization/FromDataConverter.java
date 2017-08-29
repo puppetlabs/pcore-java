@@ -124,22 +124,25 @@ public class FromDataConverter implements Converter {
 	 * Converts the given <code>Data</code> <code>value</code> according to the given <code>options</code> and returns
 	 * the resulting <code>RichData</code>.
 	 *
+	 * @param pcore the pcore instance to use when registering new types or finding implementation classes
 	 * @param value   the <Data>value</Data> to convert
 	 * @param options options hash
 	 * @return the processed <code>RichData</code> result
 	 */
-	public static Object convert(Object value, Map<String,Object> options) {
-		return new FromDataConverter(options).convert(value);
+	public static Object convert(Pcore pcore, Object value, Map<String,Object> options) {
+		return new FromDataConverter(pcore, options).convert(value);
 	}
 
 	private final boolean allowUnresolved;
 	private RefEntry root;
 	private RefEntry current;
 	private Object currentKey;
+	private final Pcore pcore;
 
 	private static final RefEntry NO_VALUE = new RefEntry();
 
-	public FromDataConverter(Map<String, Object> options) {
+	public FromDataConverter(Pcore pcore, Map<String, Object> options) {
+		this.pcore = pcore;
 		allowUnresolved = get(options, "allow_unresolved", false);
 		root = NO_VALUE;
 	}
@@ -176,7 +179,7 @@ public class FromDataConverter implements Converter {
 			return pcoreTypeHashToValue((AnyType)type, value);
 		}
 		if(typeValue instanceof String) {
-			AnyType type = (AnyType)Pcore.typeEvaluator().resolveType((String)typeValue);
+			AnyType type = (AnyType)pcore.typeEvaluator().resolveType((String)typeValue);
 			if(type instanceof TypeReferenceType) {
 				if(allowUnresolved)
 					return hash;

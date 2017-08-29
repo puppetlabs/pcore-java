@@ -19,6 +19,7 @@ abstract class MetaType extends AnyType implements Annotatable {
 	private Map<AnyType,Map<String,?>> annotations = emptyMap();
 	private Object initHashExpression;
 	private boolean selfRecursion;
+	private Pcore pcore;
 
 	MetaType(Expression initHashExpression) {
 		this.initHashExpression = initHashExpression;
@@ -42,8 +43,15 @@ abstract class MetaType extends AnyType implements Annotatable {
 	}
 
 	@Override
+	public Pcore pcore() {
+		return pcore;
+	}
+
+	@Override
 	@SuppressWarnings("unchecked")
-	public AnyType resolve() {
+	public AnyType resolve(Pcore pcore) {
+		if(this.pcore == null)
+			this.pcore = pcore;
 		if(initHashExpression != null) {
 			selfRecursion = true;
 
@@ -84,7 +92,7 @@ abstract class MetaType extends AnyType implements Annotatable {
 
 	@SuppressWarnings("unchecked")
 	Map<String,Object> resolveLiteralHash(HashExpression i12e) {
-		return (Map<String,Object>)Pcore.typeEvaluator().resolve(i12e);
+		return (Map<String,Object>)pcore.typeEvaluator().resolve(i12e);
 	}
 
 	@SuppressWarnings("unchecked")
@@ -109,7 +117,7 @@ abstract class MetaType extends AnyType implements Annotatable {
 			return Helpers.asList(result);
 		}
 
-		return value instanceof AnyType ? ((AnyType)value).resolve() : value;
+		return value instanceof AnyType ? ((AnyType)value).resolve(pcore) : value;
 	}
 
 	public Map<String,Object> _pcoreInitHash() {

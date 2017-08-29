@@ -1,8 +1,6 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeResolverException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -17,12 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 @SuppressWarnings("unused")
 @DisplayName("A Pcore Type Alias")
-public class TypeAliasTypeTest extends DeclaredTypeTestBase {
-	@BeforeEach
-	public void init() {
-		Pcore.reset();
-	}
-
+public class TypeAliasTypeTest extends PcoreTestBase {
 	@Test
 	@DisplayName("resolves nested objects using self recursion")
 	public void test1() {
@@ -101,7 +94,7 @@ public class TypeAliasTypeTest extends DeclaredTypeTestBase {
 	@Test
 	@DisplayName("can be resolved using a TypeReference")
 	public void test9() {
-		AnyType ta = typeAliasType("Foo", typeReferenceType("Integer[0]")).resolve();
+		AnyType ta = typeAliasType("Foo", typeReferenceType("Integer[0]")).resolve(pcore());
 		assertTrue(ta.isInstance(3));
 		assertFalse(ta.isInstance(-3));
 	}

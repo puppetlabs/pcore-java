@@ -65,13 +65,13 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 			return unmodifiableCopy(result);
 		}
 
-		public void resolve() {
+		public void resolve(Pcore pcore) {
 			TypedName tn = new TypedName("type", name, nameAuthority);
-			Object type = Pcore.loader().load(tn);
+			Object type = pcore().loader().load(tn);
 			if(!(type instanceof TypeSetType))
 				throw new TypeResolverException(format("%s resolves to a %s", this, type));
 
-			this.typeSet = (TypeSetType)((TypeSetType)type).resolve();
+			this.typeSet = (TypeSetType)((TypeSetType)type).resolve(pcore);
 			if(!versionRange.includes(typeSet.version))
 				throw new TypeResolverException(format(
 						"%s resolves to an incompatible version. Expected %s, got %s", this, versionRange, typeSet.version));
@@ -248,16 +248,15 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 	}
 
 	@Override
-	public AnyType resolve() {
-		super.resolve();
+	public AnyType resolve(Pcore pcore) {
+		super.resolve(pcore);
 		for(Reference ref : references.values())
-			ref.resolve();
-		return Pcore.withTypeSetScope(this, () -> {
-			for(Map.Entry<String,AnyType> entry : types.entrySet())
-				entry.setValue(entry.getValue().resolve());
-			types = unmodifiableCopy(types);
-			return this;
-		});
+			ref.resolve(pcore);
+		Pcore tsPcore = pcore.withTypeSetScope(this);
+		for(Map.Entry<String,AnyType> entry : types.entrySet())
+			entry.setValue(entry.getValue().resolve(tsPcore));
+		types = unmodifiableCopy(types);
+		return this;
 	}
 
 	static ObjectType registerPcoreType(PcoreImpl pcore) {
@@ -412,7 +411,7 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 				}
 				types.put(
 						entry.getKey(),
-						((TypeEvaluatorImpl)Pcore.typeEvaluator()).bindByName(name + "::" + entry.getKey(), (AnyType)value, nameAuth));
+						((TypeEvaluatorImpl)pcore().typeEvaluator()).bindByName(name + "::" + entry.getKey(), (AnyType)value, nameAuth));
 			}
 			result.put(KEY_TYPES, unmodifiableCopy(types));
 		}
@@ -423,7 +422,7 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 	Map<String,Object> resolveLiteralHash(HashExpression i12e) {
 		Map<String,Object> result = new LinkedHashMap<>();
 
-		TypeEvaluator evaluator = Pcore.typeEvaluator();
+		TypeEvaluator evaluator = pcore().typeEvaluator();
 		for(KeyedEntry entry : i12e.entries) {
 			Object key = evaluator.resolve(entry.key);
 			Expression value = entry.value;
@@ -468,7 +467,7 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 		if(nameAuth != null)
 			return nameAuth;
 
-		Loader loader = Pcore.loader();
+		Loader loader = pcore().loader();
 		if(loader instanceof TypeSetLoader)
 			return loader.getNameAuthority();
 

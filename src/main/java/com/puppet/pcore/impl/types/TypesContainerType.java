@@ -1,5 +1,7 @@
 package com.puppet.pcore.impl.types;
 
+import com.puppet.pcore.Pcore;
+
 import java.util.ArrayList;
 import java.util.List;
 
@@ -22,7 +24,7 @@ abstract class TypesContainerType extends AnyType {
 	}
 
 	@Override
-	public synchronized AnyType resolve() {
+	public synchronized AnyType resolve(Pcore pcore) {
 		if(resolved)
 			return this;
 
@@ -30,7 +32,7 @@ abstract class TypesContainerType extends AnyType {
 		boolean changed = false;
 		ArrayList<AnyType> rsTypes = new ArrayList<>(types.size());
 		for(AnyType type : types) {
-			AnyType rsType = type.resolve();
+			AnyType rsType = type.resolve(pcore);
 			if(type != rsType)
 				changed = true;
 			rsTypes.add(rsType);

@@ -20,8 +20,10 @@ import java.util.*;
 public class DeserializerImpl implements Deserializer {
 	private final List<Object> objectsRead = new ArrayList<>();
 	private final Reader reader;
+	private final Pcore pcore;
 
-	public DeserializerImpl(Reader reader) {
+	public DeserializerImpl(Pcore pcore, Reader reader) {
+		this.pcore = pcore;
 		this.reader = reader;
 	}
 
@@ -64,7 +66,7 @@ public class DeserializerImpl implements Deserializer {
 
 		if(val instanceof PcoreObjectStart) {
 			PcoreObjectStart os = (PcoreObjectStart)val;
-			Type type = Pcore.typeEvaluator().resolveType(os.typeName);
+			Type type = pcore.typeEvaluator().resolveType(os.typeName);
 			if(!(type instanceof ObjectType))
 				throw new SerializationException("No implementation mapping found for Puppet Type " + os.typeName);
 
@@ -75,7 +77,7 @@ public class DeserializerImpl implements Deserializer {
 
 				// Add result to the loader unless it is the exact same instance as the type returned from loadOrNull. The add
 				// will succeed when loadOrNull returns null.
-				Loader loader = Pcore.loader();
+				Loader loader = pcore.loader();
 				if(val != loader.loadOrNull(tn))
 					loader.bind(tn, val);
 			}

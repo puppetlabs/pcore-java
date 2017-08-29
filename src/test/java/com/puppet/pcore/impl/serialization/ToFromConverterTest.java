@@ -3,6 +3,7 @@ package com.puppet.pcore.impl.serialization;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.types.AnyType;
+import com.puppet.pcore.impl.types.PcoreTestBase;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.BeforeEach;
@@ -17,7 +18,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-import static com.puppet.pcore.Pcore.typeEvaluator;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static java.util.Arrays.asList;
 import static java.util.Collections.singletonList;
@@ -25,17 +25,11 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 @SuppressWarnings("unused")
 @DisplayName("The ToDataConverter/FromDataConverter")
-public class ToFromConverterTest {
-
-	@BeforeEach
-	public void init() {
-		Pcore.reset();
-	}
-
+public class ToFromConverterTest extends PcoreTestBase {
 	void assertWriteAndRead(String typeString) throws IOException {
-		TypeEvaluator te = typeEvaluator();
-		Type type = ((AnyType)te.resolveType(typeString)).resolve();
-		assertEquals(type, ((AnyType)writeAndRead(type)).resolve());
+		TypeEvaluator te = pcore().typeEvaluator();
+		Type type = ((AnyType)te.resolveType(typeString)).resolve(pcore());
+		assertEquals(type, ((AnyType)writeAndRead(type)).resolve(pcore()));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -44,7 +38,7 @@ public class ToFromConverterTest {
 		String json = new ObjectMapper().writeValueAsString(data);
 
 		Object dataAgain = new ObjectMapper().readValue(json, ArrayList.class).get(0);
-		return FromDataConverter.convert(dataAgain, asMap("loader", Pcore.loader()));
+		return FromDataConverter.convert(pcore(), dataAgain, asMap("loader", pcore().loader()));
 	}
 
 	@Nested
@@ -430,7 +424,7 @@ public class ToFromConverterTest {
 		@Test
 		@DisplayName("TypeSet[...]")
 		void rwTypeSetType() throws IOException {
-			TypeEvaluator te = typeEvaluator();
+			TypeEvaluator te = pcore().typeEvaluator();
 			te.declareType("Transports", "TypeSet[{pcore_version => '1.0.0', version => '1.0.0'}]");
 
 			assertWriteAndRead("TypeSet[{pcore_version => '1.0.0', version => '1.0.0', " +

@@ -2,6 +2,7 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.*;
+import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
 import com.puppet.pcore.serialization.Constructor;
 import com.puppet.pcore.serialization.FactoryDispatcher;
@@ -10,6 +11,7 @@ import java.io.IOException;
 import java.util.Map;
 import java.util.function.Supplier;
 
+import static com.puppet.pcore.Pcore.staticPcore;
 import static com.puppet.pcore.impl.Helpers.any;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
@@ -34,6 +36,13 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 	@Override
 	public Type _pcoreType() {
 		return ptype;
+	}
+
+	/**
+	 * @return the pcore that loaded this type
+	 */
+	public Pcore pcore() {
+		return staticPcore();
 	}
 
 	public <T> T assertInstanceOf(T actual, boolean nullOK, Supplier<String> identifier) {
@@ -113,7 +122,7 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		return this;
 	}
 
-	public AnyType resolve() {
+	public AnyType resolve(Pcore pcore) {
 		return this;
 	}
 
