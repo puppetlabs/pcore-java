@@ -3,6 +3,7 @@ package com.puppet.pcore.impl.parser;
 import com.puppet.pcore.Default;
 import com.puppet.pcore.IssueException;
 import com.puppet.pcore.parser.Expression;
+import com.puppet.pcore.parser.ParseException;
 import com.puppet.pcore.parser.ParseIssue;
 import com.puppet.pcore.parser.model.*;
 
@@ -11,6 +12,7 @@ import java.util.List;
 
 import static com.puppet.pcore.parser.ParseIssue.*;
 import static com.puppet.pcore.impl.parser.LexTokens.*;
+import static java.lang.String.format;
 
 public class Lexer extends StringReader {
 
@@ -23,6 +25,10 @@ public class Lexer extends StringReader {
 	@FunctionalInterface
 	private interface EscapeHandler {
 		void handle(StringBuilder buf, char quoteChar);
+	}
+
+	boolean canParse() {
+		return false;
 	}
 
 	Expression parse(int expectedEnd, boolean singleExpression) {
@@ -56,7 +62,11 @@ public class Lexer extends StringReader {
 	}
 
 	final String tokenString() {
-		return tokenValue == null ? tokenMap.get(currentToken) : (String)tokenValue;
+		if(tokenValue == null)
+			return tokenMap.get(currentToken);
+		if(tokenValue instanceof String)
+			return (String)tokenValue;
+		throw new ParseException(format("Token '%s' has no string representation", tokenMap.get(currentToken)));
 	}
 
 	static boolean isDigit(char c) {
@@ -417,16 +427,12 @@ public class Lexer extends StringReader {
       } else if(isDigit(c)) {
 	      advance();
         skipDecimalDigits();
-        tokenValue = from(start + 1);
+        setToken(TOKEN_VARIABLE, from(start + 1));
       } else if(Character.isLetter(c)) {
 	      setPos(start);
 	      throw parseIssue(LEX_INVALID_VARIABLE_NAME);
       } else
-      	tokenValue = "";
-
-      setToken(TOKEN_VARIABLE, new VariableExpression(
-        new QualifiedName((String)tokenValue, locator, start + 1, ((String)tokenValue).length()),
-        locator, start, pos() - start));
+	      setToken(TOKEN_VARIABLE, "");
       break;
 
     case '0':
@@ -759,7 +765,7 @@ public class Lexer extends StringReader {
 		if(start.flags != null || start.interpolate || end.indentStrip > 0) {
 			setPos(heredocContentStart);
 			List<Expression> segments = null;
-			if(start.interpolate)
+			if(start.interpolate && canParse())
 				segments = new ArrayList<>();
 
 			heredoc = applyEscapes(end.heredocContentEnd, end.indentStrip, start.flags, segments);
@@ -780,8 +786,11 @@ public class Lexer extends StringReader {
 
 		setPos(start.heredocTagEnd); // Normal parsing continues here
 		nextLineStart = end.heredocEnd + 1; // and next newline will jump to here
-		Expression textExpr = new LiteralString(heredoc, locator, heredocContentStart, end.heredocContentEnd -heredocContentStart);
-		setToken(TOKEN_HEREDOC, new HeredocExpression(textExpr, start.syntax, locator, heredocStart, end.heredocContentEnd - heredocStart));
+		if(canParse()) {
+			Expression textExpr = new LiteralString(heredoc, locator, heredocContentStart, end.heredocContentEnd - heredocContentStart);
+			setToken(TOKEN_HEREDOC, new HeredocExpression(textExpr, start.syntax, locator, heredocStart, end.heredocContentEnd - heredocStart));
+		} else
+			setToken(TOKEN_STRING, heredoc);
 	}
 
 	private char skipWhiteInLiteral() {
@@ -1049,12 +1058,18 @@ public class Lexer extends StringReader {
 	}
 
 	private void consumeDoubleQuotedString() {
-		List<Expression> segments = new ArrayList<>();
+		List<Expression> segments = null;
+		if(canParse())
+			segments = new ArrayList<>();
 		consumeDelimitedString('"', segments, (buf, ec) -> {
 			switch(ec) {
 			case '\\':
-			case '$':
 			case '\'':
+				buf.append(ec);
+				break;
+			case '$':
+				if(!canParse())
+					buf.append('\\');
 				buf.append(ec);
 				break;
 			case 'n':
@@ -1078,6 +1093,9 @@ public class Lexer extends StringReader {
 				buf.append(ec);
 			}
 		});
+		if(!canParse())
+			// currentToken will be TOKEN_STRING
+			return;
 
 		if(segments.size() > 0) {
 			if(currentToken == TOKEN_STRING) {

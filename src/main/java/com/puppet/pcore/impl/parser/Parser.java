@@ -35,6 +35,11 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 	}
 
 	@Override
+	boolean canParse() {
+		return true;
+	}
+
+	@Override
 	public Expression parse(String exprString) {
 		return parse(null, exprString);
 	}
@@ -582,9 +587,17 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 				nextToken();
 				break;
 
-			case TOKEN_HEREDOC: case TOKEN_CONCATENATED_STRING: case TOKEN_VARIABLE:
+			case TOKEN_HEREDOC: case TOKEN_CONCATENATED_STRING:
 				expr = (Expression)tokenValue;
 				nextToken();
+				break;
+
+			case TOKEN_VARIABLE:
+				String varName = tokenString();
+				nextToken();
+				expr = new VariableExpression(
+						new QualifiedName(varName, locator, atomStart + 1, varName.length()),
+						locator, atomStart, pos() - atomStart);
 				break;
 
 			case TOKEN_REGEXP:
@@ -856,7 +869,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		if(currentToken != TOKEN_VARIABLE)
 			throw parseIssue(PARSE_EXPECTED_VARIABLE);
 
-		VariableExpression variable = (VariableExpression)tokenValue;
+		String variable = tokenString();
 		nextToken();
 
 		Expression defaultExpression = null;
@@ -866,7 +879,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		}
 
 		return new Parameter(
-				((NameExpression)variable.expr).name(),
+				variable,
 				defaultExpression, typeExpr, capturesRest, locator, start, pos() - start);
 	}
 
