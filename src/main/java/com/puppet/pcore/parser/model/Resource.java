@@ -32,7 +32,7 @@ public class Resource extends AbstractResource {
 	@Override
 	public PN toPN() {
 		List<Map.Entry<String,? extends PN>> entries = new ArrayList<>();
-		entries.add(typeName.toPN().withName("resources"));
+		entries.add(typeName.toPN().withName("type"));
 		entries.add(pnList(bodies).withName("bodies"));
 		if(!form.equals("regular"))
 			entries.add(new LiteralPN(form).withName("form"));

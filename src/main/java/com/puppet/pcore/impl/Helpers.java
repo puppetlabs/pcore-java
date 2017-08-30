@@ -560,7 +560,7 @@ public class Helpers {
 		int idx = 0;
 		while(minIndent > 0) {
 			int sol = idx;
-			char c = 0;
+			char c;
 			for(;;) {
 				c = idx < top ? str.charAt(idx) : 0;
 				if(c == 0 || c == '\n' || !(c == '\t' || c == ' '))

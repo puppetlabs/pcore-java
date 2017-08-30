@@ -1,15 +1,11 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.impl.StringConverter;
 import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import org.junit.jupiter.api.*;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.MethodSource;
 
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.stream.Stream;
 
 import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.types.TypeFactory.*;

@@ -11,6 +11,6 @@ public class VirtualQuery extends QueryExpression {
 
 	@Override
 	public PN toPN() {
-		return expr instanceof NopExpression ? new CallPN("<| |>") : new CallPN("<| |>", expr.toPN());
+		return expr instanceof NopExpression ? new CallPN("virtual-query") : new CallPN("virtual-query", expr.toPN());
 	}
 }

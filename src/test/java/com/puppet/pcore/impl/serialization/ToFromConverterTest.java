@@ -6,7 +6,6 @@ import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.PcoreTestBase;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

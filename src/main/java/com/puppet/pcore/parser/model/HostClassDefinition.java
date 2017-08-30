@@ -20,6 +20,6 @@ public class HostClassDefinition extends NamedDefinition {
 
 	@Override
 	public PN toPN() {
-		return definitionPN("class");
+		return definitionPN("class", parentClass, null);
 	}
 }

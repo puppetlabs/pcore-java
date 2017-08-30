@@ -1,7 +1,6 @@
 package com.puppet.pcore.impl;
 
 import com.puppet.pcore.Binary;
-import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.PcoreTestBase;

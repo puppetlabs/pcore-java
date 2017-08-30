@@ -246,7 +246,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			case TOKEN_ASSIGN: case TOKEN_ADD_ASSIGN: case TOKEN_SUBTRACT_ASSIGN:
 				String op = tokenString();
 				nextToken();
-				expr = new AssignmentExpression(op, expr, relationship(), locator, expr.offset(), pos() - expr.offset());
+				expr = new AssignmentExpression(op, expr, assignment(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -301,7 +301,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			switch(currentToken) {
 			case TOKEN_OR:
 				nextToken();
-				expr = new OrExpression(expr, andExpression(), locator, expr.offset(), pos() - expr.offset());
+				expr = new OrExpression(expr, orExpression(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -316,7 +316,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			switch(currentToken) {
 			case TOKEN_AND:
 				nextToken();
-				expr = new AndExpression(expr, compareExpression(), locator, expr.offset(), pos() - expr.offset());
+				expr = new AndExpression(expr, andExpression(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -332,7 +332,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			case TOKEN_LESS: case TOKEN_LESS_EQUAL: case TOKEN_GREATER: case TOKEN_GREATER_EQUAL:
 				String op = tokenString();
 				nextToken();
-				expr = new ComparisonExpression(op, expr, equalExpression(), locator, expr.offset(), pos() - expr.offset());
+				expr = new ComparisonExpression(op, expr, compareExpression(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -348,7 +348,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			case TOKEN_EQUAL: case TOKEN_NOT_EQUAL:
 				String op = tokenString();
 				nextToken();
-				expr = new ComparisonExpression(op, expr, shiftExpression(), locator, expr.offset(), pos() - expr.offset());
+				expr = new ComparisonExpression(op, expr, equalExpression(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -364,7 +364,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			case TOKEN_LSHIFT: case TOKEN_RSHIFT:
 				String op = tokenString();
 				nextToken();
-				expr = new ArithmeticExpression(op, expr, additiveExpression(), locator, expr.offset(), pos() - expr.offset());
+				expr = new ArithmeticExpression(op, expr, shiftExpression(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -380,7 +380,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			case TOKEN_ADD: case TOKEN_SUBTRACT:
 				String op = tokenString();
 				nextToken();
-				expr = new ArithmeticExpression(op, expr, multiplicativeExpression(), locator, expr.offset(), pos() - expr.offset());
+				expr = new ArithmeticExpression(op, expr, additiveExpression(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -396,7 +396,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			case TOKEN_MULTIPLY: case TOKEN_DIVIDE: case TOKEN_REMAINDER:
 				String op = tokenString();
 				nextToken();
-				expr = new ArithmeticExpression(op, expr, matchExpression(), locator, expr.offset(), pos() - expr.offset());
+				expr = new ArithmeticExpression(op, expr, multiplicativeExpression(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -412,7 +412,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			case TOKEN_MATCH: case TOKEN_NOT_MATCH:
 				String op = tokenString();
 				nextToken();
-				expr = new MatchExpression(op, expr, inExpression(), locator, expr.offset(), pos() - expr.offset());
+				expr = new MatchExpression(op, expr, matchExpression(), locator, expr.offset(), pos() - expr.offset());
 				break;
 
 			default:
@@ -427,7 +427,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			switch(currentToken) {
 				case TOKEN_IN:
 					nextToken();
-					expr = new InExpression(expr, unaryExpression(), locator, expr.offset(), pos() - expr.offset());
+					expr = new InExpression(expr, inExpression(), locator, expr.offset(), pos() - expr.offset());
 					break;
 
 				default:

@@ -2,13 +2,11 @@ package com.puppet.pcore.impl;
 
 import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeAssertionException;
-import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.TypeResolverException;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.PcoreTestBase;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.time.InstantFormat;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.*;
 
 import java.time.Duration;

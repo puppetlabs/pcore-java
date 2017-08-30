@@ -13,6 +13,7 @@ public class Example extends Node {
 		this.result = result;
 	}
 
+	@Override
 	public Test createTest() {
 		List<Executable> tests = new ArrayList<>();
 		if(result instanceof ValidatesWith) {

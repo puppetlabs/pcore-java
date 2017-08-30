@@ -158,13 +158,13 @@ Examples('Qualified Reference',
 
 Examples('Variable Name',
   Example('contains letters, numbers, and underscore',
-    Given('$n32'), Parses_to('($ "n32")')),
+    Given('$n32'), Parses_to('(var "n32")')),
   Example('can start with ::',
-    Given('$::name'), Parses_to('($ "::name")')),
+    Given('$::name'), Parses_to('(var "::name")')),
   Example('can contain multiple segements separated by ::',
-    Given('$a::b::c'), Parses_to('($ "a::b::c")')),
+    Given('$a::b::c'), Parses_to('(var "a::b::c")')),
   Example('last segment can start with underscore',
-    Given('$av::bv::_v'), Parses_to('($ "av::bv::_v")')),
+    Given('$av::bv::_v'), Parses_to('(var "av::bv::_v")')),
   Example('segments cannot start with an upper case letter',
     Given('$av::bv::Cv'), Validates_with(Error(LEX_INVALID_VARIABLE_NAME))),
   Example('only last segment cannot start with an underscore',
@@ -174,47 +174,44 @@ Examples('Variable Name',
 Examples('Operator precedence',
   Example('1',
     Given('$x = a or b and c < d == e << f + g * -h'),
-    Parses_to('(= ($ "x") (or (qn "a") (and (qn "b") (< (qn "c") (== (qn "d") (<< (qn "e") (+ (qn "f") (* (qn "g") (- (qn "h"))))))))))')),
+    Parses_to('(= (var "x") (or (qn "a") (and (qn "b") (< (qn "c") (== (qn "d") (<< (qn "e") (+ (qn "f") (* (qn "g") (- (qn "h"))))))))))')),
   Example('2',
     Given('$x = -h / g + f << e == d <= c and b or a'),
-    Parses_to('(= ($ "x") (or (and (<= (== (<< (+ (/ (- (qn "h")) (qn "g")) (qn "f")) (qn "e")) (qn "d")) (qn "c")) (qn "b")) (qn "a")))')),
+    Parses_to('(= (var "x") (or (and (<= (== (<< (+ (/ (- (qn "h")) (qn "g")) (qn "f")) (qn "e")) (qn "d")) (qn "c")) (qn "b")) (qn "a")))')),
   Example('3',
     Given('$x = !a == b'),
-    Parses_to('(= ($ "x") (== (! (qn "a")) (qn "b")))')),
+    Parses_to('(= (var "x") (== (! (qn "a")) (qn "b")))')),
   Example('4',
     Given('$x = a > b'),
-    Parses_to('(= ($ "x") (> (qn "a") (qn "b")))')),
+    Parses_to('(= (var "x") (> (qn "a") (qn "b")))')),
   Example('5',
     Given('$x = a >= b'),
-    Parses_to('(= ($ "x") (>= (qn "a") (qn "b")))')),
+    Parses_to('(= (var "x") (>= (qn "a") (qn "b")))')),
   Example('6',
     Given('$x = a +b'),
-    Parses_to('(= ($ "x") (+ (qn "a") (qn "b")))')),
+    Parses_to('(= (var "x") (+ (qn "a") (qn "b")))')),
   Example('7',
     Given('$x = +4'),
-    Parses_to('(= ($ "x") 4)')),
+    Parses_to('(= (var "x") 4)')),
   Example('8',
     Given('$x = a * (b + c)'),
-    Parses_to('(= ($ "x") (* (qn "a") (() (+ (qn "b") (qn "c")))))')),
+    Parses_to('(= (var "x") (* (qn "a") (paren (+ (qn "b") (qn "c")))))')),
   Example('9',
     Given('$x = $y -= $z'),
-    Parses_to('(-= (= ($ "x") ($ "y")) ($ "z"))')),
+    Parses_to('(= (var "x") (-= (var "y") (var "z")))')),
   Example('10',
-    Given('$x = $y -= $z'),
-    Parses_to('(-= (= ($ "x") ($ "y")) ($ "z"))')),
-  Example('11',
     Given('$x = $y + $z % 5'),
-    Parses_to('(= ($ "x") (+ ($ "y") (% ($ "z") 5)))')),
-  Example('12',
+    Parses_to('(= (var "x") (+ (var "y") (% (var "z") 5)))')),
+  Example('11',
     Given('$x = $y += $z'),
-    Parses_to('(+= (= ($ "x") ($ "y")) ($ "z"))')),
-  Example('13',
+    Parses_to('(= (var "x") (+= (var "y") (var "z")))')),
+  Example('12',
     Given('$y = $x =~ $z'),
-    Parses_to('(= ($ "y") (=~ ($ "x") ($ "z")))')),
-  Example('14',
+    Parses_to('(= (var "y") (=~ (var "x") (var "z")))')),
+  Example('13',
     Given('$y = $x !~ $z'),
-    Parses_to('(= ($ "y") (!~ ($ "x") ($ "z")))')),
-  Example('15',
+    Parses_to('(= (var "y") (!~ (var "x") (var "z")))')),
+  Example('14',
     Given('$x = +b'),
     Validates_with(Error(LEX_UNEXPECTED_TOKEN))),
 )
@@ -246,35 +243,35 @@ Examples('Single Quoted String',
 Examples('Double Quoted String',
   Example('is parsed into a concatenated string',
     Given(`"the string"`),
-    Parses_to(`(concat ["the string"])`)
+    Parses_to(`(concat "the string")`)
   ),
   Example('translates escapes for newline, tab, space, carriage return, and escape',
     Given(`"string\\n\nwith\\t\t,\\s\s, and \\r\r\n"`),
-    Parses_to(`(concat ["string\\n\nwith\\t\t,\\s , and \\r\r\n"])`)
+    Parses_to(`(concat "string\\n\nwith\\t\t,\\s , and \\r\r\n")`)
   ),
   Example('retains unknown escapes',
     Given(`"unknown \k escape"`),
-    Parses_to(`(concat ["unknown \\k escape"])`)
+    Parses_to(`(concat "unknown \\k escape")`)
   ),
   Example('handles interpolated variables without {} delimiters',
     Given(`"hello $var"`),
-    Parses_to(`(concat ["hello " (str ($ "var"))])`)
+    Parses_to(`(concat "hello " (str (var "var")))`)
   ),
   Example('handles interpolated variables with {} delimiters',
     Given(`"hello ${var}"`),
-    Parses_to(`(concat ["hello " (str ($ "var"))])`)
+    Parses_to(`(concat "hello " (str (var "var")))`)
   ),
   Example('handles complex interpolated expressions',
     Given(`"Before ${{ a => true, b => "hello"}} and after"`),
-    Parses_to(`(concat ["Before " (str (hash [(=> (qn "a") true) (=> (qn "b") (concat ["hello"]))])) " and after"])`)
+    Parses_to(`(concat "Before " (str (hash (=> (qn "a") true) (=> (qn "b") (concat "hello")))) " and after")`)
   ),
   Example('handles unicode escapes consisting of 4 hexadecimal digits',
     Given(`"x\u2713y"`),
-    Parses_to(`(concat ["x✓y"])`)
+    Parses_to(`(concat "x✓y")`)
   ),
   Example('handles brace limited unicode escapes',
     Given(`"x\u{1f452}y"`),
-    Parses_to(`(concat ["x👒y"])`)
+    Parses_to(`(concat "x👒y")`)
   ),
   Example('rejects malformed variable names',
     Given(`"$Var"`),
@@ -315,7 +312,7 @@ Examples('Heredoc String',
       The second
       heredoc text
       -TWO`)),
-    Parses_to(`(hash [(=> (qn "a") (heredoc {:text "The first\nheredoc text"})) (=> (qn "b") (heredoc {:text "The second\nheredoc text"}))])`)
+    Parses_to(`(hash (=> (qn "a") (heredoc {:text "The first\nheredoc text"})) (=> (qn "b") (heredoc {:text "The second\nheredoc text"})))`)
   ),
   Example('several can exist on the same line',
     Given(Unindent(`
@@ -327,7 +324,7 @@ Examples('Heredoc String',
         fourth entry
         |-FOURTH
         'sixth']`)),
-    Parses_to(`(array ["first" (heredoc {:text "This is the text of the\nsecond entry"}) "third" (heredoc {:text "And here is the text of the\nfourth entry"}) "fifth" "sixth"])`)
+    Parses_to(`(array "first" (heredoc {:text "This is the text of the\nsecond entry"}) "third" (heredoc {:text "And here is the text of the\nfourth entry"}) "fifth" "sixth")`)
   ),
   Example('empty tag is an error',
     Given(Unindent(`
@@ -367,7 +364,7 @@ Examples('Heredoc String',
         This is
         heredoc text
         END`)),
-      Parses_to(`(heredoc {:text "This is\nheredoc text\n" :syntax "syntax"})`)
+      Parses_to(`(heredoc {:syntax "syntax" :text "This is\nheredoc text\n"})`)
     ),
     Example('does not allow multiple syntax declarations',
       Given(Unindent(`
@@ -486,7 +483,7 @@ Examples('Heredoc String',
         @(END:syntax/nt)
         This\nis\theredoc\ntext
         -END`)),
-      Parses_to(`(heredoc {:text "This\nis\theredoc\ntext" :syntax "syntax"})`)
+      Parses_to(`(heredoc {:syntax "syntax" :text "This\nis\theredoc\ntext"})`)
     ),
     Example('does not allow multiple flag declarations',
       Given(Unindent(`
@@ -543,7 +540,7 @@ Examples('Heredoc String',
           This is
           heredoc $text
           |- END`)),
-      Parses_to(`(heredoc {:text (concat ["This is\nheredoc " (str ($ "text"))])})`)
+      Parses_to(`(heredoc {:text (concat "This is\nheredoc " (str (var "text")))})`)
     ),
     Example('unquoted tag deactivates interpolation',
       Given(Unindent(`
@@ -559,7 +556,7 @@ Examples('Heredoc String',
           This is
           heredoc $a \$b
           |- END`)),
-      Parses_to(`(heredoc {:text (concat ["This is\nheredoc " (str ($ "a")) " \\" (str ($ "b"))])})`)
+      Parses_to(`(heredoc {:text (concat "This is\nheredoc " (str (var "a")) " \\" (str (var "b")))})`)
     ),
     Example('$ is escaped when $ escape flag is present',
       Given(Unindent(`
@@ -567,7 +564,7 @@ Examples('Heredoc String',
           This is
           heredoc $a \$b
           |- END`)),
-      Parses_to(`(heredoc {:text (concat ["This is\nheredoc " (str ($ "a")) " $b"])})`)
+      Parses_to(`(heredoc {:text (concat "This is\nheredoc " (str (var "a")) " $b")})`)
     ),
     Example('multiple quoted tags are not allowed inside of declaration',
       Given(Unindent(`

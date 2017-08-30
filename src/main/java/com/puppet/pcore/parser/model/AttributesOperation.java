@@ -1,6 +1,7 @@
 package com.puppet.pcore.parser.model;
 
 import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.CallPN;
 import com.puppet.pcore.parser.Expression;
 
 public class AttributesOperation extends Positioned {
@@ -17,6 +18,6 @@ public class AttributesOperation extends Positioned {
 
 	@Override
 	public PN toPN() {
-		return expr.toPN().asCall("splat_hash");
+		return new CallPN("splat-hash", expr.toPN());
 	}
 }

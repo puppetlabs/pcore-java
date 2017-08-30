@@ -191,7 +191,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 				if(operand instanceof QualifiedReference)
 					qn = (QualifiedReference)operand;
 			}
-			if("typereference".equals(qn.downcasedName()))
+			if(qn != null && "typereference".equals(qn.downcasedName()))
 				// Explicit TypeReference resolves to TypeReference
 				return at;
 

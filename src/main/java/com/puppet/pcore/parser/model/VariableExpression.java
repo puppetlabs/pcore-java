@@ -12,6 +12,6 @@ public class VariableExpression extends UnaryExpression {
 
 	@Override
 	public PN toPN() {
-		return new CallPN("$", new LiteralPN(((QualifiedName)expr).name));
+		return new CallPN("var", new LiteralPN(((QualifiedName)expr).name));
 	}
 }

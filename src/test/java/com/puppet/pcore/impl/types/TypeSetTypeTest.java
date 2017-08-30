@@ -1,9 +1,7 @@
 package com.puppet.pcore.impl.types;
 
-import com.puppet.pcore.Pcore;
 import com.puppet.pcore.TypeAssertionException;
 import com.puppet.pcore.TypeResolverException;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;

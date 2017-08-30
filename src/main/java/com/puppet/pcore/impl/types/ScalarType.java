@@ -9,7 +9,6 @@ import java.time.Instant;
 import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.types.TypeFactory.*;
-import static com.puppet.pcore.impl.types.TypeFactory.floatType;
 
 public class ScalarType extends AnyType {
 	static final ScalarType DEFAULT = new ScalarType();

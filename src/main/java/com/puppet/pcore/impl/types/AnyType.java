@@ -2,7 +2,6 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.*;
-import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
 import com.puppet.pcore.serialization.Constructor;
 import com.puppet.pcore.serialization.FactoryDispatcher;

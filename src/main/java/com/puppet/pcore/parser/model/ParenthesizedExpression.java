@@ -10,6 +10,6 @@ public class ParenthesizedExpression extends UnaryExpression {
 
 	@Override
 	public PN toPN() {
-		return unaryPN("()");
+		return unaryPN("paren");
 	}
 }

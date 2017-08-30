@@ -57,29 +57,29 @@ public class ExpressionParserTest {
 
 		@Test
 		public void doubleQuotedStringWithControlChars() {
-			assertEquals("(concat [\"string\\nwith\\t\\\\t, \\\\s, \\\\r, and \\\\n\\r\\n\"])", parse
+			assertEquals("(concat \"string\\nwith\\t\\\\t, \\\\s, \\\\r, and \\\\n\\r\\n\")", parse
 					("\"string\\nwith\\t\\\\t,\\s\\\\s, \\\\r, and \\\\n\\r\\n\""));
 		}
 
 		@Test
 		public void doubleQuotedStringWithDoubleQuotes() {
-			assertEquals("(concat [\"string\\\"with\\\"quotes\"])", parse("\"string\\\"with\\\"quotes\""));
+			assertEquals("(concat \"string\\\"with\\\"quotes\")", parse("\"string\\\"with\\\"quotes\""));
 		}
 
 		@Test
 		public void doubleQuotedStringWithSingleQoutes() {
-			assertEquals("(concat [\"string'with'quotes\"])", parse("\"string'with'quotes\""));
+			assertEquals("(concat \"string'with'quotes\")", parse("\"string'with'quotes\""));
 		}
 
 		@Test
 		public void doubleQuotedStringWithSupplimentaryUnicodeChars() {
-			assertEquals("(concat [\"x" + new String(Character.toChars(0x1f452)) + "y\"])", parse
+			assertEquals("(concat \"x" + new String(Character.toChars(0x1f452)) + "y\")", parse
 					("\"x\\u{1f452}y\""));
 		}
 
 		@Test
 		public void doubleQuotedStringWithUnicodeChars() {
-			assertEquals("(concat [\"x✓y\"])", parse("\"x\\u2713y\""));
+			assertEquals("(concat \"x✓y\")", parse("\"x\\u2713y\""));
 		}
 
 		@Test
@@ -182,7 +182,7 @@ public class ExpressionParserTest {
 		@Test
 		@DisplayName("transforms statement calls")
 		void typeAliasT() {
-			assertEquals("(block [(invoke {:functor (qn \"notice\") :args [(call {:functor (qn \"hello\") :args []}) \"world\"]})])", parse("notice hello(), 'world'", true));
+			assertEquals("(block (invoke {:functor (qn \"notice\") :args [(call {:functor (qn \"hello\") :args []}) \"world\"]}))", parse("notice hello(), 'world'", true));
 		}
 	}
 
@@ -192,7 +192,7 @@ public class ExpressionParserTest {
 		@Test
 		@DisplayName("type alias")
 		void typeAliasT() {
-			assertEquals("(type-alias \"MyType\" (access [(qr \"Variant\") (qr \"Integer\") (qr \"String\")]))",
+			assertEquals("(type-alias \"MyType\" (access (qr \"Variant\") (qr \"Integer\") (qr \"String\")))",
 					parse("type MyType = Variant[Integer,String]"));
 		}
 	}
@@ -304,7 +304,7 @@ public class ExpressionParserTest {
 		@DisplayName("syntax and escape specification")
 		void syntaxAndEscape() {
 			assertEquals(
-					"(heredoc {:text \"Tex\\tt\\\\n\" :syntax \"syntax\"})",
+					"(heredoc {:syntax \"syntax\" :text \"Tex\\tt\\\\n\"})",
 					parse(multiline(
 							"@(END:syntax/t)",
 							"Tex\\tt\\n",
@@ -338,7 +338,7 @@ public class ExpressionParserTest {
 		@Test
 		@DisplayName("multiple heredocs on the same line")
 		void multipleOnSameLine() {
-			assertEquals("(hash [(=> (heredoc {:text \"hello\"}) (heredoc {:text \"world\"}))])", parse(multiline(
+			assertEquals("(hash (=> (heredoc {:text \"hello\"}) (heredoc {:text \"world\"})))", parse(multiline(
 					"{ @(foo) => @(bar) }",
 					"hello",
 					"-foo",

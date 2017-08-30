@@ -12,6 +12,6 @@ public class ResourceTypeDefinition extends NamedDefinition {
 
 	@Override
 	public PN toPN() {
-		return definitionPN("define");
+		return definitionPN("define", null, null);
 	}
 }

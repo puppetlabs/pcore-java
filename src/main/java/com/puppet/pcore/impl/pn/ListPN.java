@@ -17,6 +17,10 @@ public class ListPN extends AbstractPN {
 	public ListPN(List<? extends PN> elements) {
 		this.elements = elements;
 	}
+	@Override
+	public PN asCall(String name) {
+		return new CallPN(name, elements);
+	}
 
 	@Override
 	public void format(StringBuilder bld) {

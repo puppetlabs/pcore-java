@@ -28,9 +28,9 @@ public class HeredocExpression extends Positioned {
 	@Override
 	public PN toPN() {
 		List<Map.Entry<String,? extends PN>> entries = new ArrayList<>();
-		entries.add(text.toPN().withName("text"));
 		if(syntax != null)
 			entries.add(new LiteralPN(syntax).withName("syntax"));
+		entries.add(text.toPN().withName("text"));
 		return new MapPN(entries).asCall("heredoc");
 	}
 }

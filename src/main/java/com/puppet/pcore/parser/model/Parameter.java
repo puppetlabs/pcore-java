@@ -44,6 +44,6 @@ public class Parameter extends Positioned {
 			entries.add(new LiteralPN(name).withName("splat"));
 		if(value != null)
 			entries.add(value.toPN().withName("value"));
-		return new MapPN(entries).asCall("node");
+		return new MapPN(entries).asCall("param");
 	}
 }

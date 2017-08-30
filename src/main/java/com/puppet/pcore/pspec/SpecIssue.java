@@ -8,7 +8,7 @@ public enum SpecIssue implements Issue {
 	SPEC_MISSING_ARGUMENT("Missing required value. Function %s, parameter %d requires a value of type %s"),
 	SPEC_NOT_TOP_EXPRESSION("%s is only legal at top level"),
 	SPEC_ILLEGAL_CALL_RECEIVER("Illegal call receiver"),
-	SPEC_ILLEGAL_NUMBER_OF_ARGUMENTS("Illegal number of arguments. Function %s expectes %d arguments, got %d"),
+	SPEC_ILLEGAL_NUMBER_OF_ARGUMENTS("Illegal number of arguments. Function %s expects %d arguments, got %d"),
 	SPEC_UNKNOWN_IDENTIFIER("unknown identifier %s");
 
 	private final String messageFormat;

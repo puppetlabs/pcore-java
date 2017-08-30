@@ -10,7 +10,6 @@
  */
 package com.puppet.pcore.semver.tests;
 
-import com.puppet.pcore.Pcore;
 import com.puppet.pcore.impl.types.PcoreTestBase;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;

@@ -12,6 +12,6 @@ public class Application extends NamedDefinition {
 
 	@Override
 	public PN toPN() {
-		return definitionPN("application");
+		return definitionPN("application", null, null);
 	}
 }

@@ -1,5 +1,8 @@
 package com.puppet.pcore.parser.model;
 
+import com.puppet.pcore.PN;
+import com.puppet.pcore.impl.pn.LiteralPN;
+
 public class ReservedWord extends LiteralExpression implements NameExpression {
 	public final String word;
 
@@ -18,6 +21,11 @@ public class ReservedWord extends LiteralExpression implements NameExpression {
 	@Override
 	public String name() {
 		return word;
+	}
+
+	@Override
+	public PN toPN() {
+		return new LiteralPN(word).asCall("reserved");
 	}
 
 	@Override

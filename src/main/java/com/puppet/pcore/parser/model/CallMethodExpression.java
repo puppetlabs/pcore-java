@@ -13,6 +13,6 @@ public class CallMethodExpression extends CallExpression {
 
 	@Override
 	public PN toPN() {
-		return callPN("call_method", "invoke_method");
+		return callPN("call-method", "invoke-method");
 	}
 }

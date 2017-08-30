@@ -11,6 +11,6 @@ public class ExportedQuery extends QueryExpression {
 
 	@Override
 	public PN toPN() {
-		return expr instanceof NopExpression ? new CallPN("exported_query") : new CallPN("exported_query", expr.toPN());
+		return expr instanceof NopExpression ? new CallPN("exported-query") : new CallPN("exported-query", expr.toPN());
 	}
 }

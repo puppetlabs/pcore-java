@@ -5,7 +5,6 @@ import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.SelfReferencingFactoryImpl;
-import com.puppet.pcore.impl.TypeEvaluatorImpl;
 import com.puppet.pcore.parser.Expression;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.serialization.ArgumentsAccessor;

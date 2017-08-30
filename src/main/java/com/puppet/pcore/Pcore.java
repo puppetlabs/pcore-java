@@ -2,13 +2,9 @@ package com.puppet.pcore;
 
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.loader.ParentedLoader;
-import com.puppet.pcore.impl.loader.TypeSetLoader;
 import com.puppet.pcore.impl.types.TypeSetType;
 import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.serialization.SerializationFactory;
-
-import java.util.function.Function;
-import java.util.function.Supplier;
 
 /**
  * Provides access to relevant parts of the Pcore Type system.
