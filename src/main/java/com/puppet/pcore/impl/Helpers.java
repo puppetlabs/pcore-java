@@ -15,6 +15,9 @@ public class Helpers {
 	private static final Pattern CLASS_NAME = Pattern.compile("^[A-Z]\\w*(?:::[A-Z]\\w*)*$");
 	private static final Pattern COLON_SPLIT = Pattern.compile("::");
 
+	/** Offset to order signed double numbers lexicographically. */
+	private static final long SGN_MASK = 0x8000000000000000L;
+
 	public static class MapEntry<K, V> implements Entry<K, V> {
 		public final K key;
 		public final V value;
@@ -25,6 +28,15 @@ public class Helpers {
 		}
 
 		@Override
+		public boolean equals(Object o) {
+			if(o instanceof Entry) {
+				Entry eo = (Entry)o;
+				return Objects.equals(key, eo.getKey()) && Objects.equals(value, eo.getValue());
+			}
+			return false;
+		}
+
+		@Override
 		public K getKey() {
 			return key;
 		}
@@ -32,6 +44,11 @@ public class Helpers {
 		@Override
 		public V getValue() {
 			return value;
+		}
+
+		@Override
+		public int hashCode() {
+			return Objects.hashCode(key) * 31 + Objects.hashCode(value);
 		}
 
 		@Override
@@ -55,6 +72,46 @@ public class Helpers {
 		for(int idx = 0; idx < len; idx += 2)
 			map.put((K)keyValuePairs[idx], (V)keyValuePairs[idx + 1]);
 		return map;
+	}
+
+	/**
+	 * Returns true if both arguments are equal or within the range of allowed error (inclusive).
+	 * Two float numbers are considered equal if there are {@code (maxUlps - 1)} (or fewer) floating
+	 * point numbers between them, i.e. two adjacent floating point numbers are considered equal.
+	 * Adapted from <a href="https://randomascii.wordpress.com/2012/02/25/comparing-floating-point-numbers-2012-edition/">Bruce Dawson</a>
+	 *
+	 * <p>This method considers that {@code NaN == NaN}.</p>
+	 *
+	 * @param x first value
+	 * @param y second value
+	 * @param maxUlps {@code (maxUlps - 1)} is the number of floating point values between {@code x} and {@code y}
+	 * @param diff numbers with diff less than this value are considered equal (avoids using ulps close to zero)
+	 * @return {@code true} if there are fewer than {@code maxUlps} floating point values between {@code x} and {@code y}.
+	 */
+	public static boolean almostEqualUlps(double x, double y, int maxUlps, double diff) {
+		// NaN == NaN
+		if(Double.isNaN(x))
+			return Double.isNaN(y);
+		if(Double.isNaN(y))
+			return false;
+
+		// Check if the numbers are really close -- needed when comparing numbers near zero.
+		double absDiff = Math.abs(x - y);
+		if(absDiff <= diff)
+			return true;
+
+		// Different signs means they do not match
+		if((x < 0) != (y < 0))
+			return false;
+
+		long aBits = Double.doubleToLongBits(x);
+		if(aBits < 0)
+			aBits = SGN_MASK - aBits;
+		long bBits = Double.doubleToLongBits(y);
+		if(bBits < 0)
+			bBits = SGN_MASK - bBits;
+		long ulps = Math.abs(aBits - bBits);
+		return ulps < maxUlps;
 	}
 
 	public static <K, V> MapEntry<K, V> entry(K key, V value) {

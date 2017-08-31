@@ -88,6 +88,10 @@ Examples('Float',
     Given('32e7'),
     Parses_to('320000000.0')
   ),
+  Example('zero with fragment and exponent',
+    Given('0.3e7'),
+    Parses_to('3000000.0')
+  ),
   Example('with negative exponent below e-range',
     Given('123456789012345.0'),
     Parses_to('123456789012345.0')
@@ -99,6 +103,10 @@ Examples('Float',
   Example('with negative exponent rounded e-range',
     Given('12345678901234567.0'),
     Parses_to('1.234567890123457e+16')
+  ),
+  Example('with negative exponent below e-range',
+    Given('0.99999999999999999e-16'),
+    Parses_to('0.99999999999999999e-16')
   ),
   Example('negative number with fragment and exponent',
     Given('-32.3e2'),
@@ -324,7 +332,14 @@ Examples('Heredoc String',
         fourth entry
         |-FOURTH
         'sixth']`)),
-    Parses_to(`(array "first" (heredoc {:text "This is the text of the\nsecond entry"}) "third" (heredoc {:text "And here is the text of the\nfourth entry"}) "fifth" "sixth")`)
+    Parses_to(`
+        (array
+          "first"
+          (heredoc {:text "This is the text of the\nsecond entry"})
+          "third"
+          (heredoc {:text "And here is the text of the\nfourth entry"})
+          "fifth"
+          "sixth")`)
   ),
   Example('empty tag is an error',
     Given(Unindent(`

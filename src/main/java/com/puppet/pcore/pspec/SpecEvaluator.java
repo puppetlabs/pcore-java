@@ -66,12 +66,12 @@ public class SpecEvaluator extends Polymorphic<Object> {
 		this.assertions = assertions;
 	}
 
-	protected boolean atTop() {
-		return path.size() == 3 && path.get(0) instanceof Program && path.get(1) instanceof BlockExpression;
+	protected boolean nested() {
+		return !(path.size() == 3 && path.get(0) instanceof Program && path.get(1) instanceof BlockExpression);
 	}
 
 	public Object examples(Expression s, List<Object> args) {
-		if(!atTop())
+		if(nested())
 			assertVariableOrParameterTo("Examples", "Examples");
 
 		String description = argument("Examples", s, String.class, 0, args);
@@ -83,7 +83,7 @@ public class SpecEvaluator extends Polymorphic<Object> {
 	}
 
 	public Object example(Expression s, List<Object> args) {
-		if(!atTop())
+		if(nested())
 			assertVariableOrParameterTo("Example", "Examples");
 
 		if(args.size() != 3)

@@ -23,6 +23,10 @@ public class MapPN extends AbstractPN {
 		this.entries = entries;
 	}
 
+	public boolean equals(Object o) {
+		return super.equals(o) && entries.equals(((MapPN)o).entries);
+	}
+
 	@Override
 	public void format(StringBuilder bld) {
 		bld.append('{');

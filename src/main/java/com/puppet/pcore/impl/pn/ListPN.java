@@ -22,6 +22,10 @@ public class ListPN extends AbstractPN {
 		return new CallPN(name, elements);
 	}
 
+	public boolean equals(Object o) {
+		return super.equals(o) && elements.equals(((ListPN)o).elements);
+	}
+
 	@Override
 	public void format(StringBuilder bld) {
 		bld.append('[');

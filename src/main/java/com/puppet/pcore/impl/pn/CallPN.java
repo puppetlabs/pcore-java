@@ -21,6 +21,10 @@ public class CallPN extends ListPN {
 		this.identifier = identifier;
 	}
 
+	public boolean equals(Object o) {
+		return super.equals(o) && identifier.equals(((CallPN)o).identifier);
+	}
+
 	@Override
 	public void format(StringBuilder bld) {
 		bld.append('(');

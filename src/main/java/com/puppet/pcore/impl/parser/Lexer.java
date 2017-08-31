@@ -18,8 +18,40 @@ public class Lexer extends StringReader {
 
 	private final boolean handleBacktickStrings;
 
+	public Lexer(String file, String content, boolean handleBacktickStrings) {
+		this.handleBacktickStrings = handleBacktickStrings;
+		init(file, content, false);
+	}
+
 	public Lexer(boolean handleBacktickStrings) {
 		this.handleBacktickStrings = handleBacktickStrings;
+	}
+
+	public void assertToken(int token) {
+		if(currentToken != token) {
+			setPos(tokenStartPos);
+			throw parseIssue(PARSE_EXPECTED_TOKEN, tokenMap.get(token), tokenMap.get(currentToken));
+		}
+	}
+
+	public int currentToken() {
+		return currentToken;
+	}
+
+	public RuntimeException syntaxError() {
+		throw parseIssue(LEX_UNEXPECTED_TOKEN, tokenMap.get(currentToken));
+	}
+
+	public Object tokenValue() {
+		return tokenValue;
+	}
+
+	public String tokenString() {
+		if(tokenValue == null)
+			return tokenMap.get(currentToken);
+		if(tokenValue instanceof String)
+			return (String)tokenValue;
+		throw new ParseException(format("Token '%s' has no string representation", tokenMap.get(currentToken)));
 	}
 
 	@FunctionalInterface
@@ -61,14 +93,6 @@ public class Lexer extends StringReader {
 		return new IssueException(issueCode, args, new ParseLocation(locator, pos()));
 	}
 
-	final String tokenString() {
-		if(tokenValue == null)
-			return tokenMap.get(currentToken);
-		if(tokenValue instanceof String)
-			return (String)tokenValue;
-		throw new ParseException(format("Token '%s' has no string representation", tokenMap.get(currentToken)));
-	}
-
 	static boolean isDigit(char c) {
 		return c >= '0' && c <= '9';
 	}
@@ -97,12 +121,12 @@ public class Lexer extends StringReader {
 		return c >= 'A' && c <= 'Z';
 	}
 
-	void nextToken() {
+	public int nextToken() {
 		int scanStart = pos();
 		char c = skipWhite();
 		if(c == 0) {
 			setToken(TOKEN_END);
-			return;
+			return TOKEN_END;
 		}
 
 		int start = pos() - 1; // start of c
@@ -120,17 +144,17 @@ public class Lexer extends StringReader {
 				setToken(TOKEN_INTEGER, Long.parseLong(from(start), 10));
 				radix = 10;
 			}
-			return;
+			return currentToken;
 		}
 
 		if('A' <= c && c <= 'Z') {
 			consumeQualifiedName(start, TOKEN_TYPE_NAME);
-			return;
+			return currentToken;
 		}
 
 		if('a' <= c && c <= 'z') {
 			consumeQualifiedName(start, TOKEN_IDENTIFIER);
-			return;
+			return currentToken;
 		}
 
 		switch(c) {
@@ -495,6 +519,7 @@ public class Lexer extends StringReader {
       setPos(start);
       throw parseIssue(LEX_UNEXPECTED_TOKEN, new String(new char[] {c}));
 		}
+		return currentToken;
 	}
 
 	private void setToken(int token) {

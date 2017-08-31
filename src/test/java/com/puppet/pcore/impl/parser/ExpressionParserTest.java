@@ -164,12 +164,6 @@ public class ExpressionParserTest {
 		}
 
 		@Test
-		@DisplayName("zero with fragment and exponent")
-		public void zeroFloatWithFragmentAndExponent() {
-			assertEquals("3000000.0", parse("0.3e7"));
-		}
-
-		@Test
 		@DisplayName("zero hex")
 		public void zeroHex() {
 			assertEquals("0", parse("0x0"));

@@ -187,13 +187,6 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		return result;
 	}
 
-	private void assertToken(int token) {
-		if(currentToken != token) {
-			setPos(tokenStartPos);
-			throw parseIssue(PARSE_EXPECTED_TOKEN, tokenMap.get(token), tokenMap.get(currentToken));
-		}
-	}
-
 	private <T extends Expression> List<T> expressions(int endToken, Supplier<T> supplier) {
 		ArrayList<T> result = new ArrayList<>();
 		for(;;) {

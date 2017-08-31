@@ -12,6 +12,10 @@ abstract class AbstractPN  implements PN {
 		return new CallPN(name, this);
 	}
 
+	public boolean equals(Object o) {
+		return o != null && getClass().equals(o.getClass());
+	}
+
 	@Override
 	public Entry<String,PN> withName(String name) {
 		return new MapEntry<>(name, this);
