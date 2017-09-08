@@ -16,8 +16,8 @@ import static com.puppet.pcore.impl.types.ArrayType.arrayFactoryDispatcher;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
 public class TupleType extends TypesContainerType {
-	static final TupleType DEFAULT = new TupleType(Collections.emptyList(), IntegerType.POSITIVE);
-	static final TupleType EXPLICIT_EMPTY = new TupleType(Collections.emptyList(), IntegerType.ZERO_SIZE);
+	static final TupleType DEFAULT = new TupleType(Collections.emptyList(), IntegerType.POSITIVE, true);
+	static final TupleType EXPLICIT_EMPTY = new TupleType(Collections.emptyList(), IntegerType.ZERO_SIZE, true);
 
 	private static ObjectType ptype;
 	public final IntegerType givenOrActualSize;
@@ -146,10 +146,8 @@ public class TupleType extends TypesContainerType {
 				return false;
 			int top = types.size();
 			if(top > 0) {
-				int last = top - 1;
 				for(int idx = 0; idx < top; ++idx) {
-					int myIdx = idx > last ? last : idx;
-					if(!types.get(myIdx).isAssignable(at.type, guard))
+					if(!types.get(idx).isAssignable(at.type, guard))
 						return false;
 				}
 			}

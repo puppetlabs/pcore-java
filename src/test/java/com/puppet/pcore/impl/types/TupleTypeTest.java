@@ -1,9 +1,11 @@
 package com.puppet.pcore.impl.types;
 
+import com.puppet.pcore.impl.Helpers;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
+import static com.puppet.pcore.impl.Helpers.asList;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Collections.emptyList;
 import static java.util.Collections.singletonList;
@@ -31,6 +33,12 @@ public class TupleTypeTest {
 		@DisplayName("a tuple with elements is assignable from to a type with assignable elements")
 		public void test3() {
 			assertTrue(tupleType(singletonList(scalarType())).isAssignable(tupleType(singletonList(stringType()))));
+		}
+
+		@Test
+		@DisplayName("a tuple with captures rest is assignable from to a type with assignable elements beyond last")
+		public void test3_1() {
+			assertTrue(tupleType(singletonList(scalarType()), integerType(1,2)).isAssignable(tupleType(asList(stringType(), stringType()))));
 		}
 
 		@Test
