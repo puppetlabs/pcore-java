@@ -63,4 +63,9 @@ public class NotUndefType extends TypeContainerType {
 	AnyType copyWith(AnyType type, boolean resolved) {
 		return new NotUndefType(type, resolved);
 	}
+
+	@Override
+	AnyType notAssignableSameClassCommon(AnyType other) {
+		return notUndefType(type.common(((NotUndefType)other).type));
+	}
 }
