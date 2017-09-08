@@ -33,7 +33,7 @@ public class ScalarDataType extends ScalarType {
 
 	@Override
 	boolean isInstance(Object o, RecursionGuard guard) {
-		return o == null || o instanceof String || o instanceof Number || o instanceof Boolean;
+		return o instanceof String || o instanceof Number || o instanceof Boolean;
 	}
 
 	@Override
