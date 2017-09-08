@@ -132,6 +132,6 @@ public class ArrayType extends CollectionType {
 
 	@Override
 	AnyType notAssignableSameClassCommon(AnyType other) {
-		return arrayType(type.common(((ArrayType)other).type));
+		return arrayType(type.common(((ArrayType)other).type), (IntegerType)size.common(((ArrayType)other).size));
 	}
 }
