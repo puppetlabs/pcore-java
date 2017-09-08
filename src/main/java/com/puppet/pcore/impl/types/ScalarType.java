@@ -51,6 +51,7 @@ public class ScalarType extends AnyType {
 	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
 		return t instanceof  ScalarType
+				|| t instanceof ScalarDataType
 				|| stringType().isAssignable(t, guard)
 				|| numericType().isAssignable(t, guard)
 				|| booleanType().isAssignable(t, guard)
