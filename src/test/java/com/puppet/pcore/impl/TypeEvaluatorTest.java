@@ -39,6 +39,24 @@ public class TypeEvaluatorTest extends PcoreTestBase {
 		public void noSuchTypeIsTypeRef() {
 			assertEquals(typeReferenceType("NoSuchType"), resolveType("NoSuchType"));
 		}
+
+		@Nested
+		@DisplayName("and failWhenUnresovled = true")
+		class FailWhenUnresovled {
+			@Test
+			@DisplayName("Integer succeeds")
+			public void integerSucceeds() {
+				pcore(true);
+				assertEquals(integerType(), resolveType("Integer"));
+			}
+
+			@Test
+			@DisplayName("NoSuchType fails")
+			public void noSuchTypeFails() {
+				pcore(true);
+				assertThrows(TypeResolverException.class, () -> resolveType("NoSuchType"));
+			}
+		}
 	}
 
 	@Nested
@@ -63,6 +81,17 @@ public class TypeEvaluatorTest extends PcoreTestBase {
 			@DisplayName("NoSuchType")
 			public void noSuchTypeFail() {
 				assertThrows(TypeResolverException.class, () -> Pcore.create(true).typeEvaluator().resolveType("NoSuchType[A,B]"));
+			}
+		}
+
+		@Nested
+		@DisplayName("and failWhenUnresovled = true")
+		class FailWhenUnresovled {
+			@Test
+			@DisplayName("Variant[String,NoSuchType] fails")
+			public void noSuchNestedTypeFails() {
+				pcore(true);
+				assertThrows(TypeResolverException.class, () -> resolveType("Variant[String,NoSuchType]"));
 			}
 		}
 

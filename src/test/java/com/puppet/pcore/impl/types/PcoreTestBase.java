@@ -14,6 +14,12 @@ public abstract class PcoreTestBase {
 		pcore = null;
 	}
 
+	public Pcore pcore(boolean failWhenUnresolved) {
+		if(pcore == null)
+			pcore = Pcore.create(failWhenUnresolved);
+		return pcore;
+	}
+
 	public Pcore pcore() {
 		if(pcore == null)
 			pcore = Pcore.create();

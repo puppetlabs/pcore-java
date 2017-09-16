@@ -180,8 +180,12 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 
 		if(t instanceof AnyType) {
 			AnyType at = (AnyType)t;
-			if(!(at instanceof TypeReferenceType && pcore.failWhenUnresolved()))
-				return at;
+			if(at instanceof TypeReferenceType) {
+				if(!pcore.failWhenUnresolved())
+					return at;
+			} else {
+				return at.resolve(pcore);
+			}
 
 			QualifiedReference qn = null;
 			if(expression instanceof QualifiedReference)
@@ -494,7 +498,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		Loader loader = pcore.loader();
 		TypedName typedName = new TypedName("type", te.name, loader.getNameAuthority());
 		AnyType found = (AnyType)loader.loadOrNull(typedName);
-		return found == null ? typeReferenceType(te.name) : found.resolve(pcore);
+		return found == null ? typeReferenceType(te.name) : found;
 	}
 
 	private <T> T assertClass(Class<T> cls, Object[] args, int paramNo, String name) {

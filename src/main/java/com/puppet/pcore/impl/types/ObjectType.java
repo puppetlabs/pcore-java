@@ -5,6 +5,7 @@ import com.puppet.pcore.impl.Constants;
 import com.puppet.pcore.impl.DynamicObjectImpl;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.parser.Expression;
+import com.puppet.pcore.parser.model.HashExpression;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
 import com.puppet.pcore.serialization.FactoryDispatcher;
 import com.puppet.pcore.serialization.SerializationException;
@@ -767,6 +768,11 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 			return (Map<String,T>)all;
 		}
 		return (Map<String,T>)(memberType == MemberType.attribute ? attributes : functions);
+	}
+
+	@SuppressWarnings("unchecked")
+	Map<String,Object> resolveLiteralHash(HashExpression i12e) {
+		return resolveHash(super.resolveLiteralHash(i12e));
 	}
 
 	private AnyType resolveParent() {

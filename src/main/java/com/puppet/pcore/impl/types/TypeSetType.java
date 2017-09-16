@@ -119,6 +119,7 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 	private Map<String,Reference> references = emptyMap();
 	private Map<String,AnyType> types = emptyMap();
 	private Version version;
+	private boolean resolved = false;
 
 	@SuppressWarnings("unchecked")
 	TypeSetType(ArgumentsAccessor args) throws IOException {
@@ -249,9 +250,15 @@ public class TypeSetType extends MetaType implements PuppetObjectWithHash {
 
 	@Override
 	public AnyType resolve(Pcore pcore) {
+		if(resolved) {
+			return this;
+		}
+		resolved = true;
 		super.resolve(pcore);
+
 		for(Reference ref : references.values())
 			ref.resolve(pcore);
+
 		Pcore tsPcore = pcore.withTypeSetScope(this);
 		for(Map.Entry<String,AnyType> entry : types.entrySet())
 			entry.setValue(entry.getValue().resolve(tsPcore));
