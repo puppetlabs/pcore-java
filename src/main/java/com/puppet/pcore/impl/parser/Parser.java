@@ -232,6 +232,29 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			nextToken();
 			break;
 		default:
+			expr = argument();
+		}
+		return expr;
+	}
+
+	private Expression argument() {
+		Expression expr = assignment();
+		if(currentToken == TOKEN_FARROW) {
+			nextToken();
+			Expression value = assignment();
+			expr = new KeyedEntry(expr, value, locator, expr.offset(), pos() - expr.offset());
+		}
+		return expr;
+	}
+
+	private Expression hashEntry() {
+		Expression expr;
+		switch(currentToken) {
+		case TOKEN_TYPE: case TOKEN_FUNCTION: case TOKEN_APPLICATION: case TOKEN_CONSUMES: case TOKEN_PRODUCES: case TOKEN_SITE:
+			expr = new QualifiedName(tokenString(), locator, tokenStartPos, pos() - tokenStartPos);
+			nextToken();
+			break;
+		default:
 			expr = assignment();
 		}
 		return expr;
@@ -681,7 +704,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 	}
 
 	private List<Expression> arrayExpression() {
-		return expressions(TOKEN_RB, this::collectionEntry);
+		return joinHashEntries(expressions(TOKEN_RB, this::collectionEntry));
 	}
 
 	private Expression capabilityMapping(Expression component, String kind) {
@@ -1029,7 +1052,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		List<Expression> args;
 		if(currentToken != TOKEN_PIPE) {
 			nextToken();
-			args = expressions(TOKEN_RP, this::assignment);
+			args = joinHashEntries(expressions(TOKEN_RP, this::argument));
 		} else
 			args = emptyList();
 
@@ -1042,6 +1065,41 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 			return new CallMethodExpression(functorExpr, args, block, true, locator, start, pos() - start);
 
 		return new CallNamedFunctionExpression(functorExpr, args, block, true, locator, start, pos() - start);
+	}
+
+	private List<Expression> joinHashEntries(List<Expression> exprs) {
+		for(Expression expr : exprs) {
+			if(expr instanceof KeyedEntry)
+				return processHashEntries(exprs);
+		}
+		return exprs;
+	}
+
+
+	private List<Expression> processHashEntries(List<Expression> exprs) {
+		List<Expression> result = new ArrayList<>();
+		List<KeyedEntry> collector = new ArrayList();
+		for(Expression expr : exprs) {
+			if(expr instanceof KeyedEntry) {
+				collector.add((KeyedEntry)expr);
+			} else {
+				if(!collector.isEmpty()) {
+					result.add(newHashWithoutBraces(collector));
+					collector.clear();
+				}
+				result.add(expr);
+			}
+		}
+		if(!collector.isEmpty())
+			result.add(newHashWithoutBraces(collector));
+		return result;
+	}
+
+	private Expression newHashWithoutBraces(List<KeyedEntry> entries) {
+		int start = entries.get(0).offset;
+		KeyedEntry last = entries.get(entries.size() - 1);
+		int end = last.offset + last.length;
+		return new HashExpression(Helpers.unmodifiableCopy(entries), locator, start, end - start);
 	}
 
 	private Expression lambda() {
@@ -1314,17 +1372,17 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 		return bld.toString();
 	}
 
-	private KeyedEntry hashEntry() {
-		Expression key = collectionEntry();
+	private KeyedEntry keyedEntry() {
+		Expression key = hashEntry();
 		if(currentToken != TOKEN_FARROW)
 			throw parseIssue(PARSE_EXPECTED_FARROW_AFTER_KEY);
 
 		nextToken();
-		Expression value = collectionEntry();
+		Expression value = hashEntry();
 		return new KeyedEntry(key, value, locator, key.offset(), pos() - key.offset());
 	}
 
 	private List<KeyedEntry> hashExpression() {
-		return expressions(TOKEN_RC, this::hashEntry);
+		return expressions(TOKEN_RC, this::keyedEntry);
 	}
 }
