@@ -128,7 +128,13 @@ public class VersionTest {
 	@Test
 	@DisplayName("version with digit-only pre-release identifiers that start with zero are invalid")
 	public void invalidZeroStart() {
-		assertTrue(Version.isValid("1.2.3-034"));
+		assertFalse(Version.isValid("1.2.3-034"));
+	}
+
+	@Test
+	@DisplayName("version with digit-only build identifiers that start with zero are valid")
+	public void validBuildZeroStart() {
+		assertTrue(Version.isValid("1.2.3+034"));
 	}
 
 	@Test

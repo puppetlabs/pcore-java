@@ -16,13 +16,16 @@ public class Version implements Comparable<Version>, Serializable {
 	public static final List<Comparable<?>> MIN_PRE_RELEASE = Collections.emptyList();
 	public static final Version MIN = new Version(0, 0, 0, MIN_PRE_RELEASE, null);
 
+	private static final String PR_PART = "(?:0|[1-9][0-9]*|[0-9]*[A-Za-z-]+[0-9A-Za-z-]*)";
+	private static final String PR_PARTS = PR_PART + "(?:\\." + PR_PART + ")*";
 	private static final String PART = "[0-9A-Za-z-]+";
 	private static final String PARTS = PART + "(?:\\." + PART + ")*";
-	private static final String PRERELEASE = "(?:-(" + PARTS + "))?";
+	private static final String PRERELEASE = "(?:-(" + PR_PARTS + "))?";
 	private static final String BUILD = "(?:\\+(" + PARTS + "))?";
 	private static final String QUALIFIER = PRERELEASE + BUILD;
 	private static final String NR = "(0|[1-9][0-9]*)";
 
+	private static final Pattern PR_PARTS_PATTERN = Pattern.compile("\\A" + PR_PARTS + "\\z");
 	private static final Pattern PARTS_PATTERN = Pattern.compile("\\A" + PARTS + "\\z");
 	private static final Pattern VERSION_PATTERN = Pattern.compile("\\A" + NR + "\\." + NR + "\\." + NR + QUALIFIER + "\\z");
 
@@ -95,27 +98,27 @@ public class Version implements Comparable<Version>, Serializable {
 
 		return instanceCache.cache(
 				new Version(major, minor, patch,
-						splitParts("pre-release", preRelease),
-						splitParts("build", build)));
+						splitParts("pre-release", preRelease, true),
+						splitParts("build", build, false)));
 	}
 
-	private static List<Comparable<?>> splitParts(String tag, String parts) {
+	private static List<Comparable<?>> splitParts(String tag, String parts, boolean stringsToInt) {
 		if(parts == null || parts.length() == 0)
 			return null;
 
-		if(!PARTS_PATTERN.matcher(parts).matches())
+		if(!(stringsToInt ? PR_PARTS_PATTERN : PARTS_PATTERN).matcher(parts).matches())
 			throw new IllegalArgumentException("Illegal characters in " + tag);
 
 		int dotIdx = parts.indexOf('.');
 		if(dotIdx < 0)
-			return Collections.singletonList(parts);
+			return Collections.singletonList(stringsToInt && isNumber(parts) ? Integer.parseInt(parts) : parts);
 
 		List<Comparable<?>> result = new ArrayList<>();
 		int start = 0;
 		final int end = parts.length();
 		for(;;) {
 			String part = parts.substring(start, dotIdx);
-			result.add(isNumber(part) ? Integer.parseInt(part) : part);
+			result.add(stringsToInt && isNumber(part) ? Integer.parseInt(part) : part);
 			start = dotIdx + 1;
 			if(start >= end)
 				return result;
@@ -303,6 +306,6 @@ public class Version implements Comparable<Version>, Serializable {
 
 	private static Version fromMatch(Matcher m) {
 		return instanceCache.cache(new Version(parseInt(m.group(1)), parseInt(m.group(2)), parseInt(m.group(3)),
-				splitParts("pre-release", m.group(4)), splitParts("build", m.group(5))));
+				splitParts("pre-release", m.group(4), true), splitParts("build", m.group(5), false)));
 	}
 }
