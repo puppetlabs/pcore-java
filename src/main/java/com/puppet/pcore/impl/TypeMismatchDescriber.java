@@ -243,12 +243,6 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		public int hashCode() {
 			return (super.hashCode() * 31 + expected.hashCode()) * 31 + actual.hashCode();
 		}
-
-		ExpectedActualMismatch swapExpected(AnyType expected) {
-			ExpectedActualMismatch eam = (ExpectedActualMismatch)copy();
-			eam.expected = expected;
-			return eam;
-		}
 	}
 
 	private static class TypeMismatch extends ExpectedActualMismatch {
@@ -272,6 +266,11 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 			AnyType e = expected;
 			AnyType a = actual;
 			boolean multi = false;
+			boolean optional = false;
+			if(e instanceof OptionalType) {
+				e = ((OptionalType)e).actualType();
+				optional = true;
+			}
 			String as;
 			String es;
 			if(e instanceof VariantType) {
@@ -284,6 +283,8 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 					els = distinct(map(el, AnyType::name));
 					as = a.name();
 				}
+				if(optional)
+					els.add(0, "Undef");
 				switch(els.size()) {
 				case 1:
 					es = els.get(0);
@@ -303,6 +304,10 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 				} else {
 					as = a.name();
 					es = e.name();
+				}
+				if(optional) {
+					es = "Undef or " + es;
+					multi = true;
 				}
 			}
 			StringBuilder bld = new StringBuilder();
@@ -403,7 +408,13 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 
 		@Override
 		String text() {
-			return "expects a match for " + expected.toExpandedString() + ", got " + actualString();
+			AnyType e = expected;
+			String valuePfx = "";
+			if(e instanceof OptionalType) {
+				e = ((OptionalType)e).actualType();
+				valuePfx = "an undef value or ";
+			}
+			return "expects " + valuePfx + "a match for " + e.toExpandedString() + ", got " + actualString();
 		}
 	}
 
@@ -463,7 +474,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		}
 	}
 
-	private static final DispatchMap dispatchMap = initPolymorphicDispatch(TypeMismatchDescriber.class, "_describe", 2);
+	private static final DispatchMap dispatchMap = initPolymorphicDispatch(TypeMismatchDescriber.class, "_describe", 3);
 	public static final TypeMismatchDescriber SINGLETON = new TypeMismatchDescriber();
 
 	private TypeMismatchDescriber() {
@@ -517,26 +528,26 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		return dispatchMap;
 	}
 
-	List<? extends Mismatch> _describe(AnyType expected, AnyType actual, List<PathElement> path) {
-		return expected.isAssignable(actual) ? emptyList() : singletonList(new TypeMismatch(path, expected, actual));
+	List<? extends Mismatch> _describe(AnyType expected, AnyType original, AnyType actual, List<PathElement> path) {
+		return expected.isAssignable(actual) ? emptyList() : singletonList(new TypeMismatch(path, original, actual));
 	}
 
-	List<? extends Mismatch> _describe(ArrayType expected, AnyType actual, List<PathElement> path) {
+	List<? extends Mismatch> _describe(ArrayType expected, AnyType original, AnyType actual, List<PathElement> path) {
 		if(expected.isAssignable(actual))
 			return emptyList();
 		if(actual instanceof TupleType)
-			return describeArrayTuple(expected, (TupleType)actual, path);
+			return describeArrayTuple(expected, original, (TupleType)actual, path);
 		if(actual instanceof ArrayType)
-			return describeArrayArray(expected, (ArrayType)actual, path);
-		return singletonList(new TypeMismatch(path, expected, actual));
+			return describeArrayArray(expected, original, (ArrayType)actual, path);
+		return singletonList(new TypeMismatch(path, original, actual));
 	}
 
-	List<? extends Mismatch> _describe(CallableType expected, AnyType actual, List<PathElement> path) {
+	List<? extends Mismatch> _describe(CallableType expected, AnyType original, AnyType actual, List<PathElement> path) {
 		if(expected.isAssignable(actual))
 			return emptyList();
 
 		if(!(actual instanceof CallableType))
-			return singletonList(new TypeMismatch(path, expected, actual));
+			return singletonList(new TypeMismatch(path, original, actual));
 
 		CallableType ca = (CallableType)actual;
 
@@ -559,62 +570,68 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		return singletonList(new TypeMismatch(path, ebt, abt));
 	}
 
-	List<? extends Mismatch> _describe(EnumType expected, AnyType actual, List<PathElement> path) {
-		return expected.isAssignable(actual) ? emptyList() : singletonList(new PatternMismatch(path, expected, actual));
+	List<? extends Mismatch> _describe(EnumType expected, AnyType original, AnyType actual, List<PathElement> path) {
+		return expected.isAssignable(actual) ? emptyList() : singletonList(new PatternMismatch(path, original, actual));
 	}
 
-	List<? extends Mismatch> _describe(HashType expected, AnyType actual, List<PathElement> path) {
+	List<? extends Mismatch> _describe(HashType expected, AnyType original, AnyType actual, List<PathElement> path) {
 		if(expected.isAssignable(actual))
 			return emptyList();
 		if(actual instanceof StructType)
-			return describeHashStruct(expected, (StructType)actual, path);
+			return describeHashStruct(expected, original, (StructType)actual, path);
 		if(actual instanceof HashType)
-			return describeHashHash(expected, (HashType)actual, path);
-		return singletonList(new TypeMismatch(path, expected, actual));
+			return describeHashHash(expected, original, (HashType)actual, path);
+		return singletonList(new TypeMismatch(path, original, actual));
 	}
 
-	List<? extends Mismatch> _describe(OptionalType expected, AnyType actual, List<PathElement> path) {
-		return actual instanceof UndefType ? emptyList() : doDescribe(expected.type, actual, path);
+	List<? extends Mismatch> _describe(OptionalType expected, AnyType original, AnyType actual, List<PathElement> path) {
+		return actual instanceof UndefType ? emptyList() : doDescribe(expected.type, original instanceof TypeAliasType ? original : expected, actual, path);
 	}
 
-	List<? extends Mismatch> _describe(PatternType expected, AnyType actual, List<PathElement> path) {
-		return expected.isAssignable(actual) ? emptyList() : singletonList(new PatternMismatch(path, expected, actual));
+	List<? extends Mismatch> _describe(PatternType expected, AnyType original, AnyType actual, List<PathElement> path) {
+		return expected.isAssignable(actual) ? emptyList() : singletonList(new PatternMismatch(path, original, actual));
 	}
 
-	List<? extends Mismatch> _describe(StructType expected, AnyType actual, List<PathElement> path) {
+	List<? extends Mismatch> _describe(StructType expected, AnyType original, AnyType actual, List<PathElement> path) {
 		if(expected.isAssignable(actual))
 			return emptyList();
 		if(actual instanceof StructType)
-			return describeStructStruct(expected, (StructType)actual, path);
+			return describeStructStruct(expected, original, (StructType)actual, path);
 		if(actual instanceof HashType)
-			return describeStructHash(expected, (HashType)actual, path);
-		return singletonList(new TypeMismatch(path, expected, actual));
+			return describeStructHash(expected, original, (HashType)actual, path);
+		return singletonList(new TypeMismatch(path, original, actual));
 	}
 
-	List<? extends Mismatch> _describe(TupleType expected, AnyType actual, List<PathElement> path) {
-		return describeTuple(expected, actual, path, false);
+	List<? extends Mismatch> _describe(TupleType expected, AnyType original, AnyType actual, List<PathElement> path) {
+		return describeTuple(expected, original, actual, path, false);
 	}
 
-	List<? extends Mismatch> _describe(TypeAliasType expected, AnyType actual, List<PathElement> path) {
-		AnyType resolvedType = expected.resolvedType().normalize();
-		return map(doDescribe(resolvedType, actual, path), description ->
-				description instanceof ExpectedActualMismatch
-						? ((ExpectedActualMismatch)description).swapExpected(expected)
-						: description);
+	List<? extends Mismatch> _describe(TypeAliasType expected, AnyType original, AnyType actual, List<PathElement> path) {
+		return doDescribe(expected.resolvedType().normalize(), expected, actual, path);
 	}
 
-	List<? extends Mismatch> _describe(VariantType expected, AnyType actual, List<PathElement> path) {
+	List<? extends Mismatch> _describe(VariantType expected, AnyType original, AnyType actual, List<PathElement> path) {
 		List<Mismatch> descriptions = new ArrayList<>();
 		List<AnyType> types = expected.types;
+		if(original instanceof OptionalType) {
+			types = new ArrayList<>(types);
+			types.add(TypeFactory.undefType());
+		}
 		int top = types.size();
 		for(int idx = 0; idx < top; ++idx) {
-			List<? extends Mismatch> d = doDescribe(expected.types.get(idx), actual,
+			AnyType et = expected.types.get(idx);
+			List<? extends Mismatch> d = doDescribe(et.normalize(), et, actual,
 					append(path, new PathElement(PathType.VARIANT, Integer.toString(idx))));
 			if(d.isEmpty())
 				return d;
 			descriptions.addAll(d);
 		}
-		return mergeDescriptions(path.size(), SizeMismatch.class, descriptions);
+		List<? extends Mismatch> result = mergeDescriptions(path.size(), SizeMismatch.class, descriptions);
+		if(original instanceof TypeAliasType && result.size() == 1)
+			// All variants failed in this alias so we report it as a mismatch on the alias
+			// rather than reporting individual failures of the variants
+			result = singletonList(new TypeMismatch(path, original, actual));
+		return result;
 	}
 
 	private static <T> List<T> append(List<? extends T> list, T value) {
@@ -626,21 +643,21 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 	private List<? extends Mismatch> describe(AnyType expected, AnyType actual, List<PathElement> path) {
 		String unresolvedType = expected.findUnresolvedType();
 		return unresolvedType == null
-				? doDescribe(expected, actual, path)
+				? doDescribe(expected.normalize(), expected, actual, path)
 				: singletonList(new UnresolvedTypeReference(path, unresolvedType));
 	}
 
 	private List<? extends Mismatch> describeArgumentTuple(TupleType expected, AnyType actual, List<PathElement> path) {
-		return describeTuple(expected, actual, path, true);
+		return describeTuple(expected, expected, actual, path, true);
 	}
 
-	private List<? extends Mismatch> describeArrayArray(ArrayType expected, ArrayType actual, List<PathElement> path) {
+	private List<? extends Mismatch> describeArrayArray(ArrayType expected, AnyType original, ArrayType actual, List<PathElement> path) {
 		return expected.size.isAssignable(actual.size)
-				? singletonList(new TypeMismatch(path, expected, actual))
+				? singletonList(new TypeMismatch(path, original, actual))
 				: singletonList(new SizeMismatch(path, expected.size, actual.size));
 	}
 
-	private List<? extends Mismatch> describeArrayTuple(ArrayType expected, TupleType actual, List<PathElement> path) {
+	private List<? extends Mismatch> describeArrayTuple(ArrayType expected, AnyType original, TupleType actual, List<PathElement> path) {
 		if(!expected.size.isAssignable(actual.givenOrActualSize))
 			return singletonList(new SizeMismatch(path, expected.size, actual.givenOrActualSize));
 
@@ -649,36 +666,36 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		for(int idx = 0; idx < top; ++idx) {
 			AnyType type = actual.types.get(idx);
 			if(!expected.type.isAssignable(type))
-				descriptions.addAll(doDescribe(expected.type, type,
+				descriptions.addAll(doDescribe(expected.type.normalize(), expected.type, type,
 						append(path, new PathElement(PathType.INDEX, Integer.toString(idx)))));
 		}
 		return descriptions;
 	}
 
-	private List<? extends Mismatch> describeHashHash(HashType expected, HashType actual, List<PathElement> path) {
+	private List<? extends Mismatch> describeHashHash(HashType expected, AnyType original, HashType actual, List<PathElement> path) {
 		return expected.size.isAssignable(actual.size)
-				? singletonList(new TypeMismatch(path, expected, actual))
+				? singletonList(new TypeMismatch(path, original, actual))
 				: singletonList(new SizeMismatch(path, expected.size, actual.size));
 	}
 
-	private List<? extends Mismatch> describeHashStruct(HashType expected, StructType actual, List<PathElement> path) {
+	private List<? extends Mismatch> describeHashStruct(HashType expected, AnyType original, StructType actual, List<PathElement> path) {
 		if(!expected.size.isAssignable(actual.size))
 			return singletonList(new SizeMismatch(path, expected.size, actual.size));
 
 		List<Mismatch> descriptions = new ArrayList<>();
 		for(StructElement m : actual.elements) {
 			if(!expected.keyType.isAssignable(m.key))
-				descriptions.addAll(doDescribe(expected.keyType, m.key, append(path, new PathElement(PathType.ENTRY_KEY, m
+				descriptions.addAll(doDescribe(expected.keyType.normalize(), expected.keyType, m.key, append(path, new PathElement(PathType.ENTRY_KEY, m
 						.name))));
 			if(!expected.type.isAssignable(m.value))
-				descriptions.addAll(doDescribe(expected.type, m.value, append(path, new PathElement(PathType.ENTRY, m.name))));
+				descriptions.addAll(doDescribe(expected.type.normalize(), expected.type, m.value, append(path, new PathElement(PathType.ENTRY, m.name))));
 		}
 		return descriptions;
 	}
 
-	private List<? extends Mismatch> describeStructHash(StructType expected, HashType actual, List<PathElement> path) {
+	private List<? extends Mismatch> describeStructHash(StructType expected, AnyType original, HashType actual, List<PathElement> path) {
 		return expected.size.isAssignable(actual.size)
-				? singletonList(new TypeMismatch(path, expected, actual))
+				? singletonList(new TypeMismatch(path, original, actual))
 				: singletonList(new SizeMismatch(path, expected.size, actual.size));
 	}
 
@@ -690,13 +707,13 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 			if(paramHash.containsKey(member.name))
 				result.addAll(describe(member.value, inferSet(value), singletonList(new
 						PathElement(PathType.PARAMETER, member.name))));
-			else
+			else if(!missingOk || member.key instanceof OptionalType)
 				result.add(new MissingParameter(null, member.name));
 		}
 		return result;
 	}
 
-	private List<? extends Mismatch> describeStructStruct(StructType expected, StructType actual, List<PathElement> path) {
+	private List<? extends Mismatch> describeStructStruct(StructType expected, AnyType original, StructType actual, List<PathElement> path) {
 		List<Mismatch> descriptions = new ArrayList<>();
 		Map<String,StructElement> h2 = new LinkedHashMap<>(actual.hashedMembers());
 		for(StructElement e1 : expected.elements) {
@@ -707,9 +724,9 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 					descriptions.add(new MissingKey(path, key));
 			} else {
 				if(!e1.key.isAssignable(e2.key))
-					descriptions.addAll(doDescribe(e1.key, e2.key, append(path, new PathElement(PathType.ENTRY_KEY, e1.name))));
+					descriptions.addAll(doDescribe(e1.key.normalize(), e1.key, e2.key, append(path, new PathElement(PathType.ENTRY_KEY, e1.name))));
 				if(!e1.value.isAssignable(e2.value))
-					descriptions.addAll(doDescribe(e1.value, e2.value, append(path, new PathElement(PathType.ENTRY, e1.name))));
+					descriptions.addAll(doDescribe(e1.value.normalize(), e1.value, e2.value, append(path, new PathElement(PathType.ENTRY, e1.name))));
 			}
 		}
 		for(String key : h2.keySet())
@@ -717,19 +734,19 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		return descriptions;
 	}
 
-	private List<? extends Mismatch> describeTuple(TupleType expected, AnyType actual, List<PathElement> path, boolean isCount) {
+	private List<? extends Mismatch> describeTuple(TupleType expected, AnyType original, AnyType actual, List<PathElement> path, boolean isCount) {
 		if(expected.isAssignable(actual))
 			return emptyList();
 		if(actual instanceof TupleType)
-			return describeTupleTuple(expected, (TupleType)actual, path, isCount);
+			return describeTupleTuple(expected, original, (TupleType)actual, path, isCount);
 		if(actual instanceof ArrayType)
-			return describeTupleArray(expected, (ArrayType)actual, path, isCount);
-		return singletonList(new TypeMismatch(path, expected, actual));
+			return describeTupleArray(expected, original, (ArrayType)actual, path, isCount);
+		return singletonList(new TypeMismatch(path, original, actual));
 	}
 
-	private List<? extends Mismatch> describeTupleArray(TupleType expected, ArrayType actual, List<PathElement> path, boolean isCount) {
+	private List<? extends Mismatch> describeTupleArray(TupleType expected, AnyType original, ArrayType actual, List<PathElement> path, boolean isCount) {
 		if(actual.type.isAssignable(anyType()))
-			return singletonList(new TypeMismatch(path, expected, actual));
+			return singletonList(new TypeMismatch(path, original, actual));
 
 		if(!expected.givenOrActualSize.isAssignable(actual.size))
 			return singletonList(isCount
@@ -741,14 +758,14 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		for(int idx = 0; idx < top; ++idx) {
 			AnyType type = expected.types.get(idx);
 			if(!type.isAssignable(actual.type))
-				descriptions.addAll(doDescribe(type, actual.type, append(path, new PathElement(PathType.INDEX, Integer
+				descriptions.addAll(doDescribe(type.normalize(), type, actual.type, append(path, new PathElement(PathType.INDEX, Integer
 						.toString(idx)))));
 		}
 		return descriptions;
 	}
 
 	private List<? extends Mismatch> describeTupleTuple(
-			TupleType expected, TupleType actual, List<PathElement> path,
+			TupleType expected, AnyType original, TupleType actual, List<PathElement> path,
 			boolean isCount) {
 		if(!expected.givenOrActualSize.isAssignable(actual.givenOrActualSize))
 			return singletonList(isCount
@@ -764,15 +781,16 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		for(int idx = 0; idx < top; ++idx) {
 			AnyType type = actual.types.get(idx);
 			int adx = idx >= expectedSize ? expectedSize : idx;
-			descriptions.addAll(doDescribe(expected.types.get(adx), type, append(path, new PathElement(
+			AnyType ex = expected.types.get(adx);
+			descriptions.addAll(doDescribe(ex.normalize(), ex, type, append(path, new PathElement(
 					PathType.INDEX,
 					Integer.toString(idx)))));
 		}
 		return descriptions;
 	}
 
-	private List<? extends Mismatch> doDescribe(AnyType expected, AnyType actual, List<PathElement> path) {
-		return dispatch(expected, actual, path);
+	private List<? extends Mismatch> doDescribe(AnyType expected, AnyType original, AnyType actual, List<PathElement> path) {
+		return dispatch(expected, original, actual, path);
 	}
 
 	private String errorString(List<? extends Mismatch> errors) {
