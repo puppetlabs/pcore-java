@@ -773,6 +773,11 @@ public class TypeFactory {
 		);
 	}
 
+	// TargetType (this is an ObjectType), not a specialization of AnyType
+	public static ObjectType targetType() {
+		return ((PcoreImpl)Pcore.staticPcore()).target;
+	}
+
 	// TimeSpanType
 	public static TimeSpanType timeSpanType() {
 		return TimeSpanType.DEFAULT;

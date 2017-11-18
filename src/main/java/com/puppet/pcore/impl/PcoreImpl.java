@@ -30,6 +30,7 @@ public class PcoreImpl extends Pcore {
 	public final AnyType data;
 	public final AnyType richDataKey;
 	public final AnyType richData;
+	public final ObjectType target;
 	public final boolean failWhenUnresolved;
 
 	private static PcoreImpl staticPcoreInstance = null;
@@ -61,6 +62,17 @@ public class PcoreImpl extends Pcore {
 			metaType.resolve(this);
 		TypeFactory.registerImpls(this);
 		failWhenUnresolved = true;
+
+		target = (ObjectType)typeEvaluator.declareType("Target",
+				"Object[\n" +
+				"  attributes => {\n" +
+				"    host => String[1],\n" +
+				"    options => { type => Hash[String[1], Data], value => {} }\n" +
+				"  }]");
+		target.resolve(this);
+		// Must request factoryDispatcher since it changes the implementation repository which is about to be frozen
+		target.factoryDispatcher();
+
 		freeze(); // Static Pcore is always frozen
 	}
 
@@ -73,6 +85,7 @@ public class PcoreImpl extends Pcore {
 		data = staticPcoreInstance.data;
 		richDataKey = staticPcoreInstance.richDataKey;
 		richData = staticPcoreInstance.richData;
+		target = staticPcoreInstance.target;
 	}
 
 	public ObjectType createObjectType(
