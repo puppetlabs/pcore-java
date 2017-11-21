@@ -45,22 +45,29 @@ public class PcoreImpl extends Pcore {
 	// Private constructor. Only used when staticPcore is initialized
 	private PcoreImpl() {
 		staticPcoreInstance = this;
-		loader = new BasicLoader();
-		implementationRegistry = new ImplementationRegistryImpl(null);
-		typeEvaluator = new TypeEvaluatorImpl(this);
+		try {
+			loader = new BasicLoader();
+			implementationRegistry = new ImplementationRegistryImpl(null);
+			typeEvaluator = new TypeEvaluatorImpl(this);
 
-		data = typeEvaluator.declareType("Data", "Variant[ScalarData,Undef,Array[Data],Hash[String,Data]]");
-		richDataKey = typeEvaluator.declareType("RichDataKey", "Variant[String,Numeric]");
-		richData = typeEvaluator.declareType("RichData", "Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Default,Undef,Hash[RichDataKey,RichData],Array[RichData]]");
+			data = typeEvaluator.declareType("Data", "Variant[ScalarData,Undef,Array[Data],Hash[String,Data]]");
+			richDataKey = typeEvaluator.declareType("RichDataKey", "Variant[String,Numeric]");
+			richData = typeEvaluator.declareType(
+					"RichData",
+					"Variant[Scalar,SemVerRange,Binary,Sensitive,Type,TypeSet,Default,Undef,Hash[RichDataKey,RichData],Array[RichData]]");
 
-		data.resolve(this);
-		richDataKey.resolve(this);
-		richData.resolve(this);
+			data.resolve(this);
+			richDataKey.resolve(this);
+			richData.resolve(this);
 
-		for(AnyType metaType : TypeFactory.registerPcoreTypes(this))
-			metaType.resolve(this);
-		TypeFactory.registerImpls(this);
-		failWhenUnresolved = true;
+			for(AnyType metaType : TypeFactory.registerPcoreTypes(this))
+				metaType.resolve(this);
+			TypeFactory.registerImpls(this);
+			failWhenUnresolved = true;
+		} catch(RuntimeException e) {
+			e.printStackTrace();
+			throw e;
+		}
 		freeze(); // Static Pcore is always frozen
 	}
 
@@ -108,11 +115,12 @@ public class PcoreImpl extends Pcore {
 	public <C> ObjectType createObjectType(
 			String typeName, String parentName, Map<String,Object>
 			attributesHash, List<String> serialization) {
-		return createObjectType(typeName, parentName, attributesHash, emptyMap(), emptyList(), serialization);
+		return createObjectType(typeName, parentName, attributesHash, emptyMap(), emptyMap(), emptyList(), serialization);
 	}
 
 	public <C> ObjectType createObjectType(String typeName, String parentName, Map<String,Object>
-			attributesHash, Map<String,Object> functionsHash, List<String> equality, List<String> serialization) {
+			attributesHash, Map<String,Object> functionsHash, Map<String,Object>
+			typeParametersHash, List<String> equality, List<String> serialization) {
 		Map<String,Object> initHash = new HashMap<>();
 		initHash.put(KEY_NAME, typeName);
 		if(parentName != null)
@@ -121,6 +129,8 @@ public class PcoreImpl extends Pcore {
 			initHash.put(KEY_ATTRIBUTES, attributesHash);
 		if(!functionsHash.isEmpty())
 			initHash.put(KEY_FUNCTIONS, functionsHash);
+		if(!typeParametersHash.isEmpty())
+			initHash.put(KEY_TYPE_PARAMETERS, typeParametersHash);
 		if(!equality.isEmpty())
 			initHash.put(KEY_EQUALITY, equality);
 		if(!serialization.isEmpty())

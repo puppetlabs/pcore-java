@@ -71,7 +71,7 @@ public class RegexpType extends ScalarType {
 	}
 
 	public boolean matches(String value) {
-		return pattern().matcher(value).matches();
+		return pattern().matcher(value).find();
 	}
 
 	public Pattern pattern() {

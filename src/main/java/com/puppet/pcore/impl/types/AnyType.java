@@ -92,6 +92,10 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 		return isAssignable((AnyType)t, null);
 	}
 
+	public boolean isEqualityIncludeType() {
+		return false;
+	}
+
 	@Override
 	public final boolean isInstance(Object o) {
 		return isInstance(o, null);

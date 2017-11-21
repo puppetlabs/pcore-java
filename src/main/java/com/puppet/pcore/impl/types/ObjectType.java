@@ -11,8 +11,11 @@ import com.puppet.pcore.serialization.FactoryDispatcher;
 import com.puppet.pcore.serialization.SerializationException;
 
 import java.io.IOException;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Constants.*;
@@ -120,6 +123,8 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 		private final Object value;
 
+		private Method getterMethod;
+
 		Attribute(String name, Map<String,Object> initHash) {
 			super(name, initHash);
 			kind = initHash.containsKey(KEY_KIND)
@@ -154,15 +159,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 		@Override
 		public Map<String,Object> initHash() {
-			Map<String,Object> result = super.initHash();
-			if(kind != AttributeKind.normal) {
-				result.put(KEY_KIND, kind.name());
-				if(kind == AttributeKind.constant)
-					result.remove(KEY_FINAL);
-			}
-			if(value != UNDEF)
-				result.put(KEY_VALUE, value);
-			return unmodifiableCopy(result);
+			return unmodifiableCopy(modifiableInitHash());
 		}
 
 		@Override
@@ -181,9 +178,70 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 			return value;
 		}
 
+		/** Return the value of the attribute in the given instance
+		 *
+		 * @param instance the instance to retrieve the attribute value from
+		 * @return the attribute value
+		 */
+		public Object get(Object instance) {
+			if(instance instanceof DynamicObject)
+				return ((DynamicObject)instance).get(name);
+
+			try {
+				return getterMethod.invoke(instance);
+			} catch(IllegalAccessException | InvocationTargetException e) {
+				return null;
+			}
+		}
+
+		private synchronized Method getterMethod(Class<?> implClass) throws NoSuchMethodException {
+			if(getterMethod == null) {
+				StringBuilder bld = new StringBuilder("get");
+				bld.append(Character.toUpperCase(name.charAt(0)));
+				bld.append(name.substring(1));
+				getterMethod = implClass.getMethod(bld.toString());
+			}
+			return getterMethod;
+		}
+
 		@Override
 		String featureType() {
 			return "attribute";
+		}
+
+		Map<String,Object> modifiableInitHash() {
+			Map<String,Object> result = super.initHash();
+			if(kind != AttributeKind.normal) {
+				result.put(KEY_KIND, kind.name());
+				if(kind == AttributeKind.constant)
+					result.remove(KEY_FINAL);
+			}
+			if(value != UNDEF)
+				result.put(KEY_VALUE, value);
+			return result;
+		}
+	}
+
+	public class TypeParameter extends Attribute {
+		TypeParameter(String name, Map<String,Object> initHash) {
+			super(name, initHash);
+		}
+
+		@Override
+		Map<String,Object> modifiableInitHash() {
+			Map<String,Object> result = super.modifiableInitHash();
+			AnyType type = (AnyType)result.get(KEY_TYPE);
+			if(type instanceof OptionalType)
+				type = ((OptionalType)type).type;
+			result.put(KEY_TYPE, type);
+			if(result.containsKey(KEY_VALUE) && result.get(KEY_VALUE) == null)
+				result.remove(KEY_VALUE);
+			return result;
+		}
+
+		@Override
+		String featureType() {
+			return "type_parameter";
 		}
 	}
 
@@ -212,6 +270,10 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	private static final AnyType TYPE_ATTRIBUTE_KIND = enumType(map(asList(AttributeKind.values()).subList(0, AttributeKind.values().length - 1), AttributeKind::name));
 	private static final AnyType TYPE_MEMBER_NAME = patternType(regexpType(Pattern.compile("\\A[a-z_]\\w*\\z")));
+	private static final AnyType TYPE_PARAMETER = variantType(typeType(), structType(
+			structElement(KEY_TYPE, typeType()),
+			structElement(optionalType(KEY_ANNOTATIONS), TYPE_ANNOTATIONS)
+	));
 	private static final AnyType TYPE_ATTRIBUTE = variantType(typeType(), structType(
 			structElement(KEY_TYPE, typeType()),
 			structElement(optionalType(KEY_ANNOTATIONS), TYPE_ANNOTATIONS),
@@ -221,6 +283,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 			structElement(optionalType(KEY_VALUE), anyType())
 	));
 	private static final AnyType TYPE_ATTRIBUTES = hashType(TYPE_MEMBER_NAME, notUndefType());
+	private static final AnyType TYPE_PARAMETERS = hashType(TYPE_MEMBER_NAME, notUndefType());
 	private static final AnyType TYPE_ATTRIBUTE_CALLABLE = callableType(tupleType(emptyList()));
 	private static final AnyType TYPE_FUNCTION_TYPE = typeType(callableType());
 	private static final AnyType TYPE_FUNCTION = variantType(TYPE_FUNCTION_TYPE, structType(
@@ -236,6 +299,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 	static final StructType TYPE_OBJECT_INIT = structType(
 			structElement(optionalType(KEY_NAME), TYPE_QUALIFIED_REFERENCE),
 			structElement(optionalType(KEY_PARENT), typeType()),
+			structElement(optionalType(KEY_TYPE_PARAMETERS), TYPE_PARAMETERS),
 			structElement(optionalType(KEY_ATTRIBUTES), TYPE_ATTRIBUTES),
 			structElement(optionalType(KEY_FUNCTIONS), TYPE_FUNCTIONS),
 			structElement(optionalType(KEY_EQUALITY), TYPE_EQUALITY),
@@ -247,6 +311,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 	private static final Object UNDEF = new Object();
 
 	private static ObjectType ptype;
+	private Map<String,TypeParameter> typeParameters = emptyMap();
 	private Map<String,Attribute> attributes = emptyMap();
 	private Object checks;
 	private List<String> equality;
@@ -283,6 +348,15 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 	@Override
 	public Type _pcoreType() {
 		return ptype;
+	}
+
+	public Map<String,TypeParameter> typeParameters(boolean includeParent) {
+		if(includeParent) {
+			Map<String,TypeParameter> all = new LinkedHashMap<>();
+			collectTypeParameters(all, includeParent);
+			return all;
+		}
+		return typeParameters;
 	}
 
 	public Map<String,Attribute> attributes(boolean includeParent) {
@@ -366,6 +440,16 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 		return member;
 	}
 
+	public TypeParameter getTypeParameter(String a) {
+		TypeParameter tp = typeParameters.get(a);
+		if(tp == null) {
+			AnyType parent = resolveParent();
+			if(parent instanceof ObjectType)
+				tp = ((ObjectType)parent).getTypeParameter(a);
+		}
+		return tp;
+	}
+
 	@Override
 	@SuppressWarnings("unchecked")
 	public FactoryDispatcher<?> factoryDispatcher() {
@@ -397,6 +481,8 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 			result.put(KEY_NAME, name);
 		if(parent != null)
 			result.put(KEY_PARENT, parent);
+		if(!typeParameters.isEmpty())
+			result.put(KEY_TYPE_PARAMETERS, compressedMembersMap(typeParameters));
 		if(!attributes.isEmpty())
 			result.put(KEY_ATTRIBUTES, compressedMembersMap(attributes));
 		if(!functions.isEmpty())
@@ -418,6 +504,14 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	public boolean isEqualityIncludeType() {
 		return equalityIncludeType;
+	}
+
+	public boolean isParameterized() {
+		if(typeParameters.isEmpty()) {
+			AnyType parent = resolveParent();
+		  return parent instanceof ObjectType && ((ObjectType)parent).isParameterized();
+		}
+		return true;
 	}
 
 	public String label() {
@@ -453,6 +547,9 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 						KEY_PARENT, asMap(
 								KEY_TYPE, optionalType(typeType()),
 								KEY_VALUE, null),
+						KEY_TYPE_PARAMETERS, asMap(
+								KEY_TYPE, optionalType(TYPE_PARAMETERS),
+								KEY_VALUE, null),
 						KEY_ATTRIBUTES, asMap(
 								KEY_TYPE, optionalType(TYPE_ATTRIBUTES),
 								KEY_VALUE, null),
@@ -483,6 +580,22 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 	}
 
 	@Override
+	void accept(Visitor visitor, RecursionGuard guard) {
+		guardedRecursion(guard, null, (g) -> {
+			super.accept(visitor, g);
+			if(parent != null)
+				parent.accept(visitor, g);
+			for(TypeParameter tp : typeParameters.values())
+				tp.accept(visitor, g);
+			for(Attribute a : attributes.values())
+				a.accept(visitor, g);
+			for(Function f : functions.values())
+				f.accept(visitor, g);
+			return null;
+		});
+	}
+
+	@Override
 	void checkSelfRecursion(AnyType originator) {
 		if(parent != null) {
 			if(parent == originator)
@@ -493,10 +606,11 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	@Override
 	boolean guardedEquals(Object o, RecursionGuard guard) {
-		if(getClass().equals(o.getClass())) {
+		if(o != null && getClass().equals(o.getClass())) {
 			ObjectType to = (ObjectType)o;
 			return Objects.equals(name, to.name)
 					&& equals(parent, to.parent, guard)
+					&& equals(typeParameters, to.typeParameters, guard)
 					&& equals(attributes, to.attributes, guard)
 					&& equals(functions, to.functions, guard)
 					&& Objects.equals(equality, to.equality)
@@ -514,6 +628,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 		parent = (AnyType)initHash.get(KEY_PARENT);
 
 		Map<String,AnnotatedMember> pm = emptyMap();
+		Map<String,TypeParameter> tp = emptyMap();
 		ObjectType pot = null;
 		if(parent != null) {
 			checkSelfRecursion(this);
@@ -521,11 +636,38 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 			if(rp instanceof ObjectType) {
 				pot = (ObjectType)rp;
 				pm = pot.members(true, MemberType.all);
+				tp = pot.typeParameters(true);
 			}
 		}
 
 		ObjectType parentObjectType = pot;
 		Map<String,AnnotatedMember> parentMembers = pm;
+
+		Map<String,Object> typeParamSpecs = (Map<String,Object>)initHash.get(KEY_TYPE_PARAMETERS);
+		if(!(typeParamSpecs == null || typeParamSpecs.isEmpty())) {
+			Map<String,TypeParameter> typeParams = new LinkedHashMap<>();
+			for(Entry<String,Object> p : typeParamSpecs.entrySet()) {
+				Object typeParamSpec = TYPE_PARAMETER.assertInstanceOf(p.getValue(),
+						() -> format("initializer for type_parameter %s[%s]", label(), p.getKey()));
+
+				Object paramValue = null;
+				AnyType paramType;
+				if(!(typeParamSpec instanceof Map<?,?>))
+					paramType = (AnyType)typeParamSpec;
+				else {
+					Map<String,Object> tm = (Map<String,Object>)typeParamSpec;
+					paramType = (AnyType)tm.get(KEY_TYPE);
+					if(tm.containsKey(KEY_VALUE))
+						paramValue = tm.get(KEY_VALUE);
+				}
+				if(!paramType.isAssignable(UndefType.DEFAULT))
+					paramType = new OptionalType(paramType);
+				TypeParameter typeParam = new TypeParameter(p.getKey(), asMap(KEY_TYPE, paramType, KEY_VALUE, paramValue));
+				typeParam.assertOverride(tp);
+				typeParams.put(p.getKey(), typeParam);
+			}
+			typeParameters = unmodifiableMap(typeParams);
+		}
 
 		Map<String,Object> attrSpecs = (Map<String,Object>)initHash.get(KEY_ATTRIBUTES);
 		if(!(attrSpecs == null || attrSpecs.isEmpty())) {
@@ -535,7 +677,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 						() -> format("initializer for attribute %s[%s]", label(), p.getKey()));
 
 				if(!(attrSpec instanceof Map<?,?>))
-					attrSpec = singletonMap(KEY_TYPE, attrSpec);
+					attrSpec = (attrSpec instanceof OptionalType) ? asMap(KEY_TYPE, attrSpec, KEY_VALUE, null) : singletonMap(KEY_TYPE, attrSpec);
 
 				Attribute attr = new Attribute(p.getKey(), (Map<String,Object>)attrSpec);
 				attr.assertOverride(parentMembers);
@@ -664,6 +806,15 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 		}
 	}
 
+	private void collectTypeParameters(Map<String,TypeParameter> all, boolean includeParent) {
+		if(includeParent) {
+			AnyType parent = resolveParent();
+			if(parent instanceof ObjectType)
+				((ObjectType)parent).collectTypeParameters(all, true);
+		}
+		all.putAll(typeParameters);
+	}
+
 	private Map<String,Object> compressedMembersMap(Map<String,? extends AnnotatedMember> members) {
 		Map<String,Object> result = new LinkedHashMap<>();
 		for(Entry<String,? extends AnnotatedMember> entry : members.entrySet()) {
@@ -750,6 +901,9 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	@Override
 	boolean isUnsafeAssignable(AnyType t, RecursionGuard guard) {
+		if(t instanceof ObjectTypeExtension)
+			t = ((ObjectTypeExtension)t).baseType;
+
 		if(t instanceof ObjectType) {
 			ObjectType ot = (ObjectType)t;
 			if(DEFAULT.equals(this) || equals(ot))

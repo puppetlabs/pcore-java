@@ -2,7 +2,9 @@ package com.puppet.pcore.impl;
 
 import com.puppet.pcore.DynamicObject;
 import com.puppet.pcore.Type;
+import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.ObjectType;
+import com.puppet.pcore.impl.types.ObjectTypeExtension;
 import com.puppet.pcore.impl.types.ParameterInfo;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
 
@@ -13,17 +15,23 @@ import static java.lang.String.format;
 
 public class DynamicObjectImpl implements DynamicObject {
 	private final Object[] attributes;
-	private final ObjectType ptype;
+	private AnyType ptype;
 
 	public DynamicObjectImpl(ArgumentsAccessor argumentsAccessor) throws IOException {
 		argumentsAccessor.remember(this);
-		this.ptype = (ObjectType)argumentsAccessor.getType();
-		this.attributes = argumentsAccessor.getAll();
+		ObjectType baseType = (ObjectType)argumentsAccessor.getType();
+		ptype = baseType;
+		attributes = argumentsAccessor.getAll();
+		if(baseType.isParameterized())
+			ptype = new ObjectTypeExtension(baseType, this);
 	}
 
 	public DynamicObjectImpl(ObjectType ptype, Object... args) {
-		this.ptype = ptype;
+		ObjectType baseType = ptype;
+		this.ptype = baseType;
 		this.attributes = new GivenArgumentsAccessor(ptype, args).getAll();
+		if(baseType.isParameterized())
+			this.ptype = new ObjectTypeExtension(baseType, this);
 	}
 
 	@Override
@@ -60,7 +68,7 @@ public class DynamicObjectImpl implements DynamicObject {
 		ParameterInfo pi = ptype.parameterInfo();
 		Integer idx = pi.attributeIndex.get(attrName);
 		if(idx == null)
-			throw new IllegalArgumentException(format("%s has no attribute named '%s'", ptype.label(), attrName));
+			throw new IllegalArgumentException(format("%s has no attribute named '%s'", ptype.name(), attrName));
 		int index = idx;
 		return index < attributes.length ? attributes[index] : pi.attributes.get(index).value();
 	}

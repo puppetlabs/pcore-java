@@ -590,7 +590,7 @@ public class TypeFormatterTest extends PcoreTestBase {
 
 	@Test
 	public void undefS() {
-		assertEquals("?", format(null));
+		assertEquals("undef", format(null));
 	}
 
 	@Test

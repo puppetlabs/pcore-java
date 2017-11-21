@@ -3,6 +3,7 @@ package com.puppet.pcore.impl.serialization;
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.serialization.extension.*;
 import com.puppet.pcore.impl.types.ObjectType;
+import com.puppet.pcore.impl.types.ObjectTypeExtension;
 import com.puppet.pcore.impl.types.TypeReferenceType;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -61,6 +62,8 @@ public class SerializerImpl implements Serializer {
 	private <T> void writeObject(T value) throws IOException {
 		Function<T,Object[]> attributeProvider;
 		Type type = value instanceof PuppetObject ? ((PuppetObject)value)._pcoreType() : pcore.infer(value);
+		if(type instanceof ObjectTypeExtension)
+			type = ((ObjectTypeExtension)type).baseType;
 		if(!(type instanceof ObjectType))
 			throw new SerializationException(format("No Puppet Type found for %s", value.getClass().getName()));
 

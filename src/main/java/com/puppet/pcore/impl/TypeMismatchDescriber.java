@@ -619,7 +619,7 @@ public class TypeMismatchDescriber extends Polymorphic<List<? extends TypeMismat
 		}
 		int top = types.size();
 		for(int idx = 0; idx < top; ++idx) {
-			AnyType et = expected.types.get(idx);
+			AnyType et = types.get(idx);
 			List<? extends Mismatch> d = doDescribe(et.normalize(), et, actual,
 					append(path, new PathElement(PathType.VARIANT, Integer.toString(idx))));
 			if(d.isEmpty())

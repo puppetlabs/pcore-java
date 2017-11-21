@@ -478,9 +478,19 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 		case "unit":
 			throw new TypeResolverException(format("Not a parameterized type '%s'", te.name));
 		default: {
-			StringBuilder bld = new StringBuilder(te.name);
-			new TypeFormatter(bld).format(asList(args));
-			return typeReferenceType(bld.toString());
+			Loader loader = pcore.loader();
+			TypedName typedName = new TypedName("type", te.name, loader.getNameAuthority());
+			AnyType found = (AnyType)loader.loadOrNull(typedName);
+			if(found == null) {
+				StringBuilder bld = new StringBuilder(te.name);
+				new TypeFormatter(bld).format(asList(args));
+				return typeReferenceType(bld.toString());
+			}
+			found = found.resolve(pcore);
+			if(found instanceof ObjectType && ((ObjectType)found).isParameterized()) {
+				return new ObjectTypeExtension((ObjectType)found, asList(args));
+			}
+			throw new TypeResolverException(format("Not a parameterized type '%s'", te.name));
 		}
 		}
 	}

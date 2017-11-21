@@ -1,6 +1,7 @@
 package com.puppet.pcore.impl;
 
 import com.puppet.pcore.Binary;
+import com.puppet.pcore.Default;
 import com.puppet.pcore.impl.types.*;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -130,7 +131,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(Void undef) {
-		out.append("?");
+		out.append("undef");
 	}
 
 	void _format(Boolean value) {
@@ -143,6 +144,10 @@ public class TypeFormatter extends Polymorphic<Void> {
 
 	void _format(Float value) {
 		out.append(value.toString());
+	}
+
+	void _format(Default value) {
+		out.append("default");
 	}
 
 	void _format(Double value) {
@@ -244,6 +249,16 @@ public class TypeFormatter extends Polymorphic<Void> {
 			else
 				out.append(t.name() == null ? "Object" : t.name());
 		}
+	}
+
+	void _format(ObjectTypeExtension t) {
+		appendArray(typeSet == null ? t.name() : typeSet.nameFor(t), () -> {
+			Object ips = t.initParameters();
+			if(ips instanceof List<?>)
+				appendValues(false, (List<?>)ips);
+			else
+				appendValues(false, ips);
+		});
 	}
 
 	void _format(OptionalType t) {

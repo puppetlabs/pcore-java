@@ -3,6 +3,7 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.GivenArgumentsAccessor;
 import com.puppet.pcore.impl.types.ObjectType.Attribute;
+import com.puppet.pcore.parser.ParseException;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
@@ -22,6 +23,215 @@ import static org.junit.jupiter.api.Assertions.*;
 @SuppressWarnings("unused")
 @DisplayName("A Pcore Object Type")
 public class ObjectTypeTest extends PcoreTestBase {
+	@Nested
+	@DisplayName("when dealing with type parameters")
+	class TypeParameters {
+		@Nested
+		@DisplayName("raises an error when")
+		class Failures {
+			@Test
+			@DisplayName("the type parameters type is not a type")
+			public void notType() {
+				declareObject("type_parameters => { a => 23 }");
+				Throwable ex = assertThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
+				assertEquals("initializer for type_parameter TestObj[a] expects a value of type Type or Struct, got Integer", ex.getMessage());
+			}
+
+			@Test
+			@DisplayName("the type parameter value is present")
+			public void typeMissing() {
+				declareObject("type_parameters => { a => { type => Integer, value => 0 }}");
+				Throwable ex = assertThrows(TypeAssertionException.class, ObjectTypeTest.this::resolveObject);
+				assertIncludes("unrecognized key 'value'", ex.getMessage());
+			}
+
+			@Test
+			@DisplayName("no parameter is given")
+			public void atLeastOneParam() {
+				declareObject("TheType",
+						"type_parameters => {" +
+								" p1 => Variant[String,Regexp,Type[Enum],Type[Pattern]] " +
+								"}," +
+								"attributes => {" +
+								" p1 => String " +
+								"}");
+				Throwable ex = assertThrows(ParseException.class, () -> resolveType("TheType[default]"));
+				assertIncludes("The TheType-Type cannot be parameterized using an empty parameter list", ex.getMessage());
+			}
+		}
+
+		@Test
+		@DisplayName("can be declared with just a type")
+		public void declaredWithType() {
+			declareObject("type_parameters => { a => Integer }");
+			assertTrue(resolveObject().getTypeParameter("a") instanceof ObjectType.TypeParameter);
+		}
+
+		@Test
+		@DisplayName("can be declared with a hash with a type")
+		public void declaredWithHashWithType() {
+			declareObject("type_parameters => { a => { type => Integer }}");
+			assertTrue(resolveObject().getTypeParameter("a") instanceof ObjectType.TypeParameter);
+		}
+
+		@Test
+		@DisplayName("can be referenced")
+		public void canBeReferenced() {
+			declareObject("TheType", "type_parameters => { p1 => String }");
+			Type tp = resolveType("TheType['hello']");
+			assertTrue(tp instanceof ObjectTypeExtension);
+			assertEquals(tp.toString(), "TheType['hello']");
+		}
+
+		@Test
+		@DisplayName("leading unset parameters are represented as default in string representation")
+		public void leadingUnset() {
+			declareObject("TheType", "type_parameters => { p1 => String, p2 => String }");
+			Type tp = resolveType("TheType[default, 'hello']");
+			assertEquals("TheType[default, 'hello']", tp.toString());
+		}
+
+		@Test
+		@DisplayName("trailing unset parameters are skipped in string representation")
+		public void trailingUnset() {
+			declareObject("TheType", "type_parameters => { p1 => String, p2 => String }");
+			Type tp = resolveType("TheType['hello']");
+			assertEquals("TheType['hello']", tp.toString());
+		}
+
+		@Test
+		@DisplayName("a type with more than 2 type parameters uses named arguments in string representation")
+		public void moreThanTwo() {
+			declareObject("TheType", "type_parameters => { p1 => String, p2 => String, p3 => String }");
+			Type tp = resolveType("TheType['hello']");
+			assertEquals("TheType[{'p1' => 'hello'}]", tp.toString());
+		}
+
+		@Test
+		@DisplayName("can be used without parameters")
+		public void withoutParameters() {
+			declareObject("TheType", "type_parameters => { p1 => String }");
+			Type tp = resolveType("TheType");
+			assertEquals("TheType", tp.toString());
+		}
+
+		@Test
+		@DisplayName("involves type parameter values when testing instance of")
+		public void involvesTypeParametersInIsInstance() {
+			declareObject("TheType", "type_parameters => { p1 => String }, attributes => { p1 => String }");
+			Type tp = resolveType("TheType");
+			Object v = tp.newInstance("world");
+			assertTrue(tp.isInstance(v));
+			assertFalse(resolveType("TheType['hello']").isInstance(v));
+			assertTrue(resolveType("TheType['world']").isInstance(v));
+		}
+
+		@Test
+		@DisplayName("involves type parameter values when testing assignability")
+		public void involvesTypeParametersInIsAssignable() {
+			declareObject("TheType", "type_parameters => { p1 => String }, attributes => { p1 => String }");
+			Type tp = resolveType("TheType['world']");
+			assertTrue(resolveType("TheType").isAssignable(tp));
+			assertFalse(resolveType("TheType['hello']").isAssignable(tp));
+			assertTrue(resolveType("TheType['world']").isAssignable(tp));
+		}
+
+		@Test
+		@DisplayName("parameters can be types")
+		public void paramsCanBeTypes() {
+			declareObject("TheType",
+					"type_parameters => {" +
+					" p1 => Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef]]," +
+					" p2 => Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef]] " +
+					"}," +
+					"attributes => {" +
+					" p1 => String, p2 => String " +
+					"}");
+			Type tp = resolveType("TheType");
+			Object v = tp.newInstance("good bye", "cruel world");
+
+			assertTrue(resolveType("TheType").isInstance(v));
+			assertTrue(resolveType("TheType[Enum['hello', 'good bye']]").isInstance(v));
+			assertTrue(resolveType("TheType[Enum['hello', 'good bye'], Pattern[/world/, /universe/]]").isInstance(v));
+			assertTrue(resolveType("TheType[NotUndef, NotUndef]").isInstance(v));
+			assertFalse(resolveType("TheType[Enum['hello', 'yo']]").isInstance(v));
+		}
+
+		@Test
+		@DisplayName("parameters can be provided using named arguments")
+		public void paramsCanBeNamed() {
+			declareObject("TheType",
+					"type_parameters => {" +
+							" p1 => Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef]]," +
+							" p2 => Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef]] " +
+							"}," +
+							"attributes => {" +
+							" p1 => String, p2 => String " +
+							"}");
+			Object v = resolveType("TheType").newInstance("good bye", "cruel world");
+			assertFalse(resolveType("TheType[p1 => 'hello', p2 => 'cruel world']").isInstance(v));
+			assertTrue(resolveType("TheType[p1 => 'good bye', p2 => 'cruel world']").isInstance(v));
+		}
+
+		@Test
+		@DisplayName("undef is a valid value for a type parameter")
+		public void undefIsValidParameterValue() {
+			declareObject("TheType",
+					"type_parameters => {" +
+							" p1 => Optional[String] " +
+							"}," +
+							"attributes => {" +
+							" p1 => Optional[String] " +
+							"}");
+			Type t = resolveType("TheType");
+			assertEquals("TheType[undef]", resolveType("TheType[undef]").toString());
+			assertTrue(resolveType("TheType[undef]").isInstance(t.newInstance()));
+			assertFalse(resolveType("TheType[undef]").isInstance(t.newInstance("hello")));
+		}
+
+		@Test
+		@DisplayName("Type parameters does not mean that type must be parameterized")
+		public void mustNotBeParameterized() {
+			declareObject("TheType",
+					"type_parameters => {" +
+							" p1 => Optional[String] " +
+							"}," +
+							"attributes => {" +
+							" p1 => Optional[String] " +
+							"}");
+			Type t = resolveType("TheType");
+			assertTrue(t.isInstance(t.newInstance("hello")));
+		}
+
+		@Test
+		@DisplayName("A parameterized type is assignable to another parameterized type if base type and parameters are assignable")
+		public void parameterizedAssignableWhenParamsAre() {
+			declareObject("TheType",
+					"type_parameters => {" +
+							" p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]] " +
+							"}," +
+							"attributes => {" +
+							" p1 => String," +
+							"}");
+			assertTrue(resolveType("TheType[Pattern[/a/,/b/]]").isAssignable(resolveType("TheType[Enum['a','b']]")));
+		}
+
+		@Test
+		@DisplayName("Instance is inferred to parameterized type")
+		public void instanceInferredToParameterized() {
+			declareObject("TheType",
+					"type_parameters => {" +
+							" p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]] " +
+							"}," +
+							"attributes => {" +
+							" p1 => String," +
+							"}");
+			Object v = resolveType("TheType").newInstance("hello");
+			assertTrue(resolveType("TheType['hello']").isInstance(v));
+			assertFalse(resolveType("TheType['good bye']").isInstance(v));
+		}
+	}
+
 	@Nested
 	@DisplayName("when dealing with attributes")
 	class Attributes {

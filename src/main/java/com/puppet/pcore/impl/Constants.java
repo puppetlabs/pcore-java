@@ -16,6 +16,7 @@ public final class Constants {
 	public static final String KEY_VERSION = "version";
 	public static final String KEY_VERSION_RANGE = "version_range";
 	public static final String KEY_ATTRIBUTES = "attributes";
+	public static final String KEY_TYPE_PARAMETERS = "type_parameters";
 	public static final String KEY_CHECKS = "checks";
 	public static final String KEY_EQUALITY = "equality";
 	public static final String KEY_EQUALITY_INCLUDE_TYPE = "equality_include_type";
