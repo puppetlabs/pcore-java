@@ -2,10 +2,7 @@ package com.puppet.pcore.impl;
 
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Function;
-import java.util.function.Predicate;
+import java.util.function.*;
 import java.util.regex.Pattern;
 
 import static java.lang.String.format;
@@ -391,6 +388,14 @@ public class Helpers {
 	public static <T> boolean all(Collection<? extends T> collection, Predicate<? super T> condition) {
 		for(T elem : collection)
 			if(!condition.test(elem))
+				return false;
+		return true;
+	}
+
+	public static <T> boolean allWithIndex(Collection<? extends T> collection, BiPredicate<T, Integer> block) {
+		int idx = 0;
+		for(T elem : collection)
+			if(!block.test(elem, idx++))
 				return false;
 		return true;
 	}

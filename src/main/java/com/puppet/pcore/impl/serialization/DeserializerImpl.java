@@ -73,12 +73,16 @@ public class DeserializerImpl implements Deserializer {
 			ObjectType ot = (ObjectType)type;
 			val = ot.newInstance(new DeserializerArgumentsAccessor(this, ot, os.attributeCount));
 			if(val instanceof ObjectType) {
+				val = ((ObjectType)val).resolve(pcore);
 				TypedName tn = new TypedName(Constants.KEY_TYPE, ((ObjectType)val).name().toLowerCase());
 
 				// Add result to the loader unless it is the exact same instance as the type returned from loadOrNull. The add
 				// will succeed when loadOrNull returns null.
 				Loader loader = pcore.loader();
-				if(val != loader.loadOrNull(tn))
+				Object prev = loader.loadOrNull(tn);
+				if(val.equals(prev))
+					val = prev;
+				else
 					loader.bind(tn, val);
 			}
 			return val;

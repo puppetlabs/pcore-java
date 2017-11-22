@@ -2,6 +2,7 @@ package com.puppet.pcore.impl.serialization;
 
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.types.AnyType;
+import com.puppet.pcore.impl.types.ObjectTypeExtension;
 import com.puppet.pcore.impl.types.PcoreTestBase;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
@@ -19,9 +20,12 @@ import java.util.List;
 import java.util.Map;
 
 import static com.puppet.pcore.impl.Helpers.asMap;
+import static com.puppet.pcore.impl.types.TypeFactory.infer;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyMap;
+import static java.util.Collections.singletonMap;
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 @SuppressWarnings("unused")
 @DisplayName("The Serializer/Deserializer")
@@ -46,6 +50,12 @@ public class SerializationTest extends PcoreTestBase {
 				SerializationTest.this.setPcore(pcore());
 				SerializationTest.this.assertWriteAndRead(typeString, SerializationFactory.JSON);
 			}
+
+			@Override
+			public Object assertWriteAndRead(Object value) throws IOException {
+				SerializationTest.this.setPcore(pcore());
+				return SerializationTest.this.assertWriteAndRead(value, SerializationFactory.JSON);
+			}
 		}
 	}
 
@@ -69,6 +79,12 @@ public class SerializationTest extends PcoreTestBase {
 				SerializationTest.this.setPcore(pcore());
 				SerializationTest.this.assertWriteAndRead(typeString, SerializationFactory.MSGPACK);
 			}
+
+			@Override
+			public Object assertWriteAndRead(Object value) throws IOException {
+				SerializationTest.this.setPcore(pcore());
+				return SerializationTest.this.assertWriteAndRead(value, SerializationFactory.MSGPACK);
+			}
 		}
 	}
 
@@ -76,6 +92,11 @@ public class SerializationTest extends PcoreTestBase {
 		TypeEvaluator te = typeEvaluator();
 		Type type = ((AnyType)te.resolveType(typeString)).resolve(pcore());
 		assertEquals(type, ((AnyType)writeAndRead(type, factoryName)).resolve(pcore()));
+	}
+
+	Object assertWriteAndRead(Object value, String factoryName) throws IOException {
+		assertEquals(value, writeAndRead(value, factoryName));
+		return value;
 	}
 
 	Object writeAndRead(Object value, String factoryName) throws IOException {
@@ -355,6 +376,26 @@ abstract class PcoreTypes extends PcoreTestBase {
 	}
 
 	@Test
+	@DisplayName("Parameterized Object type")
+	void rwParameterizedObjectType() throws IOException {
+		TypeEvaluator te = typeEvaluator();
+		te.declareType("TheType",
+				"Object[" +
+				"type_parameters => {" +
+				" p1 => Variant[Undef,String,Regexp,Type[Enum],Type[Pattern]] " +
+				"}," +
+				"attributes => {" +
+				" p1 => String " +
+				"}]");
+
+		Type type = te.resolveType("TheType");
+		Object v = assertWriteAndRead(type.newInstance("hello"));
+		Type t2 = infer(v);
+		assertTrue(t2 instanceof ObjectTypeExtension);
+		assertEquals(((ObjectTypeExtension)t2).parameters, singletonMap("p1", "hello"));
+	}
+
+	@Test
 	@DisplayName("Optional[Boolean]")
 	void rwOptionalType() throws IOException {
 		assertWriteAndRead("Optional[Boolean]");
@@ -504,5 +545,7 @@ abstract class PcoreTypes extends PcoreTestBase {
 	}
 
 	abstract void assertWriteAndRead(String typeString) throws IOException;
+
+	abstract Object assertWriteAndRead(Object value) throws IOException;
 }
 

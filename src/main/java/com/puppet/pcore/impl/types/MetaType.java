@@ -9,6 +9,7 @@ import com.puppet.pcore.parser.model.HashExpression;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Function;
 
 import static com.puppet.pcore.impl.Constants.KEY_ANNOTATIONS;
 import static com.puppet.pcore.impl.Helpers.asMap;
@@ -130,5 +131,14 @@ abstract class MetaType extends AnyType implements Annotatable {
 
 	void setInitHashExpression(Map<String,Object> unresolvedInitHash) {
 		this.initHashExpression = unresolvedInitHash;
+	}
+
+
+	<R> R guardedRecursion(RecursionGuard guard, R dflt, Function<RecursionGuard,? extends R> block) {
+		if(selfRecursion) {
+			RecursionGuard g = guard == null ? new RecursionGuard() : guard;
+			return g.withThis(this, state -> (state & RecursionGuard.SELF_RECURSION_IN_THIS) == 0 ? block.apply(g) : dflt);
+		}
+		return block.apply(guard);
 	}
 }

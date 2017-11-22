@@ -49,6 +49,15 @@ public interface Type {
 	String name();
 
 	/**
+	 * Creates a new instance of the type.
+	 * Not all types can produce instances.
+	 * @param args arguments to use when creating the instance
+	 * @return the created instance
+	 * @throws PcoreException if the type is unable to create an instance
+	 */
+	Object newInstance(Object...args);
+
+	/**
 	 * Normalizes the type. This does not change the characteristics of the type but it will remove duplicates
 	 * and constructs like NotUndef[T] where T is not assignable from Undef and change Variant[*T] where all
 	 * T are enums into an Enum.
