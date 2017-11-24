@@ -3,6 +3,7 @@ package com.puppet.pcore.impl;
 import com.puppet.pcore.Binary;
 import com.puppet.pcore.Default;
 import com.puppet.pcore.impl.types.*;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.time.DurationFormat;
@@ -11,7 +12,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
 import java.util.function.Consumer;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Constants.KEY_REFERENCES;
 import static com.puppet.pcore.impl.Constants.KEY_TYPES;
@@ -175,8 +175,8 @@ public class TypeFormatter extends Polymorphic<Void> {
 		_format(value.toString());
 	}
 
-	void _format(Pattern value) {
-		puppetRegexp(value.pattern(), out);
+	void _format(Regexp value) {
+		puppetRegexp(value.toString(), out);
 	}
 
 	void _format(HashType t) {
@@ -271,7 +271,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	void _format(PatternType t) {
 		appendArray("Pattern", t.regexps.isEmpty(), () -> {
 			for(RegexpType rx : t.regexps) {
-				puppetRegexp(rx.patternString, out);
+				puppetRegexp(rx.pattern.toString(), out);
 				out.append(COMMA_SEP);
 			}
 			chompList();
@@ -279,8 +279,8 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(RegexpType t) {
-		appendArray("Regexp", RegexpType.DEFAULT_PATTERN.equals(t.patternString), () -> puppetRegexp(
-				t.patternString,
+		appendArray("Regexp", RegexpType.DEFAULT_PATTERN.equals(t.pattern.toString()), () -> puppetRegexp(
+				t.pattern.toString(),
 				out));
 	}
 

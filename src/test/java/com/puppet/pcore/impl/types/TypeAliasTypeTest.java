@@ -1,11 +1,10 @@
 package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.TypeResolverException;
+import com.puppet.pcore.regex.Regexp;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.types.TypeFactory.typeAliasType;
 import static com.puppet.pcore.impl.types.TypeFactory.typeReferenceType;
@@ -52,7 +51,7 @@ public class TypeAliasTypeTest extends PcoreTestBase {
 	@DisplayName("detects a mismatch in an alias that directly references itself in a variant with other types")
 	public void test5() {
 		declareType("Foo", "Variant[Foo,String,Integer]");
-		assertFalse(resolveType("Foo").isInstance(Pattern.compile("x")));
+		assertFalse(resolveType("Foo").isInstance(Regexp.compile("x")));
 	}
 
 	@Test
@@ -63,7 +62,7 @@ public class TypeAliasTypeTest extends PcoreTestBase {
 		AnyType theFoo = resolveType("Foo");
 		assertTrue(theFoo.isInstance(singletonList("a")));
 		assertTrue(theFoo.isInstance(singletonList(1)));
-		assertFalse(theFoo.isInstance(Pattern.compile("x")));
+		assertFalse(theFoo.isInstance(Regexp.compile("x")));
 	}
 
 	@Test
@@ -74,7 +73,7 @@ public class TypeAliasTypeTest extends PcoreTestBase {
 		AnyType theFoo = resolveType("Foo");
 		assertTrue(theFoo.isInstance(singletonList("a")));
 		assertTrue(theFoo.isInstance(singletonList(1)));
-		assertFalse(theFoo.isInstance(Pattern.compile("x")));
+		assertFalse(theFoo.isInstance(Regexp.compile("x")));
 	}
 
 	@Test

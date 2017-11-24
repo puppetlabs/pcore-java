@@ -8,7 +8,6 @@ import java.net.URI;
 
 import static com.puppet.pcore.impl.types.TypeFactory.patternType;
 import static com.puppet.pcore.impl.types.TypeFactory.regexpType;
-import static java.util.regex.Pattern.compile;
 
 public final class Constants {
 	public static final String KEY_NAME = "name";
@@ -40,16 +39,16 @@ public final class Constants {
 	public static final VersionRange PCORE_PARSABLE_VERSIONS = VersionRange.exact(PCORE_VERSION);
 	public static final URI RUNTIME_NAME_AUTHORITY = URI.create("http://puppet.com/2016.1/runtime");
 
-	public static final AnyType TYPE_QUALIFIED_REFERENCE = patternType(regexpType(compile("\\A[A-Z][\\w]*(?:::[A-Z][\\w]*)*\\z")));
+	public static final AnyType TYPE_QUALIFIED_REFERENCE = patternType(regexpType("\\A[A-Z][\\w]*(?:::[A-Z][\\w]*)*\\z"));
 
 	/**
 	 * Regular expression for URI.
 	 *
 	 * @see <a href="https://tools.ietf.org/html/rfc3986#page-50">Uniform Resource Identifiers (URI): Generic Syntax</a>
 	 */
-	public static final AnyType TYPE_URI = patternType(regexpType(compile("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?")));
+	public static final AnyType TYPE_URI = patternType(regexpType("^(([^:/?#]+):)?(//([^/?#]*))?([^?#]*)(\\?([^#]*))?(#(.*))?"));
 
-	public static final AnyType TYPE_SIMPLE_TYPE_NAME = patternType(regexpType(compile("\\A[A-Z]\\w*\\z")));
+	public static final AnyType TYPE_SIMPLE_TYPE_NAME = patternType(regexpType("\\A[A-Z]\\w*\\z"));
 
 	public static final Object[] EMPTY_ARRAY = new Object[0];
 }

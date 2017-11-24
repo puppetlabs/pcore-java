@@ -3,6 +3,8 @@ package com.puppet.pcore.impl;
 import com.puppet.pcore.Binary;
 import com.puppet.pcore.Default;
 import com.puppet.pcore.impl.types.*;
+import com.puppet.pcore.regex.Matcher;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.time.DurationFormat;
@@ -11,11 +13,8 @@ import com.puppet.pcore.time.InstantFormat;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Helpers.*;
-import static com.puppet.pcore.impl.Polymorphic.initPolymorphicDispatch;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
@@ -725,9 +724,9 @@ public class StringConverter extends Polymorphic<String> {
 		}
 	}
 
-	String string(RegexpType valType, Pattern val, Map<AnyType, Format> formatMap, Indentation indent) {
+	String string(RegexpType valType, Regexp val, Map<AnyType, Format> formatMap, Indentation indent) {
 		Format f = getFormat(valType, formatMap);
-		String rxString = RegexpType.patternWithFlagsExpanded(val);
+		String rxString = val.toString();
 		switch(f.fmt) {
 		case 'p':
 			StringBuilder bld = new StringBuilder("/");

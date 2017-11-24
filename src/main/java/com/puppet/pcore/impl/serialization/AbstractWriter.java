@@ -6,6 +6,7 @@ import com.puppet.pcore.Default;
 import com.puppet.pcore.Symbol;
 import com.puppet.pcore.impl.serialization.extension.*;
 import com.puppet.pcore.impl.types.TypeReferenceType;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.serialization.Writer;
@@ -15,7 +16,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Helpers.splitName;
 import static com.puppet.pcore.impl.serialization.extension.Numbers.*;
@@ -85,7 +85,7 @@ public abstract class AbstractWriter implements Writer {
 		registerType(SENSITIVE_START, SensitiveStart.class, o -> buildPayload(ep -> {}));
 		registerType(DEFAULT, Default.class, o -> buildPayload(ep -> {}));
 		registerType(COMMENT, Comment.class, o -> buildPayload(ep -> ep.write(o.comment)));
-		registerType(REGEXP, Pattern.class, o -> buildPayload(ep -> ep.write(o.pattern())));
+		registerType(REGEXP, Regexp.class, o -> buildPayload(ep -> ep.write(o.toString())));
 		registerType(TYPE_REFERENCE, TypeReferenceType.class, o -> buildPayload(ep -> ep.write(o.typeString)));
 		registerType(SYMBOL, Symbol.class, o -> buildPayload(ep -> ep.write(o.toString())));
 		registerType(TIME, Instant.class, o -> buildPayload(ep -> {

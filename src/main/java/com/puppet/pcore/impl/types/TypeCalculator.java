@@ -2,6 +2,7 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.*;
 import com.puppet.pcore.impl.Polymorphic;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 
@@ -11,7 +12,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.map;
@@ -107,7 +107,7 @@ class TypeCalculator extends Polymorphic<AnyType> {
 		return runtimeType("java", o.getClass().getName());
 	}
 
-	AnyType _infer(Pattern o) {
+	AnyType _infer(Regexp o) {
 		return regexpType(o);
 	}
 

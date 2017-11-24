@@ -4,6 +4,7 @@ import com.puppet.pcore.Binary;
 import com.puppet.pcore.TypeEvaluator;
 import com.puppet.pcore.impl.types.AnyType;
 import com.puppet.pcore.impl.types.PcoreTestBase;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.Test;
@@ -14,7 +15,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
@@ -371,7 +371,7 @@ public class TypeFormatterTest extends PcoreTestBase {
 
 	@Test
 	public void regexpS() {
-		assertEquals("/expr/", format(Pattern.compile("expr")));
+		assertEquals("/expr/", format(Regexp.compile("expr")));
 	}
 
 	@Test

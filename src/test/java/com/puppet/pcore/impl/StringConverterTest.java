@@ -5,13 +5,13 @@ import com.puppet.pcore.Binary;
 import com.puppet.pcore.Default;
 import com.puppet.pcore.impl.StringConverter.Format;
 import com.puppet.pcore.impl.types.AnyType;
+import com.puppet.pcore.regex.Regexp;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.test.TestHelper.assertMatches;
 import static com.puppet.pcore.test.TestHelper.dynamicMapTest;
@@ -775,7 +775,7 @@ public class StringConverterTest {
 	@Nested
 	@DisplayName("when converting regexp")
 	class ConvertRegexpTest {
-		final Pattern sample = Pattern.compile(".*");
+		final Regexp sample = Regexp.compile(".*");
 
 		@TestFactory
 		@DisplayName("the format")
@@ -804,26 +804,26 @@ public class StringConverterTest {
 			@Test
 			@DisplayName("the format %s produces '(?m:[a-z]\\s*)' for expression /[a-z]\\s*/m")
 			public void multiLine() {
-				assertEquals("(?m:[a-z]\\s*)", converter.convert(Pattern.compile("[a-z]\\s*", Pattern.MULTILINE), "%s"));
+				assertEquals("(?m:[a-z]\\s*)", converter.convert(Regexp.compile("[a-z]\\s*", Regexp.MULTILINE), "%s"));
 			}
 
 			@Test
 			@DisplayName("the format %p produces '/(?m:[a-z]\\s*)/' for expression /[a-z]\\s*/m")
 			public void multiLine_p() {
-				assertEquals("/(?m:[a-z]\\s*)/", converter.convert(Pattern.compile("[a-z]\\s*", Pattern.MULTILINE), "%p"));
+				assertEquals("/(?m:[a-z]\\s*)/", converter.convert(Regexp.compile("[a-z]\\s*", Regexp.MULTILINE), "%p"));
 			}
 		}
 
 		@Test
 		@DisplayName("the format %p produces '/foo\\/bar\\/bas/' for expression 'foo/bar\\/baz'")
 		public void escapedBackslash_p() {
-			assertEquals("/foo\\/bar\\/baz/", converter.convert(Pattern.compile("foo/bar\\/baz"), "%p"));
+			assertEquals("/foo\\/bar\\/baz/", converter.convert(Regexp.compile("foo/bar\\/baz"), "%p"));
 		}
 
 		@Test
 		@DisplayName("the format %s produces 'foo/bar\\/bas' for expression 'foo/bar\\/baz'")
 		public void noEscapedBackslash_s() {
-			assertEquals("foo/bar\\/baz", converter.convert(Pattern.compile("foo/bar\\/baz"), "%s"));
+			assertEquals("foo/bar\\/baz", converter.convert(Regexp.compile("foo/bar\\/baz"), "%s"));
 		}
 
 		@Test

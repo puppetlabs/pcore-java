@@ -3,7 +3,9 @@ package com.puppet.pcore.impl.types;
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
+import com.puppet.pcore.regex.Regexp;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
@@ -11,7 +13,9 @@ import java.util.Objects;
 import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.any;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
+import static java.lang.String.format;
 import static java.util.Collections.singletonMap;
+import static java.util.Collections.unmodifiableList;
 
 public class PatternType extends ScalarType {
 	static final PatternType DEFAULT = new PatternType(Collections.emptyList());
@@ -19,8 +23,21 @@ public class PatternType extends ScalarType {
 	private static ObjectType ptype;
 	public final List<RegexpType> regexps;
 
-	PatternType(List<RegexpType> regexps) {
-		this.regexps = regexps;
+	PatternType(List<Object> regexps) {
+		List<RegexpType> rxs = new ArrayList<>(regexps.size());
+		for(Object re : regexps) {
+			if(re instanceof String)
+				rxs.add(regexpType((String)re));
+			else if(re instanceof Regexp)
+				rxs.add(regexpType((Regexp)re));
+			else if(re instanceof RegexpType)
+				rxs.add((RegexpType)re);
+			else if(re instanceof PatternType)
+				rxs.addAll(((PatternType)re).regexps);
+			else
+				throw new IllegalArgumentException(format("Only String, Regexp, Type[Pattern], and Type[Regexp] are allowed: got %s", re.getClass().getName()));
+		}
+		this.regexps = unmodifiableList(rxs);
 	}
 
 	@Override

@@ -1,5 +1,7 @@
 package com.puppet.pcore;
 
+import com.puppet.pcore.regex.Regexp;
+
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -9,6 +11,11 @@ public class PatternSubstitution {
 
 	public PatternSubstitution(Pattern pattern, String replacement) {
 		this.pattern = pattern;
+		this.replacement = replacement;
+	}
+
+	public PatternSubstitution(Regexp regexp, String replacement) {
+		this.pattern = Pattern.compile(regexp.toString());
 		this.replacement = replacement;
 	}
 

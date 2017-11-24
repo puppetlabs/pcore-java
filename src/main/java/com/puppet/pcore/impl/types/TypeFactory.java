@@ -6,6 +6,7 @@ import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.SelfReferencingFactoryImpl;
 import com.puppet.pcore.parser.Expression;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.serialization.ArgumentsAccessor;
 import com.puppet.pcore.serialization.FactoryDispatcher;
@@ -16,7 +17,6 @@ import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.ConstructorImpl.hashConstructor;
 import static com.puppet.pcore.impl.FactoryDispatcherImpl.dispatcher;
@@ -24,6 +24,7 @@ import static com.puppet.pcore.impl.Helpers.map;
 import static com.puppet.pcore.impl.Helpers.unmodifiableCopy;
 import static com.puppet.pcore.impl.ConstructorImpl.constructor;
 import static com.puppet.pcore.impl.types.TypeSetType.TYPE_TYPESET_INIT;
+import static java.lang.String.format;
 import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
@@ -533,8 +534,20 @@ public class TypeFactory {
 				: new RegexpType(patternString);
 	}
 
-	public static RegexpType regexpType(Pattern pattern) {
-		return pattern == null ? RegexpType.DEFAULT : new RegexpType(pattern);
+	public static RegexpType regexpType(Regexp pattern) {
+		return pattern == null || pattern.toString().equals(RegexpType.DEFAULT_PATTERN)
+				? RegexpType.DEFAULT
+				: new RegexpType(pattern);
+	}
+
+	public static RegexpType regexpType(Object pattern) {
+		if(pattern instanceof String)
+			return regexpType((String)pattern);
+		if(pattern instanceof Regexp)
+			return regexpType((Regexp)pattern);
+		if(pattern instanceof RegexpType)
+			return (RegexpType)pattern;
+		throw new IllegalArgumentException(format("Regexp parameter must be a String or a Regexp, got %s", pattern.getClass().getName()));
 	}
 
 	@SuppressWarnings("unchecked")
@@ -543,7 +556,7 @@ public class TypeFactory {
 				constructor(args -> regexpType()),
 				constructor(args -> regexpType((String)args.get(0)),
 						stringType()),
-				constructor(args -> regexpType((Pattern)args.get(0)),
+				constructor(args -> regexpType((Regexp)args.get(0)),
 						regexpType()),
 				constructor((ObjectType)regexpType()._pcoreType())
 		);

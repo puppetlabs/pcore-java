@@ -6,6 +6,7 @@ import com.puppet.pcore.Default;
 import com.puppet.pcore.Symbol;
 import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.serialization.extension.*;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.serialization.Reader;
@@ -16,7 +17,6 @@ import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.serialization.extension.Numbers.*;
 import static com.puppet.pcore.impl.types.TypeFactory.typeReferenceType;
@@ -80,7 +80,7 @@ public abstract class AbstractReader implements Reader {
 		registerType(SENSITIVE_START, data -> readPayload(data, ep -> SensitiveStart.SINGLETON));
 		registerType(DEFAULT, data -> readPayload(data, ep -> Default.SINGLETON));
 		registerType(COMMENT, data -> readPayload(data, ep -> new Comment(ep.readString())));
-		registerType(REGEXP, data -> readPayload(data, ep -> Pattern.compile(ep.readString())));
+		registerType(REGEXP, data -> readPayload(data, ep -> Regexp.compile(ep.readString())));
 		registerType(TYPE_REFERENCE, data -> readPayload(data, ep -> typeReferenceType(ep.readString())));
 		registerType(SYMBOL, data -> readPayload(data, ep -> new Symbol(ep.readString())));
 		registerType(TIME, data -> readPayload(data, ep -> {

@@ -11,7 +11,6 @@ import org.junit.jupiter.api.*;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.Pcore.staticPcore;
 import static com.puppet.pcore.test.TestHelper.multiline;
@@ -263,13 +262,13 @@ public class TypeEvaluatorTest extends PcoreTestBase {
 			@Test
 			@DisplayName("Pattern[/abc/]")
 			public void patternType1() {
-				assertEquals(patternType(regexpType(Pattern.compile("abc"))), resolveType("Pattern[/abc/]"));
+				assertEquals(patternType(regexpType("abc")), resolveType("Pattern[/abc/]"));
 			}
 
 			@Test
 			@DisplayName("Pattern[Regexp[/a\\/b\\\\c/]]")
 			public void patternType2() {
-				assertEquals(patternType(regexpType(Pattern.compile("a/b\\\\c"))), resolveType
+				assertEquals(patternType(regexpType("a/b\\\\c")), resolveType
 						("Pattern[Regexp[/a\\/b\\\\c/]]"));
 
 			}

@@ -3,6 +3,7 @@ package com.puppet.pcore.test;
 import com.puppet.pcore.pspec.Test;
 import com.puppet.pcore.pspec.TestExecutable;
 import com.puppet.pcore.pspec.TestGroup;
+import com.puppet.pcore.regex.Regexp;
 import org.junit.jupiter.api.DynamicNode;
 import org.junit.jupiter.api.DynamicTest;
 
@@ -15,7 +16,6 @@ import java.util.Map;
 import java.util.function.BiConsumer;
 import java.util.function.BiFunction;
 import java.util.function.Supplier;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Helpers.map;
 import static java.lang.String.format;
@@ -46,7 +46,7 @@ public class TestHelper {
 	}
 
 	public static void assertMatches(String expected, String actual, Supplier<String> messageSupplier) {
-		if(actual == null || !Pattern.compile(expected).matcher(actual).find())
+		if(actual == null || !Regexp.compile(expected).matcher(actual).find())
 			fail(format("%sexpected '%s' to match pattern /%s/", buildPrefix(messageSupplier.get()), actual, expected));
 	}
 

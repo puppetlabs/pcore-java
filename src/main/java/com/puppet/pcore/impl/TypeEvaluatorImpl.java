@@ -366,7 +366,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 					.name)));
 		case "regexp":
 			assertParameterCount(1, 1, args, te.name);
-			return args[0] instanceof RegexpType ? args[0] : regexpType(assertClass(String.class, args, 0, te.name));
+			return regexpType(args[0]);
 		case "resource": {
 			assertParameterCount(1, 2, args, te.name);
 			String title = null;

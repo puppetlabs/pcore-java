@@ -1,8 +1,9 @@
 package com.puppet.pcore.impl.pn;
 
+import com.puppet.pcore.regex.Matcher;
+import com.puppet.pcore.regex.Regexp;
+
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Helpers.almostEqualUlps;
 import static com.puppet.pcore.impl.Helpers.doubleQuote;
@@ -16,7 +17,7 @@ public class LiteralPN extends AbstractPN {
 
 	// Strip zeroes between last significant digit and end or exponent. The
 	// zero following the decimal point is considered significant.
-	private static final Pattern STRIP_TRAILING_ZEROES = Pattern.compile(
+	private static final Regexp STRIP_TRAILING_ZEROES = Regexp.compile(
 			"\\A(.*(?:\\.0|[1-9]))0+(e[+-]?\\d+)?\\z"
 	);
 

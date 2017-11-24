@@ -1,14 +1,14 @@
 package com.puppet.pcore.impl.eval;
 
 import com.puppet.pcore.impl.types.AnyType;
+import com.puppet.pcore.regex.Matcher;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Helpers.all;
 import static com.puppet.pcore.impl.Helpers.allWithIndex;
@@ -24,8 +24,8 @@ public class CompareOperator {
 		if(b instanceof AnyType)
 			return ((AnyType)b).isInstance(a);
 
-		if(b instanceof Pattern)
-			return _match((Pattern)b, a, scope);
+		if(b instanceof Regexp)
+			return _match((Regexp)b, a, scope);
 
 		if(b instanceof Version)
 			return _match((Version)b, a, scope);
@@ -105,7 +105,7 @@ public class CompareOperator {
 		return all(hash.entrySet(), (e) -> match(left.get(e.getKey()), e.getValue(), scope));
 	}
 
-	private static boolean _match(Pattern pattern, Object val, Scope scope) {
+	private static boolean _match(Regexp pattern, Object val, Scope scope) {
 		if(!(val instanceof String))
 			return false;
 
