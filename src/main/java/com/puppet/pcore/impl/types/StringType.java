@@ -6,11 +6,11 @@ import com.puppet.pcore.impl.Assertions;
 import com.puppet.pcore.impl.Helpers;
 import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.StringConverter;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.serialization.FactoryDispatcher;
 
 import java.util.Collections;
 import java.util.Objects;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Constants.KEY_TYPE;
 import static com.puppet.pcore.impl.Constants.KEY_VALUE;
@@ -25,7 +25,7 @@ public class StringType extends ScalarDataType {
 	static final IterableType ITERABLE_TYPE = new IterableType(new StringType(integerType(1, 1)));
 	static final AnyType NOT_EMPTY = new StringType(integerType(1));
 
-	public static final Pattern FORMAT_PATTERN = Pattern.compile("^%([\\s\\[+#0{<(|-]*)([1-9][0-9]*)?(?:\\.([0-9]+))?([a-zA-Z])$");
+	public static final Regexp FORMAT_PATTERN = Regexp.compile("^%([\\s\\[+#0{<(|-]*)([1-9][0-9]*)?(?:\\.([0-9]+))?([a-zA-Z])$");
 	private static ObjectType ptype;
 	public final IntegerType size;
 	public final String value;

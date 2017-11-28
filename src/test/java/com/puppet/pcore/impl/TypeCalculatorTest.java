@@ -3,6 +3,7 @@ package com.puppet.pcore.impl;
 import com.puppet.pcore.Binary;
 import com.puppet.pcore.Default;
 import com.puppet.pcore.impl.types.AnyType;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +15,6 @@ import java.time.Instant;
 import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.Map;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 import static java.util.Arrays.asList;
@@ -148,7 +148,7 @@ public class TypeCalculatorTest {
 		@Test
 		@DisplayName("Regexp")
 		public void inferRegexp() {
-			assertInfer(regexpType("abc"), Pattern.compile("abc"));
+			assertInfer(regexpType("abc"), Regexp.compile("abc"));
 		}
 
 		@Test

@@ -15,8 +15,6 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.Map.Entry;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.Constants.*;
 import static com.puppet.pcore.impl.ConstructorImpl.constructor;
@@ -269,7 +267,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 	static final ObjectType DEFAULT = new ObjectType();
 
 	private static final AnyType TYPE_ATTRIBUTE_KIND = enumType(map(asList(AttributeKind.values()).subList(0, AttributeKind.values().length - 1), AttributeKind::name));
-	private static final AnyType TYPE_MEMBER_NAME = patternType(regexpType(Pattern.compile("\\A[a-z_]\\w*\\z")));
+	private static final AnyType TYPE_MEMBER_NAME = patternType(regexpType("\\A[a-z_]\\w*\\z"));
 	private static final AnyType TYPE_PARAMETER = variantType(typeType(), structType(
 			structElement(KEY_TYPE, typeType()),
 			structElement(optionalType(KEY_ANNOTATIONS), TYPE_ANNOTATIONS)

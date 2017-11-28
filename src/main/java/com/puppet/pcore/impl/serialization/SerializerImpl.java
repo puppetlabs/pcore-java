@@ -5,6 +5,7 @@ import com.puppet.pcore.impl.serialization.extension.*;
 import com.puppet.pcore.impl.types.ObjectType;
 import com.puppet.pcore.impl.types.ObjectTypeExtension;
 import com.puppet.pcore.impl.types.TypeReferenceType;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 import com.puppet.pcore.semver.VersionRange;
 import com.puppet.pcore.serialization.SerializationException;
@@ -18,7 +19,6 @@ import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.function.Function;
-import java.util.regex.Pattern;
 
 import static java.lang.String.format;
 
@@ -83,7 +83,7 @@ public class SerializerImpl implements Serializer {
 
 	private void writeTabulatedFirstTime(Object value) throws IOException {
 		if(value instanceof Symbol
-				|| value instanceof Pattern
+				|| value instanceof Regexp
 				|| value instanceof Version
 				|| value instanceof VersionRange
 				|| value instanceof Duration

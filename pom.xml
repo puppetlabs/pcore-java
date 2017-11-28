@@ -12,8 +12,8 @@
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <jackson.version>2.9.2</jackson.version>
         <slf4j.version>1.8.0-beta0</slf4j.version>
-        <junit.platform.version>1.0.1</junit.platform.version>
-        <junit.jupiter.version>5.0.1</junit.jupiter.version>
+        <junit.platform.version>1.0.2</junit.platform.version>
+        <junit.jupiter.version>5.0.2</junit.jupiter.version>
     </properties>
 
     <distributionManagement>
@@ -44,6 +44,11 @@
             <groupId>org.slf4j</groupId>
             <artifactId>slf4j-api</artifactId>
             <version>${slf4j.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.jruby.joni</groupId>
+            <artifactId>joni</artifactId>
+            <version>2.1.12</version>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>

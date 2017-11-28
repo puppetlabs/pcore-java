@@ -2,13 +2,14 @@ package com.puppet.pcore.parser.model;
 
 import com.puppet.pcore.PN;
 import com.puppet.pcore.impl.pn.LiteralPN;
+import com.puppet.pcore.regex.Regexp;
 
 public class LiteralRegexp extends LiteralExpression {
-	public final String value;
+	public final Regexp value;
 
 	public LiteralRegexp(String value, Locator locator, int offset, int length) {
 		super(locator, offset, length);
-		this.value = value;
+		this.value = Regexp.compile(value);
 	}
 
 	public boolean equals(Object o) {
@@ -22,6 +23,6 @@ public class LiteralRegexp extends LiteralExpression {
 
 	@Override
 	public PN toPN() {
-		return new LiteralPN(value).asCall("regexp");
+		return new LiteralPN(value.toString()).asCall("regexp");
 	}
 }

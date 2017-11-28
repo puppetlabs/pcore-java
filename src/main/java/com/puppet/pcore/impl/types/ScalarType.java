@@ -2,11 +2,11 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.Type;
 import com.puppet.pcore.impl.PcoreImpl;
+import com.puppet.pcore.regex.Regexp;
 import com.puppet.pcore.semver.Version;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.util.regex.Pattern;
 
 import static com.puppet.pcore.impl.types.TypeFactory.*;
 
@@ -42,7 +42,7 @@ public class ScalarType extends AnyType {
 				|| o instanceof String
 				|| o instanceof Number
 				|| o instanceof Boolean
-				|| o instanceof Pattern
+				|| o instanceof Regexp
 				|| o instanceof Instant
 				|| o instanceof Duration
 				|| o instanceof Version;

@@ -17,6 +17,7 @@ import static com.puppet.pcore.test.TestHelper.assertIncludes;
 import static com.puppet.pcore.impl.Helpers.asList;
 import static com.puppet.pcore.impl.Helpers.asMap;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
+import static com.puppet.pcore.test.TestHelper.assertMatches;
 import static java.util.Collections.emptyList;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -806,7 +807,7 @@ public class ObjectTypeTest extends PcoreTestBase {
 								"equality => [a]");
 				ObjectType t = resolveObject();
 				Throwable ex = assertThrows(TypeAssertionException.class, () -> t.newInstance(3));
-				assertEquals("The factory that creates instances of type 'TestObj' expects attribute count to be 2, got 1", ex.getMessage());
+				assertMatches("expects attribute count to be 2, got 1", ex.getMessage());
 			}
 
 			@Test
