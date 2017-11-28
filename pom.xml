@@ -18,14 +18,14 @@
 
     <distributionManagement>
         <repository>
-            <id>puppet.nexus.releases</id>
-            <name>Puppet Nexus Release Repository</name>
-            <url>http://nexus.delivery.puppetlabs.net/content/repositories/releases</url>
+            <id>puppet.artifactory.releases</id>
+            <name>Puppet Artifactory Release Repository</name>
+            <url>https://artifactory.delivery.puppetlabs.net/artifactory/clojure-releases__local/</url>
         </repository>
         <snapshotRepository>
-            <id>puppet.nexus.snapshots</id>
-            <name>Puppet Nexus Snapshot Repository</name>
-            <url>http://nexus.delivery.puppetlabs.net/content/repositories/snapshots</url>
+            <id>puppet.artifactory.snapshots</id>
+            <name>Puppet Artifactory Snapshot Repository</name>
+            <url>https://artifactory.delivery.puppetlabs.net/artifactory/clojure-snapshots__local/</url>
         </snapshotRepository>
     </distributionManagement>
 
