@@ -13,26 +13,26 @@ public class TargetTypeTest {
 	private final ObjectType subject = targetType();
 
 	@Test
-	@DisplayName("Target-Type is an Object-Type")
+	@DisplayName("TargetType is an ObjectType")
 	public void targetTypeTest() {
 		assertTrue(subject instanceof ObjectType);
 		assertEquals(subject.name(), "Target");
 	}
 
 	@Test
-	@DisplayName("A Target can be created with a string")
+	@DisplayName("A Target can be created from a string")
 	public void targetInstanceTest() {
 		assertNotNull(subject.newInstance("www.example.com"));
 	}
 
 	@Test
-	@DisplayName("A Target can be created with a string and a hash of Data")
+	@DisplayName("A Target can be created from a string and a hash of Data")
 	public void targetInstanceTest2() {
 		assertNotNull(subject.newInstance("www.example.com", Helpers.asMap("opt-key", "opt value")));
 	}
 
 	@Test
-	@DisplayName("A created Target is an instance of Target-Type")
+	@DisplayName("A created Target is an instance of TargetType")
 	public void targetInstanceTest3() {
 		assertTrue(subject.isInstance(subject.newInstance("www.example.com", Helpers.asMap("opt-key", "opt value"))));
 	}
