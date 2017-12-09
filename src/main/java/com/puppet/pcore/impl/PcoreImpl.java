@@ -31,6 +31,7 @@ public class PcoreImpl extends Pcore {
 	public final AnyType richDataKey;
 	public final AnyType richData;
 	public final ObjectType target;
+	public final ObjectType error;
 	public final boolean failWhenUnresolved;
 
 	private static PcoreImpl staticPcoreInstance = null;
@@ -65,15 +66,34 @@ public class PcoreImpl extends Pcore {
 				metaType.resolve(this);
 			TypeFactory.registerImpls(this);
 			failWhenUnresolved = true;
+
   		target = (ObjectType)typeEvaluator.declareType("Target",
 	  			"Object[\n" +
 		  		"  attributes => {\n" +
 			  	"    host => String[1],\n" +
 				  "    options => { type => Hash[String[1], Data], value => {} }\n" +
 				  "  }]");
-		  target.resolve(this);
-		  // Must request factoryDispatcher since it changes the implementation repository which is about to be frozen
-		  target.factoryDispatcher();
+
+			error = (ObjectType)typeEvaluator.declareType("Error",
+					"Object[\n" +
+					"  type_parameters => {\n" +
+					"    kind => Optional[Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef],Type[Undef]]],\n" +
+					"    issue_code => Optional[Variant[String,Regexp,Type[Enum],Type[Pattern],Type[NotUndef],Type[Undef]]]\n" +
+					"  },\n" +
+					"  attributes => {\n" +
+					"    message => String[1],\n" +
+					"    kind => { type => Optional[String[1]], value => undef },\n" +
+					"    issue_code => { type => Optional[String[1]], value => undef },\n" +
+					"    partial_result => { type => Data, value => undef },\n" +
+					"    details => { type => Optional[Hash[String[1],Data]], value => undef },\n" +
+					"  }]");
+
+			target.resolve(this);
+			error.resolve(this);
+
+			// Must request factoryDispatcher since it changes the implementation repository which is about to be frozen
+			target.factoryDispatcher();
+			error.factoryDispatcher();
 
 		} catch(RuntimeException e) {
 			e.printStackTrace();
@@ -92,6 +112,7 @@ public class PcoreImpl extends Pcore {
 		richDataKey = staticPcoreInstance.richDataKey;
 		richData = staticPcoreInstance.richData;
 		target = staticPcoreInstance.target;
+		error = staticPcoreInstance.error;
 	}
 
 	public ObjectType createObjectType(

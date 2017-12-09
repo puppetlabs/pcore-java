@@ -234,6 +234,11 @@ public class TypeFactory {
 		);
 	}
 
+	// ErrorType (this is an ObjectType), not a specialization of AnyType
+	public static ObjectType errorType() {
+		return ((PcoreImpl)Pcore.staticPcore()).error;
+	}
+
 	// FloatType
 	public static FloatType floatType() {
 		return FloatType.DEFAULT;
