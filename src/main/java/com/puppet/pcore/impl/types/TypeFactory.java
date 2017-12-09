@@ -505,11 +505,11 @@ public class TypeFactory {
 		return PatternType.DEFAULT;
 	}
 
-	public static PatternType patternType(RegexpType... regexps) {
+	public static PatternType patternType(Object... regexps) {
 		return regexps.length == 0 ? PatternType.DEFAULT : new PatternType(Helpers.asList(regexps));
 	}
 
-	public static PatternType patternType(List<RegexpType> regexps) {
+	public static PatternType patternType(List<Object> regexps) {
 		return regexps.isEmpty() ? PatternType.DEFAULT : new PatternType(unmodifiableCopy(regexps));
 	}
 
@@ -517,8 +517,8 @@ public class TypeFactory {
 	public static FactoryDispatcher<PatternType> patternTypeDispatcher() {
 		return dispatcher(
 				constructor(args -> patternType()),
-				constructor(args -> patternType((List<RegexpType>)args.get(0)),
-						arrayType(typeType(regexpType()))),
+				constructor(args -> patternType((List<Object>)args.get(0)),
+						arrayType(variantType(stringType(), regexpType(), typeType(regexpType()), typeType(patternType())))),
 				constructor((ObjectType)patternType()._pcoreType())
 		);
 	}
