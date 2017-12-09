@@ -240,7 +240,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 	}
 
 	Object eval(LiteralRegexp ce) {
-		return regexpType(ce.value);
+		return ce.value;
 	}
 
 	Object eval(AccessExpression ae) {
@@ -362,8 +362,7 @@ public class TypeEvaluatorImpl extends Polymorphic<Object> implements TypeEvalua
 			return optionalType(assertTypeOrString(args, 0, te.name));
 		case "pattern":
 			assertParameterCount(1, Integer.MAX_VALUE, args, te.name);
-			return patternType(mapRange(0, args.length, paramNo -> assertClass(RegexpType.class, args, paramNo, te
-					.name)));
+			return patternType(args);
 		case "regexp":
 			assertParameterCount(1, 1, args, te.name);
 			return regexpType(args[0]);
