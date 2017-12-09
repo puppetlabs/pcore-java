@@ -18,6 +18,7 @@ import java.util.Map.Entry;
 
 import static com.puppet.pcore.impl.Constants.*;
 import static com.puppet.pcore.impl.ConstructorImpl.constructor;
+import static com.puppet.pcore.impl.ConstructorImpl.hashConstructor;
 import static com.puppet.pcore.impl.FactoryDispatcherImpl.dispatcher;
 import static com.puppet.pcore.impl.Helpers.*;
 import static com.puppet.pcore.impl.types.TypeFactory.*;
@@ -455,7 +456,23 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 		FactoryDispatcher fd = ir.creatorFor(this);
 		if(fd == null) {
 			FactoryDispatcher<DynamicObjectImpl> dynFd = dispatcher(
-					constructor(args -> new DynamicObjectImpl(this, args.toArray()), parameterInfo().parametersType()));
+					constructor(args -> new DynamicObjectImpl(this, args.toArray()), parameterInfo().parametersType()),
+					hashConstructor(args -> {
+						Map<String,Object> hash = (Map<String,Object>)args.get(0);
+						List<Object> argv = new ArrayList<>(args.size());
+						for(ObjectType.Attribute attr : parameterInfo().attributes) {
+							if(hash.containsKey(attr.name))
+								argv.add(hash.get(attr.name));
+							else {
+								if(!attr.hasValue())
+									throw new IllegalArgumentException(String.format("no value provided for required %s", attr.label()));
+								argv.add(attr.value());
+							}
+						}
+						return new DynamicObjectImpl(this, argv.toArray(new Object[argv.size()]));
+					}, initType())
+			);
+
 			ir.registerImplementation(this, dynFd, DynamicObjectImpl::getAttributes);
 			fd = dynFd;
 		}
