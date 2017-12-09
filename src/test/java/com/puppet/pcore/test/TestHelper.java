@@ -13,9 +13,7 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
-import java.util.function.BiConsumer;
-import java.util.function.BiFunction;
-import java.util.function.Supplier;
+import java.util.function.*;
 
 import static com.puppet.pcore.impl.Helpers.map;
 import static java.lang.String.format;
@@ -48,6 +46,10 @@ public class TestHelper {
 	public static void assertMatches(String expected, String actual, Supplier<String> messageSupplier) {
 		if(actual == null || !Regexp.compile(expected).matcher(actual).find())
 			fail(format("%sexpected '%s' to match pattern /%s/", buildPrefix(messageSupplier.get()), actual, expected));
+	}
+
+	public static <V> List<DynamicTest> dynamicListTest(List<V> list, Function<V, String> title, Consumer<V> test) {
+		return map(list, (value) -> dynamicTest(title.apply(value), () -> test.accept(value)));
 	}
 
 	public static <K, V> List<DynamicTest> dynamicMapTest(Map<K, V> map, BiFunction<K, V, String> title, BiConsumer<K, V> test) {
