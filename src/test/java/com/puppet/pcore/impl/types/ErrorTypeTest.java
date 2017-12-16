@@ -23,7 +23,7 @@ public class ErrorTypeTest extends PcoreTestBase {
 	}
 
 	@Test
-	@DisplayName("A created Error is an instance of ErrorType")
+	@DisplayName("An Error is an instance of ErrorType")
 	public void errorInstanceTest() {
 		Object error = subject.newInstance("bad things happened");
 		assertNotNull(error);
@@ -31,7 +31,7 @@ public class ErrorTypeTest extends PcoreTestBase {
 	}
 
 	@Test
-	@DisplayName("A Error can be created from a message")
+	@DisplayName("An Error can be created from a message")
 	public void errorInstanceTest2() {
 		Object error = subject.newInstance("bad things happened");
 		assertNotNull(error);
@@ -39,7 +39,7 @@ public class ErrorTypeTest extends PcoreTestBase {
 	}
 
 	@Test
-	@DisplayName("A Error can be created from a message and a kind")
+	@DisplayName("An Error can be created from a message and a kind")
 	public void errorInstanceTest3() {
 		Object error = subject.newInstance("bad things happened", "puppet/error");
 		assertNotNull(error);
@@ -48,7 +48,7 @@ public class ErrorTypeTest extends PcoreTestBase {
 	}
 
 	@Test
-	@DisplayName("A Error can be created from a message, a kind, and an issue_code")
+	@DisplayName("An Error can be created from a message, a kind, and an issue_code")
 	public void errorInstanceTest4() {
 		Object error = subject.newInstance("bad things happened", "puppet/error", "OOPS");
 		assertNotNull(error);
@@ -58,7 +58,7 @@ public class ErrorTypeTest extends PcoreTestBase {
 	}
 
 	@Test
-	@DisplayName("A Error can be created from a hash with message, kind, and issue_code")
+	@DisplayName("An Error can be created from a hash with message, kind, and issue_code")
 	public void errorInstanceTest5() {
 		Object error = subject.newInstance(asMap("message", "bad things happened", "kind", "puppet/error", "issue_code", "OOPS"));
 		assertNotNull(error);
