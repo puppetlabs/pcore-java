@@ -66,6 +66,6 @@ public class EnumTypeTest {
 	@Test
 	@DisplayName("common type for two enums is an enum")
 	public void commonEnum3() {
-		assertEquals(enumType("a", "b"), enumType("a", "b", "c").common(enumType("b", "c")));
+		assertEquals(enumType("a", "b", "c"), enumType("a", "b").common(enumType("b", "c")));
 	}
 }

@@ -51,6 +51,11 @@ public class EnumType extends ScalarDataType {
 	}
 
 	@Override
+	boolean guardedEquals(Object o, RecursionGuard guard) {
+		return super.guardedEquals(o, guard) && enums.equals(((EnumType)o).enums);
+	}
+
+	@Override
 	boolean isIterable(RecursionGuard guard) {
 		return true;
 	}

@@ -117,7 +117,7 @@ public class TypeCalculatorTest {
 		@Test
 		@DisplayName("Array[Array[Enum]]")
 		public void inferList5() {
-			assertInfer(arrayType(arrayType(enumType("first", "array", "second"), integerType(2, 3)), integerType(2, 2)), asList(asList
+			assertInfer(arrayType(arrayType(enumType("first", "array", "second", "extra"), integerType(2, 3)), integerType(2, 2)), asList(asList
 					("first", "array"), asList("second", "array", "extra")));
 		}
 
