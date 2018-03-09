@@ -191,6 +191,12 @@ public class TypeEvaluatorTest extends PcoreTestBase {
 			}
 
 			@Test
+			@DisplayName("Enum['a-b', 'b-c', 'c-d']")
+			public void enumType3() {
+				assertEquals(enumType("a-b", "b-c", "c-d"), resolveType("Enum['a-b', 'b-c', 'c-d']"));
+			}
+
+			@Test
 			@DisplayName("Float[1.0]")
 			public void floatType1() {
 				assertEquals(floatType(1.0), resolveType("Float[1.0]"));
