@@ -35,6 +35,15 @@ public class StringReader {
 	}
 
 	/**
+	 * Returns the character at the given position without changing the
+	 * position.
+	 * @return The character at the given position or 0 if at end of text.
+	 */
+	public char peekAt(int position) {
+		return 0 <= position && position < text.length() ? text.charAt(position) : 0;
+	}
+
+	/**
 	 * Scans the text from the current position and until either the
 	 * given character is found or the end of text is reached. Advances
 	 * the position only if the character is found.
