@@ -1014,11 +1014,24 @@ public class Lexer extends StringReader {
 
 	private void consumeQualifiedName(int start, int token) {
 		boolean lastStartsWithUnderscore = false;
-		for(;;) {
+		outer: for(;;) {
 			char c = peek();
 			while(isLetterOrDigit(c)) {
 				advance();
 				c = peek();
+			}
+
+			if(c == '-' && token == TOKEN_IDENTIFIER) {
+				// Valid only if a letter or digit is present before end of name
+				for(int i = pos() + 1;;i++) {
+					c = peekAt(i);
+					if(isLetterOrDigit(c)) {
+						setPos(i + 1);
+						continue outer;
+					}
+					if(c != '-')
+						break outer;
+				}
 			}
 
 			if(c != ':')
