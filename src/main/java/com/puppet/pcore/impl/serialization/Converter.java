@@ -1,13 +1,13 @@
 package com.puppet.pcore.impl.serialization;
 
 public interface Converter {
-	String PCORE_TYPE_KEY = "__pcore_type__";
+	String PCORE_TYPE_KEY = "__ptype";
 
   /** Key used when the value can be represented as, and recreated from, a single string that can
    * be passed to a `from_string` method or an array of values that can be passed to the default
    * initializer method.
    */
-  String PCORE_VALUE_KEY = "__pcore_value__";
+  String PCORE_VALUE_KEY = "__pvalue";
 
 	/**
 	 * Type key used for hashes that contain keys that are not of type String
