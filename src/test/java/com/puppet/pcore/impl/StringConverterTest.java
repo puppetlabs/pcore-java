@@ -1118,7 +1118,6 @@ public class StringConverterTest {
 
 	@TestFactory
 	@DisplayName("literals")
-	@Disabled
 	Iterable<DynamicTest> literalsTruncated() {
 		return dynamicMapTest(
 				Helpers.<List<?>,String>asMap(

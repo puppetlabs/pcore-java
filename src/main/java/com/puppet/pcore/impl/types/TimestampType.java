@@ -48,9 +48,9 @@ public class TimestampType extends TimeDataType<TimestampType,Instant> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<Instant> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		AnyType formatType = stringType(2);
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor(
 						(args) -> Instant.now()),
 				constructor(

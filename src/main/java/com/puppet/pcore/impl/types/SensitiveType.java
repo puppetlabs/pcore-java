@@ -37,8 +37,8 @@ public class SensitiveType extends TypeContainerType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<Sensitive> factoryDispatcher() {
-		return dispatcher(
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor(
 						(args) -> new Sensitive(args.get(0)),
 						anyType())

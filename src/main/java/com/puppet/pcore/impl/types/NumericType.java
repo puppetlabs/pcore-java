@@ -84,11 +84,11 @@ public class NumericType extends ScalarDataType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<? extends Number> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		AnyType convertible = variantType(undefType(), integerType(), floatType(), booleanType(), stringType(), timeSpanType(), timestampType());
 		AnyType namedArgs = structType(structElement("from", convertible), structElement(optionalType("abs"), booleanType()));
 
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor(
 						(args) -> fromArgs(args.get(0), false),
 						convertible),

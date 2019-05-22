@@ -52,9 +52,9 @@ public class TimeSpanType extends TimeDataType<TimeSpanType,Duration> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<Duration> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		AnyType formatType = stringType(2);
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor(
 						(args) -> fromSeconds((Number)args.get(0)),
 						variantType(integerType(), floatType())),

@@ -52,7 +52,7 @@ public class StringType extends ScalarDataType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<String> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		AnyType formatType = patternType(regexpType(FORMAT_PATTERN));
 		AnyType containerFormatType = structType(
 				structElement(optionalType("format"), formatType),
@@ -62,7 +62,7 @@ public class StringType extends ScalarDataType {
 		);
 		AnyType typeMapType = hashType(typeType(), variantType(formatType, containerFormatType));
 
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 			constructor((args) -> fromArgs(args.get(0), Default.SINGLETON),
 					anyType()),
 			constructor((args) -> fromArgs(args.get(0), args.get(1)),

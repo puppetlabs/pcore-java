@@ -30,9 +30,9 @@ public class SemVerRangeType extends AnyType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<VersionRange> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		AnyType formatType = stringType(2);
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor(
 						(args) -> VersionRange.create((String)args.get(0)),
 						stringType())

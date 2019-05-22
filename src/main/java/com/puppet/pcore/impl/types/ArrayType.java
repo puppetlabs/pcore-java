@@ -57,8 +57,9 @@ public class ArrayType extends CollectionType {
 	}
 
 	@Override
-	public FactoryDispatcher<List<?>> factoryDispatcher() {
-		return arrayFactoryDispatcher();
+	@SuppressWarnings("unchecked")
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
+		return (FactoryDispatcher<T>)arrayFactoryDispatcher();
 	}
 
 	@SuppressWarnings("unchecked")

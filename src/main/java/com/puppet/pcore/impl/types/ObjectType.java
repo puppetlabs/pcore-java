@@ -451,7 +451,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public FactoryDispatcher<?> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		ImplementationRegistry ir = pcore().implementationRegistry();
 		FactoryDispatcher fd = ir.creatorFor(this);
 		if(fd == null) {
@@ -469,7 +469,7 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 								argv.add(attr.value());
 							}
 						}
-						return new DynamicObjectImpl(this, argv.toArray(new Object[argv.size()]));
+						return new DynamicObjectImpl(this, argv.toArray(new Object[0]));
 					}, initType())
 			);
 

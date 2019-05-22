@@ -140,7 +140,7 @@ public class Helpers {
 		return map;
 	}
 
-	@SuppressWarnings("unchecked")
+	@SafeVarargs
 	public static <T> List<T> asList(T... values) {
 		return values.length == 0 ? Collections.emptyList() : unmodifiableList(Arrays.asList(values));
 	}

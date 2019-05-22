@@ -61,13 +61,13 @@ public class InitType extends TypeContainerType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<?> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		if(AnyType.DEFAULT.equals(type))
 			return super.factoryDispatcher();
 
 		assertInitialized();
 		if(initArgs.isEmpty()) {
-			return dispatcher(
+			return (FactoryDispatcher<T>)dispatcher(
 					constructor((args) -> {
 						List<?> value = (List<?>)args.get(0);
 						return singleType.isInstance(value) || otherType != null && !otherType.isInstance(value) && hasOptionalSingle && otherType.isInstance(args)
@@ -79,7 +79,7 @@ public class InitType extends TypeContainerType {
 						anyType())
 			);
 		}
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor((args) -> {
 						Object[] allArgs = new Object[1 + initArgs.size()];
 						allArgs[0] = args.get(0);

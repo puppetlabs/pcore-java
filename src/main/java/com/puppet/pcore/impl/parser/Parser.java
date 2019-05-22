@@ -1078,7 +1078,7 @@ public class Parser extends Lexer implements com.puppet.pcore.parser.ExpressionP
 
 	private List<Expression> processHashEntries(List<Expression> exprs) {
 		List<Expression> result = new ArrayList<>();
-		List<KeyedEntry> collector = new ArrayList();
+		List<KeyedEntry> collector = new ArrayList<>();
 		for(Expression expr : exprs) {
 			if(expr instanceof KeyedEntry) {
 				collector.add((KeyedEntry)expr);

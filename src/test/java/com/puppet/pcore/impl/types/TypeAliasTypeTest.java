@@ -2,6 +2,7 @@ package com.puppet.pcore.impl.types;
 
 import com.puppet.pcore.TypeResolverException;
 import com.puppet.pcore.regex.Regexp;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -15,6 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 @SuppressWarnings("unused")
 @DisplayName("A Pcore Type Alias")
 public class TypeAliasTypeTest extends PcoreTestBase {
+
 	@Test
 	@DisplayName("resolves nested objects using self recursion")
 	public void test1() {

@@ -84,11 +84,11 @@ public class FloatType extends NumericType implements MergableRange<FloatType> {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<? extends Number> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		AnyType convertibleType = variantType(undefType(), numericType(), booleanType(), stringType(), timeSpanType(), timestampType());
 		AnyType namedArgsType = structType(structElement("from", convertibleType), structElement(optionalType("abs"), booleanType()));
 
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor(
 						(args) -> fromArgs(args.get(0), false),
 						convertibleType),

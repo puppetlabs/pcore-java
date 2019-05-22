@@ -35,6 +35,7 @@ public class ObjectTypeExtension extends AnyType {
 		return parameters;
 	}
 
+	@SuppressWarnings("unchecked")
 	private static Map<String,Object> parametersFromList(ObjectType baseType, List<Object> parameters) {
 		if(parameters.isEmpty())
 			return emptyMap();
@@ -96,7 +97,8 @@ public class ObjectTypeExtension extends AnyType {
 		this.parameters = unmodifiableMap(paramsCopy);
 	}
 
-	public FactoryDispatcher<?> factoryDispatcher() {
+	@Override
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		return baseType.factoryDispatcher();
 	}
 
@@ -113,10 +115,10 @@ public class ObjectTypeExtension extends AnyType {
 		if(pts.size() > 2)
 			return parameters;
 
-		List<Object> result = new ArrayList();
+		List<Object> result = new ArrayList<>();
 		for(TypeParameter tp : pts.values()) {
 			String pn = tp.name;
-			result.add(parameters.containsKey(pn) ? parameters.get(pn) : Default.SINGLETON);
+			result.add(parameters.getOrDefault(pn, Default.SINGLETON));
 		}
 		while(result.size() > 1 && result.get(result.size() - 1) == Default.SINGLETON)
 			result.remove(result.size() - 1);

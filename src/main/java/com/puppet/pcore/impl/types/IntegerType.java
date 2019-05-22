@@ -149,12 +149,12 @@ public class IntegerType extends NumericType implements MergableRange<IntegerTyp
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<Long> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		AnyType radixType = variantType(defaultType(), integerType(2, 16));
 		AnyType convertibleType = variantType(undefType(), numericType(), booleanType(), stringType(), timeSpanType(), timestampType());
 		AnyType namedArgs = structType(structElement("from", convertibleType), structElement(optionalType("radix"), radixType), structElement(optionalType("abs"), booleanType()));
 
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor(
 						(args) -> fromArgs(args.get(0), Default.SINGLETON, false),
 						convertibleType),

@@ -28,14 +28,14 @@ public class BinaryType extends AnyType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<Binary> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		AnyType byteInteger = integerType(0, 266);
 		AnyType base64Format = enumType("%b", "%u", "%B", "%s", "%r");
 		AnyType stringHash = structType(structElement("value", stringType()), structElement(optionalType("format"), base64Format));
 		AnyType arrayHash = structType(structElement("value", arrayType(byteInteger)));
 		AnyType binaryArgsHash = variantType(stringHash, arrayHash);
 
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor(
 						(args) -> fromString((String)args.get(0), "%B"),
 						stringType()),

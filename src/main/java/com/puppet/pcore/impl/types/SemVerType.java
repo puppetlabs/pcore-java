@@ -47,9 +47,9 @@ public class SemVerType extends ScalarType {
 
 	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<Version> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		AnyType formatType = stringType(2);
-		return dispatcher(
+		return (FactoryDispatcher<T>)dispatcher(
 				constructor(
 						(args) -> Version.create((String)args.get(0)),
 						stringType())

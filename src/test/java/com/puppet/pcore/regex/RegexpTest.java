@@ -4,8 +4,6 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 
-import java.util.regex.Pattern;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -81,9 +79,7 @@ public class RegexpTest {
 			Regexp rx = Regexp.compile("^h\\Xllå$");
 			assertTrue(rx.matcher("hàllå").matches());
 			assertTrue(rx.matcher("h\u00E0llå").matches());
-
-			// @TODO assertTrue. Pending fix for https://github.com/jruby/joni/issues/30
-			assertFalse(rx.matcher("h\u0061\u0300llå").matches());
+			assertTrue(rx.matcher("h\u0061\u0300llå").matches());
 		}
 
 		@Test
@@ -194,10 +190,8 @@ public class RegexpTest {
 		public void testSpecialGroup1() {
 			Regexp rx = Regexp.compile("s\\Kt");
 			Matcher m = rx.matcher("street");
-
-			// @TODO assertTrue. Pending fix for https://github.com/jruby/jruby/issues/4871
-			assertFalse(m.matches());
-			// assertEquals("t", m.group(0));
+			assertTrue(m.find());
+			assertEquals("t", m.group(0));
 		}
 
 		@Test

@@ -78,7 +78,7 @@ public class AnyType extends ModelObject implements Type, PuppetObject {
 
 	@Override
 	@SuppressWarnings("unchecked")
-	public FactoryDispatcher<?> factoryDispatcher() {
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
 		throw new PcoreException(format("Creation of new instance of type '%s' is not supported", name()));
 	}
 

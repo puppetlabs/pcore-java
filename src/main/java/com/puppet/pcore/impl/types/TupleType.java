@@ -44,9 +44,10 @@ public class TupleType extends TypesContainerType {
 		return ptype;
 	}
 
+	@SuppressWarnings("unchecked")
 	@Override
-	public FactoryDispatcher<List<?>> factoryDispatcher() {
-		return arrayFactoryDispatcher();
+	public <T> FactoryDispatcher<T> factoryDispatcher() {
+		return (FactoryDispatcher<T>)arrayFactoryDispatcher();
 	}
 
 	@Override
