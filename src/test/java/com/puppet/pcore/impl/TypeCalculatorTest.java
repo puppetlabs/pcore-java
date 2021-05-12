@@ -185,13 +185,6 @@ public class TypeCalculatorTest {
 				assertInfer(typeType(type), type);
 		}
 
-		@Test
-		@DisplayName("Basic types _ptype")
-		public void inferBasicTypesPtype() {
-			for(AnyType type: TypeEvaluatorImpl.BASIC_TYPES.values())
-				assertEquals(String.format("Pcore::%sType", type.name()), type._pcoreType().name());
-		}
-
 		private void assertInfer(AnyType expected, Object value) {
 			assertEquals(expected, infer(value));
 		}
