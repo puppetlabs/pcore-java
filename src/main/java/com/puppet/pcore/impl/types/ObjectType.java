@@ -362,31 +362,6 @@ public class ObjectType extends MetaType implements PuppetObjectWithHash {
 		return members(includeParent, MemberType.attribute);
 	}
 
-	public Object[] attributeValuesFor(Object value) {
-		Object[] args;
-		if(value instanceof DynamicObjectImpl)
-			args = ((DynamicObjectImpl)value).getAttributes();
-		else {
-			Class<?> implClass = value.getClass();
-			java.util.function.Function<Object,Object[]> attributeProvider = pcore().implementationRegistry().attributeProviderFor(this);
-			if(attributeProvider == null)
-				throw new SerializationException(format("No attribute provider found for %s", implClass.getName()));
-
-			args = attributeProvider.apply(value);
-		}
-
-		// Limit the array to not include trailing defaults
-		int top = args.length;
-		ParameterInfo pi = parameterInfo();
-		while(--top >= 0) {
-			Attribute attr = pi.attributes.get(top);
-			if(!(attr.hasValue() && Objects.equals(attr.value(), args[top])))
-				break;
-		}
-		++top;
-		return top == args.length ? args : Arrays.copyOf(args, top);
-	}
-
 	public List<String> declaredEquality() {
 		return equality;
 	}

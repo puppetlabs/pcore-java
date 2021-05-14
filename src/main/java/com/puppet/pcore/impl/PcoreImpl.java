@@ -6,12 +6,8 @@ import com.puppet.pcore.impl.loader.ParentedLoader;
 import com.puppet.pcore.impl.loader.TypeSetLoader;
 import com.puppet.pcore.impl.types.*;
 import com.puppet.pcore.serialization.FactoryDispatcher;
-import com.puppet.pcore.serialization.SerializationException;
-import com.puppet.pcore.impl.serialization.json.JsonSerializationFactory;
-import com.puppet.pcore.impl.serialization.msgpack.MsgPackSerializationFactory;
 import com.puppet.pcore.loader.Loader;
 import com.puppet.pcore.loader.TypedName;
-import com.puppet.pcore.serialization.SerializationFactory;
 
 import java.util.*;
 import java.util.function.Function;
@@ -208,18 +204,6 @@ public class PcoreImpl extends Pcore {
 	@Override
 	public Type inferSet(Object value) {
 		return TypeFactory.inferSet(value);
-	}
-
-	@Override
-	public SerializationFactory serializationFactory(String serializationFormat) {
-		switch(serializationFormat) {
-		case SerializationFactory.MSGPACK:
-			return new MsgPackSerializationFactory();
-		case SerializationFactory.JSON:
-			return new JsonSerializationFactory();
-		default:
-			throw new SerializationException(format("Unknown serialization format '%s'", serializationFormat));
-		}
 	}
 
 	@Override
