@@ -4,7 +4,6 @@ import com.puppet.pcore.impl.PcoreImpl;
 import com.puppet.pcore.impl.loader.ParentedLoader;
 import com.puppet.pcore.impl.types.TypeSetType;
 import com.puppet.pcore.loader.Loader;
-import com.puppet.pcore.serialization.SerializationFactory;
 
 /**
  * Provides access to relevant parts of the Pcore Type system.
@@ -36,8 +35,6 @@ public abstract class Pcore {
 	public abstract Type infer(Object value);
 
 	public abstract Type inferSet(Object value);
-
-	public abstract SerializationFactory serializationFactory(String serializationFormat);
 
 	public abstract TypeEvaluator typeEvaluator();
 
