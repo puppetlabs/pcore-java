@@ -163,7 +163,7 @@ public class TypeFormatter extends Polymorphic<Void> {
 	}
 
 	void _format(Duration value) {
-		_format(DurationFormat.DEFAULTS.get(0).format(value));
+		_format(DurationFormat.defaultFormat(value));
 	}
 
 	void _format(Instant value) {
