@@ -392,8 +392,8 @@ public class DurationFormat {
 		}
 	}
 
-	public static final List<DurationFormat> DEFAULTS = Collections.unmodifiableList(
-			map(asList("%D-%H:%M:%S.%-N", "%H:%M:%S.%-N", "%M:%S.%-N", "%S.%-N", "%D-%H:%M:%S", "%H:%M:%S", "%D-%H:%M", "%S"), FormatParser.singleton::parseFormat));
+	public static final List<String> DEFAULT_FORMATS = Collections.unmodifiableList(
+			asList("%D-%H:%M:%S.%-N", "%H:%M:%S.%-N", "%M:%S.%-N", "%S.%-N", "%D-%H:%M:%S", "%H:%M:%S", "%D-%H:%M", "%S"));
 	private static final long NSECS_PER_USEC = 1000;
 	private static final long NSECS_PER_MSEC = NSECS_PER_USEC * 1000;
 	private static final long NSECS_PER_SEC = NSECS_PER_MSEC * 1000;
@@ -410,19 +410,11 @@ public class DurationFormat {
 	}
 
 	public static Duration defaultParse(String timeSpan) {
-		for(DurationFormat format : DEFAULTS) {
-			try {
-				return format.parse(timeSpan);
-			} catch(IllegalArgumentException ignored) {
-			}
-		}
-		throw new IllegalArgumentException(String.format(
-				"Unable to parse '%s' using any of the default formats",
-				timeSpan));
+    return parse(timeSpan, DEFAULT_FORMATS);
 	}
 
 	public static String defaultFormat(Duration timeSpan) {
-		return DEFAULTS.get(0).format(timeSpan);
+		return format(timeSpan, DEFAULT_FORMATS.get(0));
 	}
 
 	public static Duration parse(String timeSpan, List<String> formats) {
